@@ -1,0 +1,26 @@
+[
+  {
+    "name":"Horizon UI PRO",
+    "category": "Approved",
+    "date": "18 Apr 2022",
+    "nRequestes": 75.5  
+  },
+  {
+    "name":"Horizon UI Free",
+    "category": "Disable",
+    "date": "18 Apr 2022",
+    "nRequestes": 25.5  
+  },
+  {
+    "name":"Marketplace",
+    "category": "Error",
+    "date": "20 May 2021",
+    "nRequestes": 90  
+  },
+  {
+    "name":"Weekly Updates",
+    "category": "Approved",
+    "date": "12 Jul 2021",
+    "nRequestes": 50.5  
+  }
+]
