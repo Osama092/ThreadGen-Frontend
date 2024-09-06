@@ -1,52 +1,30 @@
 /* eslint-disable */
 
 import {
-  Box,
-  Flex,
-  Icon,
-  Progress,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Th,
-  Thead,
-  Tr,
-  useColorModeValue,
-} from '@chakra-ui/react';
+  Box, Flex, Icon, Progress, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
 
-import {
-  Tag,
-  TagLabel,
-  TagLeftIcon,
-  TagRightIcon,
-  TagCloseButton,
-} from '@chakra-ui/react'
-
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
 import * as React from 'react';
-import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
+import useSSE from 'hooks/requests/useSSE';
+
+
 
 const columnHelper = createColumnHelper();
 
 // const columns = columnsDataCheck;
-export default function ComplexTable(props) {
-  const { tableData } = props;
+export default function ComplexTable() {
+  const [data, error] = useSSE('http://localhost:5000/sse-requests');
+
   const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
-  let defaultData = tableData;
+
+
   const columns = [
-    columnHelper.accessor('name', {
-      id: 'name',
+    columnHelper.accessor('id', {
+      id: 'id',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -54,7 +32,7 @@ export default function ComplexTable(props) {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          NAME
+          ID
         </Text>
       ),
       cell: (info) => (
@@ -65,8 +43,8 @@ export default function ComplexTable(props) {
         </Flex>
       ),
     }),
-    columnHelper.accessor('category', {
-      id: 'category',
+    columnHelper.accessor('flow', {
+      id: 'flow',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -74,7 +52,7 @@ export default function ComplexTable(props) {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Category
+          FLOW
         </Text>
       ),
       cell: (info) => (
@@ -83,8 +61,8 @@ export default function ComplexTable(props) {
         </Flex>
       ),
     }),
-    columnHelper.accessor('date', {
-      id: 'date',
+    columnHelper.accessor('sent_date', {
+      id: 'sent_date',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -92,7 +70,7 @@ export default function ComplexTable(props) {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          DATE
+          SENT DATE
         </Text>
       ),
       cell: (info) => (
@@ -101,8 +79,8 @@ export default function ComplexTable(props) {
         </Text>
       ),
     }),
-    columnHelper.accessor('nRequestes', {
-      id: 'nRequestes',
+    columnHelper.accessor('tts_text', {
+      id: 'tts_text',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -110,7 +88,7 @@ export default function ComplexTable(props) {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          N° Requestes
+          TTS TEXT
         </Text>
       ),
       cell: (info) => (
@@ -120,10 +98,9 @@ export default function ComplexTable(props) {
       ),
     }),
   ];
-  const [data, setData] = React.useState(() => [...defaultData]);
   const table = useReactTable({
-    data,
     columns,
+    data: data,
     state: {
       sorting,
     },
@@ -132,6 +109,16 @@ export default function ComplexTable(props) {
     getSortedRowModel: getSortedRowModel(),
     debugTable: true,
   });
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (!data) {
+    return <div>Loading...</div>;
+  }
+  
+
   return (
     <Card
       flexDirection="column"
@@ -189,7 +176,7 @@ export default function ComplexTable(props) {
           <Tbody>
             {table
               .getRowModel()
-              .rows.slice(0, 5)
+              .rows
               .map((row) => {
                 return (
                   <Tr key={row.id}>

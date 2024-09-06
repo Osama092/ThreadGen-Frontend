@@ -1,14 +1,13 @@
 
 export const columnsDataComplex = [
   {
-    Header: "REQUEST_ID",
-    accessor: "request_id",
+    Header: "ID",
+    accessor: "id",
   },
   {
     Header: "FLOW",
     accessor: "flow",
   },
-
   {
     Header: "SENT_DATE",
     accessor: "sent_date",
@@ -17,10 +16,5 @@ export const columnsDataComplex = [
     Header: "TTS_TEXT",
     accessor: "tts_text",
   },
-
-
-
-
-
 
 ];

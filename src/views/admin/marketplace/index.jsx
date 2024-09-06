@@ -19,15 +19,10 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import React from "react";
-
-import {
-  Tag,
-  TagLabel,
-
-} from '@chakra-ui/react'
+import beyondTheRainbow from "assets/img/BeyondTheRainbow.mp4"
 
 import {
   Input,
@@ -76,7 +71,7 @@ import {
   AlertTitle,
   AlertDescription,
 } from '@chakra-ui/react'
-import { CloseButton } from '@chakra-ui/react'; // Add this import
+import { CloseButton,  Fade, IconButton} from '@chakra-ui/react'; // Add this import
 import { Progress } from '@chakra-ui/react'
 // Custom components
 
@@ -86,7 +81,9 @@ import { useDropzone } from 'react-dropzone';
 // Assets
 
 import { AddIcon } from '@chakra-ui/icons'
-
+import { RangeSlider, RangeSliderTrack, RangeSliderFilledTrack, RangeSliderThumb } from "@chakra-ui/react";
+import { FaPlay, FaPause } from 'react-icons/fa';
+import useGetFlows from 'hooks/flows/useGetFlows';
 
 const thumbsContainer = {
   display: 'flex',
@@ -120,22 +117,9 @@ const videoStyles = {
 };
 
 
-export default function Marketplace() {
-
-  const [value, setValue] = useState('');
-
-  const handleChange = (e) => {
-    setValue(e.target.value);
-  };
-
-  // Split the value into two parts
-  const firstRow = value.split('\n')[0];
-  const secondRow = value.split('\n')[1] || '';
-
-
-  
-  const [activeStep, setActiveStep] = useState(0);
+export default function Marketplace() {  
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const { flows, loading, error, refetch} = useGetFlows()
 
   const [file, setFile] = useState(null);
   const { getRootProps, getInputProps } = useDropzone({
@@ -165,6 +149,8 @@ export default function Marketplace() {
     };
   }, [file]);
 
+
+
   useEffect(() => {
     let timer;
     if (showAlert) {
@@ -190,71 +176,8 @@ export default function Marketplace() {
   }, [showAlert]);
   
 
-  const [currentTime, setCurrentTime] = useState(0); // New state for current time
+  console.log(flows)
 
-  
-
-  const thumbElement = file ? (
-    <div style={thumb} key={file.name}>
-      <div style={thumbInner}>
-        <video
-          src={file.preview}
-          style={videoStyles}
-          controls
-          onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)} // Update current time
-          onLoadedData={() => { URL.revokeObjectURL(file.preview) }}
-        />
-        <Text>Current Time: {currentTime.toFixed(2)} seconds</Text> {/* Display current time */}
-      </div>
-    </div>
-  ) : null;
-
-
-
-
-
-  const steps = [
-    {
-      title: 'Step 1',
-      content: (
-        <VStack spacing={4} align="stretch">
-          <FormControl>
-            <Grid templateColumns="repeat(2, 1fr)" gap={8}> {/* Adjust gap as needed */}
-
-              <FormControl>
-                <FormLabel htmlFor='title'>Title</FormLabel>
-                <Input id='title' type='text' />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel htmlFor='lastName'>Category</FormLabel>
-                <Input id='lastName' type='text' />
-              </FormControl>
-
-            </Grid>
-          </FormControl>
-
-        </VStack>
-      )
-    },
-    {
-      title: 'Step 2',
-      content: (
-
-
-        <Grid align="center"justify="center">
-          <Upload
-            minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
-            pe='20px'
-            pb={{ base: "100px", lg: "20px" }}
-          />
-          </Grid>
-
-
-          
-      )
-    },
-  ];
 
   // Chakra Color Mode
 
@@ -294,48 +217,49 @@ export default function Marketplace() {
                 <ModalContent>
                   <ModalHeader>
                     Modal Title
-                    <Stepper size='md' index={activeStep}>
-                      {steps.map((step, index) => (
-                        <Step key={index} onClick={() => setActiveStep(index)}>
-                          <StepIndicator>
-                            <StepStatus
-                              complete={<StepIcon />}
-                              incomplete={<StepNumber />}
-                              active={<StepNumber />}
-                            />
-                          </StepIndicator>
+                    <ModalBody>
+                      <VStack spacing={4} align="stretch">
+                        <FormControl>
+                          <Grid templateColumns="repeat(2, 1fr)" gap={8}> {/* Adjust gap as needed */}
 
-                          <Box flexShrink='0'>
-                            <StepTitle>{step.title}</StepTitle>
-                          </Box>
+                            <FormControl>
+                              <FormLabel htmlFor='title'>Title</FormLabel>
+                              <Input id='title' type='text' />
+                            </FormControl>
 
-                          <StepSeparator />
-                        </Step>
-                      ))}
-                    </Stepper>
+                            <FormControl>
+                              <FormLabel htmlFor='lastName'>Category</FormLabel>
+                              <Input id='lastName' type='text' />
+                            </FormControl>
+
+                          </Grid>
+                        </FormControl>
+
+                        <Grid align="center"justify="center">
+                        <Upload
+                          minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
+                          pe='20px'
+                          pb={{ base: "100px", lg: "20px" }}
+                        />
+                        </Grid>
+
+
+                      </VStack>   
+                    </ModalBody>
                   </ModalHeader>
                   <ModalCloseButton />
                   <ModalBody>
-                    {steps[activeStep].content}
                   </ModalBody>
                   <ModalFooter>
-                    {activeStep > 0 && (
-                      <Button variant="outline" onClick={() => setActiveStep(activeStep - 1)} mr={3}>
-                        Back
-                      </Button>
-                    )}
-                    {activeStep < steps.length - 1 ? (
-                      <Button colorScheme="teal" onClick={() => setActiveStep(activeStep + 1)}>
-                        Next
-                      </Button>
-                    ) : (
+                    
+
                         <Button colorScheme="teal" onClick={() => {
                           onClose();
                           setShowAlert(true);
                       }}>
                         Done
                       </Button>
-                    )}
+                    
                   </ModalFooter>
                 </ModalContent>
               </Modal>
@@ -378,97 +302,41 @@ export default function Marketplace() {
                 </Modal>
               )}
 
+       
               
-
-              <Card maxW='sm'>
-                <CardBody>
-                    <video borderRadius='lg'>
-                      <source src="https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4" type="video/mp4" />
-                  </video>
-                  
-
+            {loading && <Text>Loading...</Text>}
+              {error && <Text>Error: {error.message}</Text>}
+              {flows && flows.map((flow, index) => (
+                <Card key={index} maxW='sm'>
+                  <CardBody>
+                    <video borderRadius='lg' controls>
+                      <source src={flow.video} type="video/mp4" />
+                    </video>
                     <Stack mt='6' spacing='3'>
-                      <Heading size='md'>Flow A</Heading>
-                        <Text color='blue.600'>
-                          Info C
+                      <Heading size='md'>{flow.name}</Heading>
+                      <Text color='blue.600'>{flow.category}</Text>
+                      <Text>{flow.description}</Text>
+                      {flow.timeframe.map((tf, tfIndex) => (
+                        <Text key={tfIndex}>
+                          {`Start: ${tf.start_time} - End: ${tf.end_time}`}
                         </Text>
-                        <Divider />
-                        <Text as="sub">02/11/2024</Text>
-                    </Stack>
-                </CardBody>
-              </Card>
-              <Card maxW='sm'>
-                <CardBody>
-                  <video borderRadius='lg'>
-                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-                  </video>
-
-
-                  <Stack mt='6' spacing='3'>
-                    <Heading size='md'>Flow A</Heading>
-                      <Text color='blue.600'>
-                        Info C
-                      </Text>
+                      ))}
                       <Divider />
-                      <Text as="sub">02/11/2024</Text>
-                  </Stack>
-                </CardBody>
-              </Card>
+                      <Text as="sub">{flow.created_date}</Text>
+                    </Stack>
+                  </CardBody>
+                </Card>
+              ))}
+
+
               
 
 
-              <Card maxW='sm'>
-                <CardBody>
-                  <video borderRadius='lg'>
-                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-                  </video>
 
-                  <Stack mt='6' spacing='3'>
-                    <Heading size='md'>Flow A</Heading>
-                      <Text color='blue.600'>
-                        Info C
-                      </Text>
-                      <Divider />
-                      <Text as="sub">02/11/2024</Text>
-                  </Stack>
-                </CardBody>
-              </Card>
-
-              <Card maxW='sm'>
-                <CardBody>
-                  <video borderRadius='lg'>
-                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-                  </video>
-                  <Stack mt='6' spacing='3'>
-                    <Heading size='md'>Flow A</Heading>
-                      <Text color='blue.600'>
-                        Info C
-                      </Text>
-                      <Divider />
-                      <Text as="sub">02/11/2024</Text>
-                  </Stack>
-                </CardBody>
-              </Card>
-
-              <Card maxW='sm'>
-                <CardBody>
-                  <video borderRadius='lg'>
-                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-                  </video>
-
-                  <Stack mt='6' spacing='3'>
-                    <Heading size='md'>Flow A</Heading>
-                      <Text color='blue.600'>
-                        Info C
-                      </Text>
-                      <Divider />
-                      <Text as="sub">02/11/2024</Text>
-                  </Stack>
-                </CardBody>
-              </Card>
             </SimpleGrid>
           </Flex>
         </Flex>
+        
       </Grid>
     </Box>
   );

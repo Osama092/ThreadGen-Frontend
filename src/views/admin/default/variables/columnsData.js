@@ -1,19 +1,20 @@
 
 export const columnsDataComplex = [
   {
-    Header: "NAME",
-    accessor: "name",
+    Header: "ID",
+    accessor: "id",
   },
   {
-    Header: "Category",
-    accessor: "category",
+    Header: "FLOW",
+    accessor: "flow",
   },
   {
-    Header: "Date",
-    accessor: "date",
+    Header: "SENT_DATE",
+    accessor: "sent_date",
   },
   {
-    Header: "N° Requestes",
-    accessor: "nRequestes",
+    Header: "TTS_TEXT",
+    accessor: "tts_text",
   },
+
 ];

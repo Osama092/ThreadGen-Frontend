@@ -3,9 +3,11 @@ import { Button, Flex, Input, useColorModeValue, Box, Image, Text } from "@chakr
 // Assets
 import Upload from "views/admin/marketplace/components/Upload";
 import { useDropzone } from "react-dropzone";
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { MdGraphicEq } from 'react-icons/md';
 //import { MdGraphicEq } from '@chakra-ui/icons';
+import { CloseButton,  Fade, IconButton} from '@chakra-ui/react'; // Add this import
+import { FaPlay, FaPause } from 'react-icons/fa';
 
 import {
   RangeSlider,
@@ -40,18 +42,84 @@ function Dropzone(props) {
     setFile(null);
   };
 
-  const [currentTime, setCurrentTime] = useState(0);
-  const [videoDuration, setVideoDuration] = useState(0);
+  
 
-  const handleChange = (values) => {
-    const [min, max] = values;
-    const range = max - min;
-    const newTime = (range / 100) * videoDuration + (min / 100) * videoDuration;
-    videoRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
+
+  const [videoSrc, setVideoSrc] = useState(null);
+  const [videoDuration, setVideoDuration] = useState(100);
+  const [range, setRange] = useState([0, 100]);
+  const videoPlayerRef = useRef(null);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+
+
+  const togglePlayPause = () => {
+    if (videoPlayerRef.current.paused) {
+      videoPlayerRef.current.play();
+      setIsPlaying(true);
+    } else {
+      videoPlayerRef.current.pause();
+      setIsPlaying(false);
+    }
   };
 
-  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const videoPlayer = videoPlayerRef.current;
+
+    const handleTimeUpdate = () => {
+      const [start, end] = range;
+      if (videoPlayer.currentTime > end) {
+        videoPlayer.pause();
+      }
+    };
+
+    videoPlayer?.addEventListener("timeupdate", handleTimeUpdate);
+
+    return () => {
+      videoPlayer?.removeEventListener("timeupdate", handleTimeUpdate);
+    };
+  }, [range]);
+
+  const handleVideoUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setVideoSrc(url);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    const duration = videoPlayerRef.current.duration;
+    setVideoDuration(duration);
+    setRange([0, duration]);
+  };
+
+  const handleRangeChange = (values) => {
+    setRange(values);
+    const [start, end] = values;
+  
+    // Update video currentTime based on the new range
+    if (videoPlayerRef.current) {
+      const videoPlayer = videoPlayerRef.current;
+      if (videoPlayer.currentTime < start || videoPlayer.currentTime > end) {
+        videoPlayer.currentTime = start;
+      } else {
+        videoPlayer.currentTime = end;
+      }
+    }
+  };
+
+  const handleRangeChangeEnd = () => {
+    // Sync video currentTime to start when slider movement ends
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.currentTime = range[0];
+    }
+  };
+
+
 
 
 
@@ -78,33 +146,50 @@ function Dropzone(props) {
       )}
       {file && (
         <Flex direction='column' mt='20px'>
-          <Box mb='10px'>
             <video
-              ref={videoRef}
-              controls
-              width="100%"
-              onTimeUpdate={() => setCurrentTime(videoRef.current.currentTime)}
-              onLoadedMetadata={(e) => setVideoDuration(e.target.duration)}
+              ref={videoPlayerRef}
+              width="640"
+              onLoadedMetadata={handleLoadedMetadata}
             >
               <source src={file.preview} type={file.type} />
               Your browser does not support the video tag.
             </video>
+
+            <Fade in={isHovered || !isPlaying}>
+              <IconButton
+                onClick={togglePlayPause}
+                position="absolute"
+                top="50%"
+                left="50%"
+                transform="translate(-50%, -50%)"
+                backgroundColor="rgba(0, 0, 0, 0.5)"
+                color="white"
+                borderRadius="50%"
+                _hover={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
+                icon={isPlaying ? <FaPause /> : <FaPlay />}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+              />
+            </Fade>
+              
             <Text>{file.name}</Text>
 
-            <RangeSlider aria-label={['min', 'max']} defaultValue={[0, 100]} onChange={handleChange}>
-              <RangeSliderTrack bg='red.100'>
-                <RangeSliderFilledTrack bg='tomato' />
+            <RangeSlider
+              min={0}
+              max={videoDuration}
+              step={0.1}
+              value={range}
+              onChange={handleRangeChange}
+              onChangeEnd={handleRangeChangeEnd}
+              aria-label={["Start time", "End time"]}
+            >
+              <RangeSliderTrack>
+                <RangeSliderFilledTrack />
               </RangeSliderTrack>
-              <RangeSliderThumb boxSize={6} index={0}>
-                <Box color='tomato' as={MdGraphicEq} />
-              </RangeSliderThumb>
-              <RangeSliderThumb boxSize={6} index={1}>
-                <Box color='tomato' as={MdGraphicEq} />
-              </RangeSliderThumb>
+              <RangeSliderThumb index={0} />
+              <RangeSliderThumb index={1} />
             </RangeSlider>
             
             <Button mt='10px' onClick={removeFile}>Remove File</Button>
-          </Box>
         </Flex>
       )}
     </>
