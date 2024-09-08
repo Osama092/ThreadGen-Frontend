@@ -32,9 +32,6 @@ function Dropzone(props) {
       align='center'
       justify='center'
       bg={bg}
-      border='1px dashed'
-      borderColor={borderColor}
-      borderRadius='16px'
       w='20%'
       h={audioSrc ? 'auto' : 'max-content'}
       minH={audioSrc ? 'auto' : '100%'}

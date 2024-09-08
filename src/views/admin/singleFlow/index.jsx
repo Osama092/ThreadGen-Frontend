@@ -19,7 +19,7 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 import React from "react";
 
@@ -32,7 +32,7 @@ import MiniStatistics from "components/card/MiniStatistics";
 import {
   Box,
   Button,
-
+  Input,
   Grid,
 
   Text,
@@ -53,6 +53,7 @@ import {
 
 //import Card from "components/card/Card.js";
 import { Card, CardBody, Heading  } from '@chakra-ui/react';
+import { useLocation } from 'react-router-dom';
 
 
 import tableDataComplex from "views/admin/singleFlow/variables/tableDataComplex.json";
@@ -64,35 +65,38 @@ import {
   EditablePreview,
 } from '@chakra-ui/react'
 
-export default function Marketplace() {
+export default function SingleFlow() {
 
-  const [tags, setTags] = useState([]);
-  const [inputValue, setInputValue] = useState('');
 
-  const handleAddTag = () => {
-    if (inputValue.trim() && !tags.includes(inputValue.trim())) {
-      setTags([...tags, inputValue.trim()]);
-      setInputValue('');
-    }
+  const [buttonText, setButtonText] = useState('Edit');
+  const [isEditing, setIsEditing] = useState(false);
+  const nameInputRef = useRef(null);
+  const descriptionInputRef = useRef(null);
+  const [isReadOnly, setIsReadOnly] = useState(true);
+
+
+
+  
+
+  const handleButtonClick = () => {
+    setButtonText(prevText => (prevText === 'Edit' ? 'Save' : 'Edit'));
+    setIsEditing(prevState => !prevState);
+    setIsReadOnly(!isReadOnly);
+    nameInputRef.current.focus();
   };
 
-  const handleDeleteTag = (tagToDelete) => {
-    setTags(tags.filter(tag => tag !== tagToDelete));
-  };
+
+
+
+
   
   
 
-  const [selectedOption, setSelectedOption] = useState("+234");
-
-  // Function to handle menu item selection
-  const handleSelect = (option) => {
-    setSelectedOption(option);
-  };
-  // Chakra Color Mode
   const textColor = useColorModeValue("secondaryGray.900", "white");
-  const textColorBrand = useColorModeValue("brand.500", "white");
-  const brandColor = useColorModeValue("brand.500", "white");
-  const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
+
+  const location = useLocation();
+  const { flow } = location.state || {};
+
 
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
@@ -111,8 +115,8 @@ export default function Marketplace() {
         <SimpleGrid columns={{ base: 1, md: 2 }} gap='20px'>
           <Card maxW='xl'>
             <CardBody>
-      <video controls borderRadius='xl'width='200%' >
-                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+              <video controls borderRadius='xl'width='200%' >
+                <source src={flow.video} type="video/mp4" />
               </video>        
               
             </CardBody>
@@ -120,66 +124,55 @@ export default function Marketplace() {
 
           <Card height='auto'>
             <CardBody>
-              <SimpleGrid columns={{ base:'3' }} spacing='20px'>
+              <SimpleGrid columns={{ base:'2' }} spacing='20px'>
                 <MiniStatistics growth='+23%' name='Sales' value='$574.34' width='sm' />
 
                 <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
 
-                <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
               </SimpleGrid>
 
                         
 
-              <SimpleGrid columns={3} spacing='20px' ml='5%' mt='5%'>
-                <HStack align='start'>
-                  <VStack align='start'>
-                    <Heading as='h4' size='md'>Title</Heading>
-                    <Editable defaultValue='Take some chakra'>
-                      <EditablePreview />
-                      <EditableInput />
-                    </Editable>
-                  </VStack>
-                </HStack>
-
-
+              <SimpleGrid columns={2} spacing='20px' ml='5%' mt='5%'>
                 
-                <HStack align='start'>
-                  <VStack align='start'>
-                    <Heading as='h4' size='md'>Description</Heading>
-                    <Editable defaultValue='Take some chakra'>
-                      <EditablePreview />
-                      <EditableInput />
-                    </Editable>
+              <HStack align='start'>
+                <VStack align='start'>
+                  <Heading as='h4' size='md'>Title</Heading>
+                    <Input focusBorderColor='lime' value={flow.description} ref={nameInputRef} isReadOnly={isReadOnly} />
                   </VStack>
-                </HStack>
-
-                <HStack align='start'>
-                  <VStack align='start'>
-                    <Heading as='h4' size='md'>Created at</Heading>
-                    <Editable defaultValue='Take some chakra' >
-                      <EditablePreview />
-                      <EditableInput />
-                    </Editable>
-                  </VStack>
-                </HStack>
+              </HStack>
                 
+              <HStack align='start'>
+                <Button variant="brand" size='lg' px={9} onClick={handleButtonClick} >
+                  {buttonText}
+                </Button>
+              </HStack> 
+
+              <HStack align='start'>
+                <VStack align='start'>
+                  <Heading as='h4' size='md'>Description</Heading>
+                  <Input focusBorderColor='lime' value={flow.description} isReadOnly={isReadOnly} />
+                </VStack>
+              </HStack>
+
                 <HStack>
                   <VStack align='start'>
                     <Heading as='h4' size='md'>Time frame</Heading>
-                    <Editable defaultValue='Take some chakra' >
-                      <EditablePreview />
-                      <EditableInput />
-                    </Editable>
+                    {flow.timeframe.map((tf, tfIndex) => (
+                      <Text key={tfIndex}>
+                        {`Start: ${tf.start_time} - End: ${tf.end_time}`}
+                      </Text>
+                    ))}
                   </VStack>
-                </HStack>
-
-                <HStack align='start'>
-                  <Button variant="brand" size='lg' px={9}>Save</Button>
-                </HStack>
-                <HStack align='start'>
-                  <Button variant="brand" size='lg' px={9}>Delete</Button>
 
                 </HStack>
+
+                <VStack align='start'>
+                    <Heading as='h4' size='md'>Creation date</Heading>
+                    <Text>{flow.created_date}</Text>
+                </VStack>
+
+
 
                 
 
@@ -191,10 +184,11 @@ export default function Marketplace() {
         {/* Second Row with One Column for the Last Card */}
         <Card>
           <CardBody>
-            <ComplexTable
+          <ComplexTable
               columnsData={columnsDataComplex}
               tableData={tableDataComplex}
             />
+
           </CardBody>
         </Card>
       </Grid>

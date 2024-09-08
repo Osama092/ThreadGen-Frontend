@@ -47,7 +47,6 @@ export default function ComplexTable() {
           navigator.clipboard.writeText(apiKey).then(() => {
             toast({
               title: 'API Key copied.',
-              description: 'The API key has been copied to your clipboard.',
               status: 'success',
               duration: 2000,
               isClosable: true,
@@ -63,7 +62,6 @@ export default function ComplexTable() {
               fontSize="md"
               fontWeight="700"
               onDoubleClick={handleDoubleClick}
-              cursor="pointer"
             >
               {displayKey}
             </Text>

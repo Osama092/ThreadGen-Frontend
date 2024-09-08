@@ -13,6 +13,7 @@ import React from "react";
 // Assets
 import { MdUpload } from "react-icons/md";
 import Dropzone from "components/dropzone/Dropzone.js";
+import { BsBorderStyle } from "react-icons/bs";
 
 export default function Upload(props) {
   const { used, total, ...rest } = props;
@@ -25,31 +26,27 @@ export default function Upload(props) {
     align="center"
     justify="center"
     m="0 auto "
-    p={10}
-    border="1px solid"
-    borderColor={textColorSecondary}
-    borderRadius="md"
+      p={5}
     width="100%"
-    height="auto"
+      height="auto"
+      border= "1px dashed #ccc"
 
   >
     <Dropzone
       style={{
-        width: "100%",
-        height: "100%",
-        borderColor: brandColor,
-        borderRadius: "md",
+        width: "auto",
+        height: "auto",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "20px",
+          justifyContent: "center",
+        padding : '10px',
         backgroundColor: useColorModeValue("gray.50", "gray.700"),
       }}
       content={
         <Box textAlign="center"  >
-          <Icon as={MdUpload} w="80px" h="80px" color={brandColor} />
-          <Flex justify="center" mx="auto" mb="12px">
-            <Text fontSize="xl" fontWeight="700" color={brandColor}>
+          <Icon as={MdUpload} w="40px" h="40px" color={brandColor} />
+          <Flex justify="center" mx="auto" mb="6px">
+            <Text fontSize="md" fontWeight="700" color={brandColor}>
               Upload Files
             </Text>
           </Flex>

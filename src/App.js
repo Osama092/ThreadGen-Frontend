@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import {} from 'react-router-dom';
 import AuthLayout from './layouts/auth';
 import AdminLayout from './layouts/admin';
+import SingleFlow from './views/admin/singleFlow';
 import {
   ChakraProvider,
   // extendTheme

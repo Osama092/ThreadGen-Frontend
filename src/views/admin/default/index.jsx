@@ -49,7 +49,7 @@ import {
   columnsDataComplex,
 } from "views/admin/default/variables/columnsData";
 import tableDataComplex from "views/admin/default/variables/tableDataComplex.json";
-export default function UserReports() {
+export default function Dashboard() {
 
   // Chakra Color Mode
   const brandColor = useColorModeValue("brand.500", "white");

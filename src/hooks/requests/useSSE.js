@@ -1,27 +1,33 @@
-// useSSE.js
-import { useState, useEffect } from 'react';
+// src/hooks/useSSE.js
+import { useState, useEffect, useRef } from 'react';
+import { getSSEUrl } from 'services/requestServices';
 
-const useSSE = (url) => {
+const useSSE = () => {
   const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
+  const eventSourceRef = useRef(null);
 
   useEffect(() => {
-    const eventSource = new EventSource(url);
+    const url = getSSEUrl();
+    eventSourceRef.current = new EventSource(url);
 
-    eventSource.onmessage = (event) => {
-      setData(JSON.parse(event.data));
+    eventSourceRef.current.onmessage = (event) => {
+      const parsedData = JSON.parse(event.data);
+      setData(parsedData);
     };
 
-    eventSource.onerror = () => {
-      setError('Error connecting to SSE endpoint');
+    eventSourceRef.current.onerror = (error) => {
+      console.error('EventSource failed:', error);
+      eventSourceRef.current.close();
     };
 
     return () => {
-      eventSource.close();
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
     };
-  }, [url]);
+  }, []);
 
-  return [data, error];
+  return data;
 };
 
 export default useSSE;

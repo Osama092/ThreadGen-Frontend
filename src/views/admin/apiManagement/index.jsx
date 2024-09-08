@@ -53,7 +53,7 @@ import {
 import ComplexTable from "views/admin/apiManagement/components/ComplexTable";
 
 
-export default function UserReports() {
+export default function ApiManagement() {
   // Chakra Color Mode
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");

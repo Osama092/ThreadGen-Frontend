@@ -1,4 +1,4 @@
-// services/sseService.js
-const SSE_URL = 'http://localhost:5000/sse-requests';
+// src/services/apiService.js
+const BASE_URL = 'http://localhost:5000';
 
-export const getSseEndpoint = () => SSE_URL;
+export const getSSEUrl = () => `${BASE_URL}/sse-requests`;

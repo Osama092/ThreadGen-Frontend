@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import './assets/css/App.css';
 import App from './App';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { SSEProvider } from 'contexts/SSEContext';
 
 const PUBLISHABLE_KEY = process.env.REACT_APP_PUBLISHABLE_KEY
 
@@ -17,7 +18,9 @@ root.render(
 
   <BrowserRouter>
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+      <SSEProvider>
         <App />
+      </SSEProvider>
     </ClerkProvider>
   </BrowserRouter>
 

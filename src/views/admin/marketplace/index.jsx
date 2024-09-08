@@ -20,9 +20,8 @@
 
 */
 import { useState, useEffect, useRef } from 'react';
-
+import { useNavigate } from 'react-router-dom';
 import React from "react";
-import beyondTheRainbow from "assets/img/BeyondTheRainbow.mp4"
 
 import {
   Input,
@@ -33,17 +32,11 @@ import {
   ModalCloseButton,
   ModalBody,
   ModalFooter,
-  Stepper,
-  Step,
-  StepIndicator,
-  StepStatus,
-  StepIcon,
-  StepNumber,
-  StepTitle,
-  StepSeparator,
-
   useDisclosure
 } from '@chakra-ui/react';
+import { IconButton, Icon } from '@chakra-ui/react';
+import { FiUpload } from 'react-icons/fi';
+import { BsMic } from 'react-icons/bs';
 
 import Upload from "views/admin/marketplace/components/Upload";
 
@@ -71,7 +64,7 @@ import {
   AlertTitle,
   AlertDescription,
 } from '@chakra-ui/react'
-import { CloseButton,  Fade, IconButton} from '@chakra-ui/react'; // Add this import
+import { CloseButton } from '@chakra-ui/react'; // Add this import
 import { Progress } from '@chakra-ui/react'
 // Custom components
 
@@ -81,43 +74,14 @@ import { useDropzone } from 'react-dropzone';
 // Assets
 
 import { AddIcon } from '@chakra-ui/icons'
-import { RangeSlider, RangeSliderTrack, RangeSliderFilledTrack, RangeSliderThumb } from "@chakra-ui/react";
-import { FaPlay, FaPause } from 'react-icons/fa';
 import useGetFlows from 'hooks/flows/useGetFlows';
 
-const thumbsContainer = {
-  display: 'flex',
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  marginTop: 16
-};
-
-const thumb = {
-  display: 'inline-flex',
-  borderRadius: 2,
-  border: '1px solid #eaeaea',
-  marginBottom: 8,
-  marginRight: 8,
-  width: '100%',
-  height: 'auto',
-  padding: 4,
-  boxSizing: 'border-box'
-};
-
-const thumbInner = {
-  display: 'flex',
-  minWidth: 0,
-  overflow: 'hidden'
-};
-
-const videoStyles = {
-  display: 'block',
-  width: '100%',
-  height: 'auto'
-};
 
 
-export default function Marketplace() {  
+
+
+
+export default function FlowManagement() {  
   const { isOpen, onOpen, onClose } = useDisclosure()
   const { flows, loading, error, refetch} = useGetFlows()
 
@@ -139,6 +103,10 @@ export default function Marketplace() {
   const [showAlert, setShowAlert] = useState(false); // New state for alert visibility
   const [progress, setProgress] = useState(0); // New state for progress
 
+  const navigate = useNavigate();
+  const handleCardClick = (flow) => {
+    navigate(`/admin/flow/${flow.id}`, { state: { flow } });
+  };
 
   useEffect(() => {
     // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
@@ -183,6 +151,41 @@ export default function Marketplace() {
 
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const textColorBrand = useColorModeValue("brand.500", "white");
+
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioUrl, setAudioUrl] = useState('');
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    console.log('Uploaded file:', file);
+  };
+
+  const handleRecordClick = async () => {
+    if (isRecording) {
+      // Stop recording
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    } else {
+      // Start recording
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+        audioChunksRef.current = []; // Clear the chunks
+      };
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    }
+  };
+
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
       {/* Main Fields */}
@@ -253,12 +256,12 @@ export default function Marketplace() {
                   <ModalFooter>
                     
 
-                        <Button colorScheme="teal" onClick={() => {
-                          onClose();
-                          setShowAlert(true);
-                      }}>
-                        Done
-                      </Button>
+                    <Button colorScheme="teal" onClick={() => {
+                      onClose();
+                      setShowAlert(true);
+                  }}>
+                    Done
+                  </Button>
                     
                   </ModalFooter>
                 </ModalContent>
@@ -307,7 +310,7 @@ export default function Marketplace() {
             {loading && <Text>Loading...</Text>}
               {error && <Text>Error: {error.message}</Text>}
               {flows && flows.map((flow, index) => (
-                <Card key={index} maxW='sm'>
+                <Card key={index} maxW='sm' onClick={() => handleCardClick(flow)} cursor="pointer">
                   <CardBody>
                     <video borderRadius='lg' controls>
                       <source src={flow.video} type="video/mp4" />
@@ -336,8 +339,62 @@ export default function Marketplace() {
             </SimpleGrid>
           </Flex>
         </Flex>
+
+
         
       </Grid>
+      <Box
+      bg="gray.800"
+      borderRadius="md"
+      p={6}
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      borderWidth={2}
+      borderColor="gray.600"
+      height="300px"
+      cursor="pointer"
+      _hover={{ borderColor: 'gray.500' }}
+      onClick={() => document.getElementById('audio-upload-input').click()}
+    >
+      <input
+        id="audio-upload-input"
+        type="file"
+        accept="audio/*"
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+      />
+      <VStack spacing={3}>
+        <Icon as={FiUpload} boxSize={8} color="whiteAlpha.800" />
+        <Text color="whiteAlpha.800" fontSize="lg" fontWeight="bold">
+          Drop Audio Here
+        </Text>
+        <Text color="gray.400">- or -</Text>
+        <Text color="blue.400" fontSize="lg" fontWeight="bold">
+          Click to Upload
+        </Text>
+      </VStack>
+      <Box display="flex" justifyContent="center" mt={6}>
+
+        <IconButton
+          aria-label="Record"
+          icon={<BsMic />}
+          colorScheme="pink"
+          onClick={handleRecordClick}
+          isRound
+          variant={isRecording ? 'solid' : 'outline'}
+        />
+      </Box>
+      {/* Playback of recorded audio */}
+      {audioUrl && (
+        <Box mt={4}>
+          <audio controls src={audioUrl} />
+        </Box>
+      )}
+      </Box>
+      
     </Box>
+    
   );
 }

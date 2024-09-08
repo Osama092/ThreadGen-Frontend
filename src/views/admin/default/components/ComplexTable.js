@@ -1,21 +1,49 @@
 /* eslint-disable */
 
 import {
-  Box, Flex, Icon, Progress, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
+  Box, Flex, Button, Icon, Progress, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
 
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
-import * as React from 'react';
-import useSSE from 'hooks/requests/useSSE';
+//import * as React from 'react';
+//import useSSE from 'hooks/requests/useSSE';
+import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
+import { SSEContext } from 'contexts/SSEContext';
 
-
+import React, { useEffect,useContext, useState } from "react";
 
 const columnHelper = createColumnHelper();
 
-// const columns = columnsDataCheck;
 export default function ComplexTable() {
-  const [data, error] = useSSE('http://localhost:5000/sse-requests');
+
+  const data = useContext(SSEContext);
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (user) {
+      console.log("User Email:", user.primaryEmailAddress.emailAddress);
+    } else {
+      console.log("User is not logged in");
+    }
+  }, [user]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (user) {
+      const email = user.primaryEmailAddress.emailAddress;
+      try {
+        await axios.post('http://localhost:5000/add-random-request', { email });
+      } catch (error) {
+        console.error('Error adding request:', error);
+      }
+    } else {
+      console.error('User is not logged in');
+    }
+  };
+
+
 
   const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
@@ -110,9 +138,6 @@ export default function ComplexTable() {
     debugTable: true,
   });
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
 
   if (!data) {
     return <div>Loading...</div>;
@@ -201,6 +226,10 @@ export default function ComplexTable() {
           </Tbody>
         </Table>
       </Box>
+      <Text>Hellw world</Text>
+      <form onSubmit={handleSubmit}>
+          <Button type="submit" colorScheme="blue">Add Request</Button>
+        </form>
     </Card>
   );
 }

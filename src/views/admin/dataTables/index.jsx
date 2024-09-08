@@ -38,7 +38,7 @@ import React from "react";
 import { Card, CardBody, Button, Heading, Text, Badge, } from '@chakra-ui/react'
 
 
-export default function Settings() {
+export default function Billing() {
 
   
   

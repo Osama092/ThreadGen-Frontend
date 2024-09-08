@@ -64,7 +64,7 @@ const routes = [
   {
     name: 'Single',
     layout: '/admin',
-    path: '/flow',
+    path: '/flow/:id',
     icon: <Icon as={MdPerson} width="20px" height="20px" color="inherit" />,
     component: <SingleFlow />,
   },

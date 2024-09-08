@@ -5,17 +5,16 @@ import { Box, Flex, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Ta
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
-import * as React from 'react';
-import useSSE from 'hooks/requests/useSSE';
+import React, { useEffect,useContext, useState } from "react";
 
+import { SSEContext } from 'contexts/SSEContext';
 
 
 const columnHelper = createColumnHelper();
 
 // const columns = columnsDataCheck;
 export default function ComplexTable() {
-  const [data, error] = useSSE('http://localhost:5000/sse-requests');
-
+  const data = useContext(SSEContext);
   const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
@@ -98,7 +97,7 @@ export default function ComplexTable() {
     }),
   ];
 
-  const filteredData = data ? data.filter(row => row.user === 'Osama') : [];
+  const filteredData = data ? data.filter(row => row.user === 'ETuAN') : [];
 
 
   const table = useReactTable({
@@ -113,9 +112,7 @@ export default function ComplexTable() {
     debugTable: true,
   });
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  
 
   if (!data) {
     return <div>Loading...</div>;
