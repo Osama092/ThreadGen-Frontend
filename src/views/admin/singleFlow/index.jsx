@@ -34,7 +34,8 @@ import {
   Button,
   Input,
   Grid,
-
+  GridItem,
+  Spacer,
   Text,
   VStack,
   HStack,
@@ -42,7 +43,7 @@ import {
   SimpleGrid,
 
 } from "@chakra-ui/react";
-
+import { Wrap, WrapItem } from '@chakra-ui/react'
 
 import ComplexTable from "views/admin/singleFlow/components/ComplexTable";
 import {
@@ -58,38 +59,22 @@ import { useLocation } from 'react-router-dom';
 
 import tableDataComplex from "views/admin/singleFlow/variables/tableDataComplex.json";
 
-
-import {
-  Editable,
-  EditableInput,
-  EditablePreview,
-} from '@chakra-ui/react'
-
 export default function SingleFlow() {
 
 
-  const [buttonText, setButtonText] = useState('Edit');
-  const [isEditing, setIsEditing] = useState(false);
   const nameInputRef = useRef(null);
-  const descriptionInputRef = useRef(null);
   const [isReadOnly, setIsReadOnly] = useState(true);
 
 
 
-  
+  const [buttonText, setButtonText] = useState('Edit');
 
-  const handleButtonClick = () => {
+  const handleClick = () => {
     setButtonText(prevText => (prevText === 'Edit' ? 'Save' : 'Edit'));
-    setIsEditing(prevState => !prevState);
-    setIsReadOnly(!isReadOnly);
-    nameInputRef.current.focus();
   };
 
 
 
-
-
-  
   
 
   const textColor = useColorModeValue("secondaryGray.900", "white");
@@ -122,63 +107,52 @@ export default function SingleFlow() {
             </CardBody>
           </Card>
 
-          <Card height='auto'>
-            <CardBody>
-              <SimpleGrid columns={{ base:'2' }} spacing='20px'>
-                <MiniStatistics growth='+23%' name='Sales' value='$574.34' width='sm' />
-
-                <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
-
-              </SimpleGrid>
-
-                        
-
-              <SimpleGrid columns={2} spacing='20px' ml='5%' mt='5%'>
-                
-              <HStack align='start'>
-                <VStack align='start'>
-                  <Heading as='h4' size='md'>Title</Heading>
-                    <Input focusBorderColor='lime' value={flow.description} ref={nameInputRef} isReadOnly={isReadOnly} />
-                  </VStack>
-              </HStack>
-                
-              <HStack align='start'>
-                <Button variant="brand" size='lg' px={9} onClick={handleButtonClick} >
-                  {buttonText}
-                </Button>
-              </HStack> 
-
-              <HStack align='start'>
-                <VStack align='start'>
-                  <Heading as='h4' size='md'>Description</Heading>
-                  <Input focusBorderColor='lime' value={flow.description} isReadOnly={isReadOnly} />
-                </VStack>
-              </HStack>
-
-                <HStack>
-                  <VStack align='start'>
-                    <Heading as='h4' size='md'>Time frame</Heading>
-                    {flow.timeframe.map((tf, tfIndex) => (
-                      <Text key={tfIndex}>
-                        {`Start: ${tf.start_time} - End: ${tf.end_time}`}
-                      </Text>
-                    ))}
-                  </VStack>
-
-                </HStack>
-
-                <VStack align='start'>
-                    <Heading as='h4' size='md'>Creation date</Heading>
-                    <Text>{flow.created_date}</Text>
-                </VStack>
-
-
-
+          <Card>
+        <CardBody>
+          <Grid
+            h="auto"
+            templateRows="repeat(1, 1fr)"
+            templateColumns="repeat(4, 1fr)"
+            gap={4}
+          >
+            <GridItem colSpan={2} >
+              <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
+            </GridItem>
+            
+            <GridItem colSpan={2} >
+              <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
+            </GridItem>
+            <GridItem colSpan={2} >
+              <Heading as='h4' size='md'>Title</Heading>
+              <Input focusBorderColor='lime' value={flow.name} ref={nameInputRef} isReadOnly={isReadOnly} />
+            </GridItem>
+            <GridItem colSpan={2} display="flex" justifyContent="flex-end" alignItems="flex-end">
+              <Button  w='50%' size="lg" variant="brand" onClick={handleClick}> {buttonText} </Button>
+                </GridItem>
                 
 
-              </SimpleGrid>
-            </CardBody>
-          </Card>
+
+            <GridItem colSpan={4} >
+              <Heading as='h4' size='md'>Description</Heading>
+              <Input focusBorderColor='lime' value={flow.description} ref={nameInputRef} isReadOnly={isReadOnly} />
+            </GridItem>
+
+            <GridItem colSpan={2}>
+              <Heading as='h4' size='md'>Creation date</Heading>
+              <Text>{flow.created_date}</Text>
+            </GridItem>
+            <GridItem colSpan={2} >
+            <Heading as='h4' size='md'>Time frame</Heading>
+                  {flow.timeframe.map((tf, tfIndex) => (
+                    <Text key={tfIndex}>
+                      {`Start: ${tf.start_time} - End: ${tf.end_time}`}
+                    </Text>
+                  ))}
+            </GridItem>
+
+          </Grid>
+        </CardBody>
+      </Card>
         </SimpleGrid>
 
         {/* Second Row with One Column for the Last Card */}
@@ -191,7 +165,29 @@ export default function SingleFlow() {
 
           </CardBody>
         </Card>
+
+
       </Grid>
+      <Box
+  as="button"
+  h='50%'
+  w='50%'
+  display="flex"
+  alignItems="center"
+  justifyContent="center"
+  bg="teal.500"
+  color="white"
+  fontSize="lg"
+  fontWeight="bold"
+  p={4}
+  borderRadius="md"
+  _hover={{ bg: "teal.600" }}
+  _active={{ bg: "teal.700" }}
+  onClick={handleClick}
+> 
+{buttonText}</Box>
+
+
     </Box>
   );
 }

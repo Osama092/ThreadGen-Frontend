@@ -1,5 +1,6 @@
 // Chakra imports
-import { Button, Flex, Input, useColorModeValue } from "@chakra-ui/react";
+import { Button, Flex, Input, useColorModeValue, IconButton , Box} from "@chakra-ui/react";
+import { CloseIcon } from "@chakra-ui/icons";
 // Assets
 import React, { useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -14,6 +15,10 @@ function Dropzone(props) {
       const audioURL = URL.createObjectURL(file);
       setAudioSrc(audioURL);
     }
+  };
+
+  const handleDiscardAudio = () => {
+    setAudioSrc(null);
   };
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -37,6 +42,7 @@ function Dropzone(props) {
       minH={audioSrc ? 'auto' : '100%'}
       cursor='pointer'
       p={audioSrc ? 4 : 0}
+      position='relative' // Add relative positioning to the Flex container
       {...rest}>
       {!audioSrc && (
         <div {...getRootProps({ className: "dropzone" })}>
@@ -44,7 +50,26 @@ function Dropzone(props) {
           <Button variant='no-effects'>{content}</Button>
         </div>
       )}
-      {audioSrc && <audio controls src={audioSrc} />}
+      {audioSrc && (
+        <>
+          
+
+          <Box position="relative" display="inline-block">
+  <IconButton
+    icon={<CloseIcon />}
+    size="sm"
+    onClick={handleDiscardAudio}
+    position="absolute"
+    top="50%"
+    left="50%"
+    transform="translate(-50%, -200%)" // Adjust to place it above the audio
+    zIndex="1"
+  />
+  <audio controls src={audioSrc} style={{ position: 'relative', display: 'block' }} />
+</Box>
+
+      </>
+      )}
     </Flex>
   );
 }

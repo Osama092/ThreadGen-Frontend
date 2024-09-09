@@ -14,7 +14,12 @@ import {
   Box,
   useColorModeValue,
   useColorMode,
+  HStack,
 } from '@chakra-ui/react';
+
+import { Table, Thead, Tbody, Tr, Th, Td } from '@chakra-ui/react';
+
+
 import { ItemContent } from 'components/menu/ItemContent';
 import { SidebarResponsive } from 'components/sidebar/Sidebar';
 import PropTypes from 'prop-types';
@@ -30,11 +35,13 @@ import { MdNotificationsNone, MdInfoOutline } from 'react-icons/md';
 import { IoMdMoon, IoMdSunny } from 'react-icons/io';
 import { FaEthereum } from 'react-icons/fa';
 import routes from 'routes';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
+import { Modal,Container, Grid, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
 import { useModal } from 'contexts/ModalContext';
 import useUserStatus from 'hooks/useUserStatus';
 import { motion } from 'framer-motion';
 import { css, keyframes } from '@emotion/react';
+import { CloseIcon } from '@chakra-ui/icons';
+import { redirect } from 'react-router-dom';
 
 const PUBLISHABLE_KEY = process.env.REACT_APP_PUBLISHABLE_KEY;
 
@@ -46,9 +53,9 @@ export default function HeaderLinks(props) {
   useUserStatus();
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [file, setFile] = useState(null);
-  const [showButtons, setShowButtons] = useState(false);
 
   const { secondary } = props;
+  const bg = useColorModeValue("gray.100", "navy.700");
 
   let menuBg = useColorModeValue('white', 'navy.800');
 
@@ -83,16 +90,8 @@ export default function HeaderLinks(props) {
     }
   };
 
-  const handleSave = () => {
-    // Implement save functionality here
-    console.log('Audio saved:', audioUrl);
-  };
-
-  const handleDiscard = () => {
+  const handleDiscardAudio = () => {
     setAudioUrl('');
-    setFile(null);
-    setShowButtons(false);
-    console.log('Audio discarded');
   };
 
   const pulse = keyframes`
@@ -132,75 +131,105 @@ export default function HeaderLinks(props) {
         </SignedIn>
       </Box>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="md">
-        <ModalOverlay backdropFilter="blur(10px)" />
-        <ModalContent>
-          <ModalHeader textAlign="center" fontSize="xl" fontWeight="bold">
-            Record Your Voice
-          </ModalHeader>
-          <ModalBody>
-            <Box
-              borderRadius="md"
-              p={2}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              height="auto"
-              cursor="pointer"
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+  <ModalOverlay backdropFilter="blur(10px)" />
+  <ModalContent maxW="fit-content">
+    <ModalHeader textAlign="center" fontSize="xl" fontWeight="bold">
+      Record Your Voice
+    </ModalHeader>
+    <ModalBody>
+      <Box
+        borderRadius="md"
+        p={2}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        height="auto"
+        cursor="pointer"
+        position="relative"
+      >
+        {audioUrl ? (
+          <>
+            <Flex 
+              width="100%" 
+              height="100%" 
+              justify="center" 
+                    align="center"
+                    bottom={-4}
+              position="relative"
             >
-              {audioUrl ? (
-                <>
-                  <Box mt={4}>
-                    <audio controls src={audioUrl} />
-                  </Box>
-                  <Box display="flex" justifyContent="space-between" mt={4} width="100%">
-                    <Button colorScheme="teal" onClick={handleSave}>
-                      Save
-                    </Button>
-                    <Button colorScheme="teal" onClick={handleDiscard}>
-                      Discard
-                    </Button>
-                  </Box>
-                </>
-              ) : (
-                <>
-                  <Upload
-                    minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
-                    pe='20px'
-                    pb={{ base: "100px", lg: "20px" }}
-                  />
-                  {showButtons && (
-                    <Box display="flex" justifyContent="space-between" mt={4} width="100%">
-                      <Button colorScheme="green" onClick={handleSave}>
-                        Save
-                      </Button>
-                      <Button colorScheme="red" onClick={handleDiscard}>
-                        Discard
-                      </Button>
-                    </Box>
-                  )}
-                </>
-              )}
-            </Box>
-            <Box display='flex' justifyContent='center' mt={4}> 
-              <Button onClick={handleRecordClick}>
-                <Box
-                  as="div"
-                  width="12px"
-                  height="12px"
-                  borderRadius="50%"
-                  backgroundColor="red"
-                  marginRight="8px"
-                  animation={isRecording ? `${pulse} 1.5s infinite` : 'none'}
-                />
-                {isRecording ? 'Recording' : 'Record'}
-              </Button>
-            </Box>
-          </ModalBody>
-        </ModalContent>
+              <IconButton
+                icon={<CloseIcon />}
+                size="sm"
+                position="absolute"
+                onClick={handleDiscardAudio}
+              />
+            </Flex>
+                  <Box  border= "1px dashed #ccc"     p={5}
+                  >
+                  <Box mt={4}       bg={bg}       p={audioUrl ? 2 : 0}    
 
-      </Modal>
+
+>
+  <audio controls src={audioUrl} />
+</Box>
+            </Box>
+            
+          </>
+        ) : (
+          <>
+            <Upload
+              minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
+              pe='20px'
+              pb={{ base: "100px", lg: "20px" }}
+            />
+          </>
+        )}
+      </Box>
+
+      <Box display='flex' justifyContent='center' mb={7} size="xs"> 
+        <Button onClick={handleRecordClick} size="xs">
+          <Box
+            as="div"
+            width="12px"
+            height="12px"
+            borderRadius="50%"
+            backgroundColor="red"
+            marginRight="8px"
+            animation={isRecording ? `${pulse} 1.5s infinite` : 'none'}
+          />
+          {audioUrl ? 'Save' : (isRecording ? 'Recording' : 'Record')}
+        </Button>
+      </Box>
+
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '10px', width: 'fit-content', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#f9f9f9' }}>
+          <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
+            <Text width="auto">✅ Recommended</Text>
+            <Text>• Talking without pauses</Text>
+            <Text>• Changing positions while</Text>
+            <Text>• Talking without pauses</Text>
+          </div>
+          <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
+            <Text width="auto">❌ Things to avoid</Text>
+            <Text>• Talking without pauses</Text>
+            <Text>• Changing positions</Text>
+            <Text>• Changing positions</Text>
+          </div>
+        </div>
+      </div>
+
+    </ModalBody>
+  </ModalContent>
+</Modal>
+
+
+
+
+
+
+
     </Flex>
   );
 }

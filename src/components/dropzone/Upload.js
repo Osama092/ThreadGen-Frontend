@@ -25,12 +25,12 @@ export default function Upload(props) {
     <Flex
     align="center"
     justify="center"
-    m="0 auto "
-      p={5}
-    width="100%"
-      height="auto"
-      border= "1px dashed #ccc"
-
+    m="0 auto"
+    p={5}
+    width="auto"
+    height="auto"
+    border= "1px dashed #ccc"
+    mb={-1}
   >
     <Dropzone
       style={{
@@ -38,7 +38,7 @@ export default function Upload(props) {
         height: "auto",
         display: "flex",
         alignItems: "center",
-          justifyContent: "center",
+        justifyContent: "center",
         padding : '10px',
         backgroundColor: useColorModeValue("gray.50", "gray.700"),
       }}

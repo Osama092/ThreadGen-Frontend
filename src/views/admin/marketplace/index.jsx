@@ -77,29 +77,17 @@ import { AddIcon } from '@chakra-ui/icons'
 import useGetFlows from 'hooks/flows/useGetFlows';
 
 
-
-
+import tempvid from 'assets/img/tempvid.mp4';
+import countdown from 'assets/img/countdown.mp4';
 
 
 export default function FlowManagement() {  
   const { isOpen, onOpen, onClose } = useDisclosure()
   const { flows, loading, error, refetch} = useGetFlows()
+  const videoRef = useRef(null);
 
   const [file, setFile] = useState(null);
-  const { getRootProps, getInputProps } = useDropzone({
-    accept: {
-      'video/*': [] // Accept all video file types
-    },
-    onDrop: acceptedFiles => {
-      if (acceptedFiles.length > 0) {
-        // Only accept one file
-        const newFile = acceptedFiles[0];
-        setFile(Object.assign(newFile, {
-          preview: URL.createObjectURL(newFile)
-        }));
-      }
-    }
-  });
+
   const [showAlert, setShowAlert] = useState(false); // New state for alert visibility
   const [progress, setProgress] = useState(0); // New state for progress
 
@@ -152,39 +140,7 @@ export default function FlowManagement() {
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const textColorBrand = useColorModeValue("brand.500", "white");
 
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [audioUrl, setAudioUrl] = useState('');
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    console.log('Uploaded file:', file);
-  };
-
-  const handleRecordClick = async () => {
-    if (isRecording) {
-      // Stop recording
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    } else {
-      // Start recording
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        const url = URL.createObjectURL(audioBlob);
-        setAudioUrl(url);
-        audioChunksRef.current = []; // Clear the chunks
-      };
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    }
-  };
+  
 
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
@@ -215,109 +171,147 @@ export default function FlowManagement() {
               <AddIcon boxSize={20} />
             </Box>
 
-              <Modal isOpen={isOpen} size={'xl'} onClose={onClose}>
-                <ModalOverlay />
-                <ModalContent>
-                  <ModalHeader>
-                    Modal Title
-                    <ModalBody>
-                      <VStack spacing={4} align="stretch">
-                        <FormControl>
-                          <Grid templateColumns="repeat(2, 1fr)" gap={8}> {/* Adjust gap as needed */}
 
-                            <FormControl>
-                              <FormLabel htmlFor='title'>Title</FormLabel>
-                              <Input id='title' type='text' />
-                            </FormControl>
-
-                            <FormControl>
-                              <FormLabel htmlFor='lastName'>Category</FormLabel>
-                              <Input id='lastName' type='text' />
-                            </FormControl>
-
-                          </Grid>
-                        </FormControl>
-
-                        <Grid align="center"justify="center">
-                        <Upload
-                          minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
-                          pe='20px'
-                          pb={{ base: "100px", lg: "20px" }}
-                        />
-                        </Grid>
-
-
-                      </VStack>   
-                    </ModalBody>
-                  </ModalHeader>
-                  <ModalCloseButton />
+            <Modal isOpen={isOpen} size={'xl'} onClose={onClose}>
+              <ModalOverlay />
+              <ModalContent>
+                <ModalHeader>
+                  Modal Title
                   <ModalBody>
-                  </ModalBody>
-                  <ModalFooter>
-                    
+                    <VStack spacing={4} align="stretch">
+                      <FormControl>
+                        <Grid templateColumns="repeat(2, 1fr)" gap={8}> {/* Adjust gap as needed */}
 
-                    <Button colorScheme="teal" onClick={() => {
-                      onClose();
-                      setShowAlert(true);
-                  }}>
-                    Done
-                  </Button>
-                    
-                  </ModalFooter>
+                          <FormControl>
+                            <FormLabel htmlFor='title'>Title</FormLabel>
+                            <Input id='title' type='text' />
+                          </FormControl>
+
+                          <FormControl>
+                            <FormLabel htmlFor='lastName'>Category</FormLabel>
+                            <Input id='lastName' type='text' />
+                          </FormControl>
+
+                        </Grid>
+                      </FormControl>
+
+                      <Grid align="center"justify="center">
+                      <Upload
+                        minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
+                        pe='20px'
+                        pb={{ base: "100px", lg: "20px" }}
+                      />
+                      </Grid>
+
+
+                    </VStack>   
+                  </ModalBody>
+                </ModalHeader>
+                <ModalCloseButton />
+                <ModalBody>
+                </ModalBody>
+                <ModalFooter>
+                  
+
+                  <Button colorScheme="teal" onClick={() => {
+                    onClose();
+                    setShowAlert(true);
+                }}>
+                  Done
+                </Button>
+                  
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
+            {showAlert && ( // Conditional rendering of the alert
+              <Modal isOpen={showAlert} onClose={() => setShowAlert(false)} isCentered>
+                <ModalOverlay backdropFilter='blur(5px)' /> {/* Blur effect */}
+                <ModalContent bg='transparent' boxShadow='none'>
+                  <ModalBody>
+                    <Progress colorScheme='green' size='sm' width='100%' value={progress} borderRadius='none' />
+
+                    <Alert
+                      status='success'
+                      variant='subtle'
+                      flexDirection='column'
+                      alignItems='center'
+                      justifyContent='center'
+                      textAlign='center'
+                      height='200px'
+                    >
+                      <AlertIcon boxSize='40px' mr={0} />
+                      <AlertTitle mt={4} mb={1} fontSize='lg'>
+
+                        Application submitted!
+                      </AlertTitle>
+                      <AlertDescription maxWidth='sm'>
+                        Thanks for submitting your application. Our team will get back to you soon.
+                      </AlertDescription>
+                      <CloseButton
+                        alignSelf='flex-start'
+                        position='absolute'
+                        right={2}
+                        top={2}
+                        onClick={() => setShowAlert(false)}
+
+                      />
+                    </Alert>
+
+                  </ModalBody>
                 </ModalContent>
               </Modal>
-              {showAlert && ( // Conditional rendering of the alert
-                <Modal isOpen={showAlert} onClose={() => setShowAlert(false)} isCentered>
-                  <ModalOverlay backdropFilter='blur(5px)' /> {/* Blur effect */}
-                  <ModalContent bg='transparent' boxShadow='none'>
-                    <ModalBody>
-                      <Progress colorScheme='green' size='sm' width='100%' value={progress} borderRadius='none' />
-
-                      <Alert
-                        status='success'
-                        variant='subtle'
-                        flexDirection='column'
-                        alignItems='center'
-                        justifyContent='center'
-                        textAlign='center'
-                        height='200px'
-                      >
-                        <AlertIcon boxSize='40px' mr={0} />
-                        <AlertTitle mt={4} mb={1} fontSize='lg'>
-
-                          Application submitted!
-                        </AlertTitle>
-                        <AlertDescription maxWidth='sm'>
-                          Thanks for submitting your application. Our team will get back to you soon.
-                        </AlertDescription>
-                        <CloseButton
-                          alignSelf='flex-start'
-                          position='absolute'
-                          right={2}
-                          top={2}
-                          onClick={() => setShowAlert(false)}
-
-                        />
-                      </Alert>
-
-                    </ModalBody>
-                  </ModalContent>
-                </Modal>
-              )}
+            )}
 
        
               
             {loading && <Text>Loading...</Text>}
-              {error && <Text>Error: {error.message}</Text>}
-              {flows && flows.map((flow, index) => (
-                <Card key={index} maxW='sm' onClick={() => handleCardClick(flow)} cursor="pointer">
+            {error && <Text>Error: {error.message}</Text>}
+            {flows && flows.map((flow, index) => (
+              <Box>
+                <Card key={index} maxW='sm' onClick={() => handleCardClick(flow)} cursor="pointer" variant='unstyled'>
                   <CardBody>
-                    <video borderRadius='lg' controls>
-                      <source src={flow.video} type="video/mp4" />
-                    </video>
-                    <Stack mt='6' spacing='3'>
+                    <div
+                      style={{
+                        width: '100%',
+                        borderTopLeftRadius: '10px',
+                        borderTopRightRadius:'10px',
+                        height: '300px', // Fixed height for all videos
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        overflow: 'hidden',
+                        background: '#000', // Background color for empty space
+                      }}
+                    >
+                      <video  controls re= {videoRef} style={{
+                        display: 'block', // Block-level to fill container width
+                        width: '100%',
+                        height: '100%',
+
+                        objectFit: 'cover', // Maintain aspect ratio while filling the container
+                      }}>
+                        <source src={flow.video} type="video/mp4" />
+                      </video>
+                    </div>
+                  </CardBody>
+                </Card>
+                <Card
+                  pl={2}
+                  variant='unstyled' 
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderBottomLeftRadius: '10px',
+                    borderBottomRightRadius: '10px',
+                    borderTopLeftRadius: '0px',
+                    borderTopRightRadius: '0px',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <CardBody>
+                    <Stack mt='2' mb='2' spacing='3'>
                       <Heading size='md'>{flow.name}</Heading>
-                      <Text color='blue.600'>{flow.category}</Text>
                       <Text>{flow.description}</Text>
                       {flow.timeframe.map((tf, tfIndex) => (
                         <Text key={tfIndex}>
@@ -325,75 +319,16 @@ export default function FlowManagement() {
                         </Text>
                       ))}
                       <Divider />
-                      <Text as="sub">{flow.created_date}</Text>
+                      <Text as="sup">{flow.created_date}</Text>
                     </Stack>
                   </CardBody>
                 </Card>
-              ))}
-
-
-              
-
-
-
+              </Box>
+            ))}
             </SimpleGrid>
           </Flex>
         </Flex>
-
-
-        
       </Grid>
-      <Box
-      bg="gray.800"
-      borderRadius="md"
-      p={6}
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
-      borderWidth={2}
-      borderColor="gray.600"
-      height="300px"
-      cursor="pointer"
-      _hover={{ borderColor: 'gray.500' }}
-      onClick={() => document.getElementById('audio-upload-input').click()}
-    >
-      <input
-        id="audio-upload-input"
-        type="file"
-        accept="audio/*"
-        style={{ display: 'none' }}
-        onChange={handleFileUpload}
-      />
-      <VStack spacing={3}>
-        <Icon as={FiUpload} boxSize={8} color="whiteAlpha.800" />
-        <Text color="whiteAlpha.800" fontSize="lg" fontWeight="bold">
-          Drop Audio Here
-        </Text>
-        <Text color="gray.400">- or -</Text>
-        <Text color="blue.400" fontSize="lg" fontWeight="bold">
-          Click to Upload
-        </Text>
-      </VStack>
-      <Box display="flex" justifyContent="center" mt={6}>
-
-        <IconButton
-          aria-label="Record"
-          icon={<BsMic />}
-          colorScheme="pink"
-          onClick={handleRecordClick}
-          isRound
-          variant={isRecording ? 'solid' : 'outline'}
-        />
-      </Box>
-      {/* Playback of recorded audio */}
-      {audioUrl && (
-        <Box mt={4}>
-          <audio controls src={audioUrl} />
-        </Box>
-      )}
-      </Box>
-      
     </Box>
     
   );

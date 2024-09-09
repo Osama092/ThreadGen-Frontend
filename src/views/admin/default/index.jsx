@@ -22,7 +22,7 @@
 import {  MdPieChart } from 'react-icons/md';
 import axios from 'axios';
 import  { useEffect, useState } from 'react';
-import { ChakraProvider, Table, Thead, Tbody, Tr, Th, Td, TableContainer, Heading, Spinner, Center } from '@chakra-ui/react';
+import { ChakraProvider, Table, Thead, Tbody, Tr, Th, Td, TableContainer, Heading, Spinner, Center, HStack } from '@chakra-ui/react';
 
 // Chakra imports
 import {
@@ -144,8 +144,23 @@ export default function Dashboard() {
         
           
       </Grid>
-
-      
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+  <div style={{ display: 'flex', gap: '10px', width: 'fit-content', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#f9f9f9' }}>
+    <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
+      <Text width="auto">✅ Recommended</Text>
+      <Text>• Talking without pauses</Text>
+      <Text>• Changing positions while</Text>
+      <Text>• Talking without pauses</Text>
+    </div>
+    <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
+      <Text width="auto">❌ Things to avoid</Text>
+      <Text>• Talking without pauses</Text>
+      <Text>• Changing positions</Text>
+      <Text>• Changing positions</Text>
+    </div>
+  </div>
+</div>
+     
 
       
     </Box>
