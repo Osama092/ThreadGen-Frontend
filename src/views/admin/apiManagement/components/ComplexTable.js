@@ -10,7 +10,9 @@ import useAddApiKey from 'hooks/apiKeys/useAddKey';
 
 const columnHelper = createColumnHelper();
 
-export default function ComplexTable() {
+
+
+const ComplexTable = React.memo(() => {
   const { apiKeys, loading: loadingKeys, error: errorKeys, refetch: getApiKeys } = useGetApiKeys();
   const { removeApiKey, loading: loadingDelete, error: errorDelete } = useDeleteApiKey();
   const { addKey, loading: loadingAdd, error: errorAdd } = useAddApiKey();
@@ -226,4 +228,6 @@ export default function ComplexTable() {
       </Box>
     </Card>
   );
-}
+});
+
+export default ComplexTable;

@@ -13,7 +13,7 @@ import { SSEContext } from 'contexts/SSEContext';
 const columnHelper = createColumnHelper();
 
 // const columns = columnsDataCheck;
-export default function ComplexTable() {
+const ComplexTable = React.memo(() => {
   const data = useContext(SSEContext);
   const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
@@ -91,7 +91,7 @@ export default function ComplexTable() {
       ),
       cell: (info) => (
         <Flex align="center">
-            <Text color={textColor} fontSize="sm" fontWeight="700"> {info.getValue()} </Text>
+          <Text color={textColor} fontSize="sm" fontWeight="700"> {info.getValue()} </Text>
         </Flex>
       ),
     }),
@@ -203,4 +203,6 @@ export default function ComplexTable() {
       </Box>
     </Card>
   );
-}
+});
+
+export default ComplexTable;

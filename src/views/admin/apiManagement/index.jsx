@@ -19,41 +19,19 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import {  MdPieChart } from 'react-icons/md';
-
 
 // Chakra imports
-import {
-  Box,
-  Icon,
-  Button,
-  Grid,
-  HStack,
-  SimpleGrid,
-  useColorModeValue,
-  Flex,
-  Text,
-  Card,
-  CardBody,
-  VStack,
-  Input,
-  FormLabel,
-  FormControl,
-  CardHeader
-} from "@chakra-ui/react";
+import { Box, Button, Grid, SimpleGrid, useColorModeValue, Card, CardBody, VStack, Input, FormLabel, FormControl, CardHeader } from "@chakra-ui/react";
 // Assets
-// Custom components
-import MiniStatistics from "components/card/MiniStatistics";
-import IconBox from "components/icons/IconBox";
-import React from "react";
-import {
-  MdAttachMoney,
-  MdBarChart,
-} from "react-icons/md";
+
+import React, { useState, useRef } from "react";
+
 import ComplexTable from "views/admin/apiManagement/components/ComplexTable";
 
 
 export default function ApiManagement() {
+
+
   // Chakra Color Mode
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
@@ -73,15 +51,26 @@ export default function ApiManagement() {
           <ComplexTable />
         </SimpleGrid>
       </Grid>
-    
-
-      <Box>
+      
+      <Grid
+        templateColumns={{
+          base: "1fr",
+          lg: "1.34fr 4.62fr",
+        }}
+        templateRows={{
+          base: "repeat(2, 1fr)",
+          lg: "1fr",
+        }}
+        gap={{ base: "20px", xl: "20px" }}>
+        <SimpleGrid
+        columns={{ base: 1, md: 1, lg: 1, "2xl": 1 }}
+        gap='20px'
+        mb='20px'>
         <Card>
           <CardHeader>
             lksdfjlsdjk
           </CardHeader>
           <CardBody>
-            <Grid templateColumns="repeat(2, 1fr)" gap={6}>
               <Box>
                 <VStack spacing={4}>
                   <FormControl>
@@ -98,19 +87,21 @@ export default function ApiManagement() {
                   </FormControl>
                   <Button mt={4}>Submit</Button>
                 </VStack>
-              </Box>
-              <Box display='flex' justifyContent="flex-end">
-                
-                  <video controls style={{ width: '100%', height: 'auto' }}>
-                    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-                  </video>
-              </Box>
-
-            </Grid>
+            </Box>
           </CardBody>
         </Card>
-      </Box>
 
+        </SimpleGrid>
+        <Card>
+          <CardBody>
+          <video controls style={{ width: '100%', height: 'auto' }}>
+            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+            </video>
+          </CardBody>
+              </Card>
+
+        
+      </Grid>
     </Box>
   );
 }

@@ -167,7 +167,7 @@ export default function FlowManagement() {
             </Flex>
             <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap='20px'>
 
-            <Box as='button' onClick={onOpen} borderRadius='md'  color='blue' px={4} h={8} width='auto' height='auto' border='2px' borderColor='blue.600'>
+            <Box as='button' onClick={onOpen} borderRadius='md'  color='blue' px={4} h={8} width='auto' height='auto' border='2px' borderColor='blue.600' maxW='sm'>
               <AddIcon boxSize={20} />
             </Box>
 
@@ -267,8 +267,8 @@ export default function FlowManagement() {
             {loading && <Text>Loading...</Text>}
             {error && <Text>Error: {error.message}</Text>}
             {flows && flows.map((flow, index) => (
-              <Box>
-                <Card key={index} maxW='sm' onClick={() => handleCardClick(flow)} cursor="pointer" variant='unstyled'>
+              <Box  onClick={() => handleCardClick(flow)} cursor="pointer"> 
+                <Card key={index} maxW='sm'  variant='unstyled'>
                   <CardBody>
                     <div
                       style={{
@@ -296,6 +296,7 @@ export default function FlowManagement() {
                   </CardBody>
                 </Card>
                 <Card
+                  maxW='sm'
                   pl={2}
                   variant='unstyled' 
                   style={{
@@ -309,7 +310,7 @@ export default function FlowManagement() {
                     WebkitBackdropFilter: 'blur(10px)',
                   }}
                 >
-                  <CardBody>
+                  <CardBody >
                     <Stack mt='2' mb='2' spacing='3'>
                       <Heading size='md'>{flow.name}</Heading>
                       <Text>{flow.description}</Text>

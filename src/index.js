@@ -5,7 +5,7 @@ import './assets/css/App.css';
 import App from './App';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { SSEProvider } from 'contexts/SSEContext';
-
+import { SubscriptionsProvider } from 'contexts/SubscriptionContext'
 const PUBLISHABLE_KEY = process.env.REACT_APP_PUBLISHABLE_KEY
 
 if (!PUBLISHABLE_KEY) {
@@ -18,9 +18,13 @@ root.render(
 
   <BrowserRouter>
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+    <SubscriptionsProvider>
+
       <SSEProvider>
         <App />
-      </SSEProvider>
+        </SSEProvider>
+        </SubscriptionsProvider>
+
     </ClerkProvider>
   </BrowserRouter>
 

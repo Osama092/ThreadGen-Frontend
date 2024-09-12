@@ -33,8 +33,10 @@ export default function ComplexTable() {
     e.preventDefault();
     if (user) {
       const email = user.primaryEmailAddress.emailAddress;
+      const apiKey = "eblbhkacq4lspb5254lw0fhzubd05426"
       try {
-        await axios.post('http://localhost:5000/add-random-request', { email });
+        await axios.post('http://localhost:5000/add-random-request', { apiKey });
+
       } catch (error) {
         console.error('Error adding request:', error);
       }
@@ -226,7 +228,7 @@ export default function ComplexTable() {
           </Tbody>
         </Table>
       </Box>
-      <Text>Hellw world</Text>
+      
       <form onSubmit={handleSubmit}>
           <Button type="submit" colorScheme="blue">Add Request</Button>
         </form>

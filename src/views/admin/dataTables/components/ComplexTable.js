@@ -34,21 +34,26 @@ import {
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
 import * as React from 'react';
+import { useState, useEffect } from 'react';
+
 // Assets
 import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
 
+import useBills from 'hooks/bills/useGetBills'; // Import the custom hook
+
 const columnHelper = createColumnHelper();
 
-// const columns = columnsDataCheck;
 export default function ComplexTable(props) {
+  const { bills, loading, error } = useBills(); // Use the custom hook
+
   const { tableData } = props;
   const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
   let defaultData = tableData;
   const columns = [
-    columnHelper.accessor('reference', {
-      id: 'reference',
+    columnHelper.accessor('id', {
+      id: 'id',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -105,8 +110,6 @@ export default function ComplexTable(props) {
         </Flex>
       ),
     }),
-    
-    
     columnHelper.accessor('issued_date', {
       id: 'issued_date',
       header: () => (
@@ -125,7 +128,6 @@ export default function ComplexTable(props) {
         </Text>
       ),
     }),
-    
     columnHelper.accessor('status', {
       id: 'status',
       header: () => (
@@ -170,9 +172,8 @@ export default function ComplexTable(props) {
       ),
     }),
   ];
-  const [data, setData] = React.useState(() => [...defaultData]);
   const table = useReactTable({
-    data,
+    data: bills ? [bills] : [], // Use the subscription data
     columns,
     state: {
       sorting,
@@ -182,6 +183,10 @@ export default function ComplexTable(props) {
     getSortedRowModel: getSortedRowModel(),
     debugTable: true,
   });
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
+
   return (
     <Card
       flexDirection="column"

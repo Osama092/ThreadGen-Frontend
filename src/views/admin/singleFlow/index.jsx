@@ -19,41 +19,16 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import { useState, useRef } from 'react';
 
-import React from "react";
-
-
+import React, { useState, useRef } from "react";
 import MiniStatistics from "components/card/MiniStatistics";
 
-
-
-// Chakra imports
-import {
-  Box,
-  Button,
-  Input,
-  Grid,
-  GridItem,
-  Spacer,
-  Text,
-  VStack,
-  HStack,
-  useColorModeValue,
-  SimpleGrid,
-
-} from "@chakra-ui/react";
-import { Wrap, WrapItem } from '@chakra-ui/react'
+import { Box, Button, Input, Grid, GridItem, Text, useColorModeValue, SimpleGrid, Card, CardBody, Heading } from "@chakra-ui/react";
 
 import ComplexTable from "views/admin/singleFlow/components/ComplexTable";
-import {
-
-  columnsDataComplex,
-} from "views/admin/singleFlow/variables/columnsData";
-// Custom components
+import { columnsDataComplex } from "views/admin/singleFlow/variables/columnsData";
 
 //import Card from "components/card/Card.js";
-import { Card, CardBody, Heading  } from '@chakra-ui/react';
 import { useLocation } from 'react-router-dom';
 
 
@@ -66,22 +41,23 @@ export default function SingleFlow() {
   const [isReadOnly, setIsReadOnly] = useState(true);
 
 
-
-  const [buttonText, setButtonText] = useState('Edit');
-
-  const handleClick = () => {
-    setButtonText(prevText => (prevText === 'Edit' ? 'Save' : 'Edit'));
-  };
-
-
-
-  
-
   const textColor = useColorModeValue("secondaryGray.900", "white");
 
   const location = useLocation();
   const { flow } = location.state || {};
 
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Handler to toggle between edit and save modes
+  const handleToggle = () => {
+    setIsEditing(!isEditing);
+    setIsReadOnly(!isReadOnly);
+    if (!isEditing) {
+      setTimeout(() => {
+        nameInputRef.current.focus();
+      }, 0);
+    }
+  };
 
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
@@ -118,17 +94,19 @@ export default function SingleFlow() {
             <GridItem colSpan={2} >
               <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
             </GridItem>
-            
             <GridItem colSpan={2} >
               <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
             </GridItem>
+                
             <GridItem colSpan={2} >
               <Heading as='h4' size='md'>Title</Heading>
               <Input focusBorderColor='lime' value={flow.name} ref={nameInputRef} isReadOnly={isReadOnly} />
-            </GridItem>
+              </GridItem>
             <GridItem colSpan={2} display="flex" justifyContent="flex-end" alignItems="flex-end">
-              <Button  w='50%' size="lg" variant="brand" onClick={handleClick}> {buttonText} </Button>
-                </GridItem>
+            <Button w='50%' size="lg" variant="brand" onClick={handleToggle}>
+                    {isEditing ? 'Save' : 'Edit'}
+                  </Button>
+            </GridItem>
                 
 
 
@@ -156,7 +134,7 @@ export default function SingleFlow() {
         </SimpleGrid>
 
         {/* Second Row with One Column for the Last Card */}
-        <Card>
+        <Card mt='20px'>
           <CardBody>
           <ComplexTable
               columnsData={columnsDataComplex}
@@ -168,24 +146,6 @@ export default function SingleFlow() {
 
 
       </Grid>
-      <Box
-  as="button"
-  h='50%'
-  w='50%'
-  display="flex"
-  alignItems="center"
-  justifyContent="center"
-  bg="teal.500"
-  color="white"
-  fontSize="lg"
-  fontWeight="bold"
-  p={4}
-  borderRadius="md"
-  _hover={{ bg: "teal.600" }}
-  _active={{ bg: "teal.700" }}
-  onClick={handleClick}
-> 
-{buttonText}</Box>
 
 
     </Box>

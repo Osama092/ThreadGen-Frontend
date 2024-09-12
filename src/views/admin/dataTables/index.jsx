@@ -33,14 +33,17 @@ import {
 } from "views/admin/dataTables/variables/columnsData";
 
 import tableDataComplex from "views/admin/dataTables/variables/tableDataComplex.json";
-import React from "react";
+import React ,{ useContext } from "react";
 
 import { Card, CardBody, Button, Heading, Text, Badge, } from '@chakra-ui/react'
+import { SubscriptionsContext } from 'contexts/SubscriptionContext';
 
 
 export default function Billing() {
 
   
+  const { subscriptions, loading, error } = useContext(SubscriptionsContext);
+
   
   // Chakra Color Mode
   return (
@@ -184,7 +187,14 @@ export default function Billing() {
         />
 
       </Grid>
-      
+      <div>
+      <h1>Subscriptions</h1>
+      <ul>
+        {subscriptions.map(subscription => (
+          <li key={subscription.id}>{subscription.name}</li>
+        ))}
+      </ul>
+    </div>
     </Box>
   );
 }
