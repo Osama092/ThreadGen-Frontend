@@ -33,7 +33,7 @@ export default function ComplexTable() {
     e.preventDefault();
     if (user) {
       const email = user.primaryEmailAddress.emailAddress;
-      const apiKey = "eblbhkacq4lspb5254lw0fhzubd05426"
+      const apiKey = "h6j5dj4tv54xy7kfa0wpzoqm3be2bbmp"
       try {
         await axios.post('http://localhost:5000/add-random-request', { apiKey });
 

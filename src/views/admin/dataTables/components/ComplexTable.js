@@ -44,13 +44,16 @@ import useBills from 'hooks/bills/useGetBills'; // Import the custom hook
 const columnHelper = createColumnHelper();
 
 export default function ComplexTable(props) {
-  const { bills, loading, error } = useBills(); // Use the custom hook
+  const user = "tempuser0999@gmail.com";
+  const { bills, loading, error } = useBills(user);
+
+  console.log('chekc here for the bills', bills)
 
   const { tableData } = props;
   const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
-  let defaultData = tableData;
+
   const columns = [
     columnHelper.accessor('id', {
       id: 'id',
@@ -173,7 +176,7 @@ export default function ComplexTable(props) {
     }),
   ];
   const table = useReactTable({
-    data: bills ? [bills] : [], // Use the subscription data
+    data: bills, // Use the subscription data
     columns,
     state: {
       sorting,

@@ -18,12 +18,15 @@ import {
 } from '@chakra-ui/react';
 
 import { Table, Thead, Tbody, Tr, Th, Td } from '@chakra-ui/react';
+import { Spinner } from '@chakra-ui/react'
 
+import { CloseButton } from '@chakra-ui/react'; // Add this import
+import { Progress } from '@chakra-ui/react'
 
 import { ItemContent } from 'components/menu/ItemContent';
 import { SidebarResponsive } from 'components/sidebar/Sidebar';
 import PropTypes from 'prop-types';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Alert, AlertIcon, AlertTitle, AlertDescription, VStack } from '@chakra-ui/react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import { ClerkProvider } from '@clerk/clerk-react';
@@ -53,6 +56,7 @@ export default function HeaderLinks(props) {
   useUserStatus();
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [file, setFile] = useState(null);
+
 
   const { secondary } = props;
   const bg = useColorModeValue("gray.100", "navy.700");
@@ -105,6 +109,36 @@ export default function HeaderLinks(props) {
       box-shadow: 0px 0px 3px 7px rgba(173,0,0,0);
     }
   `;
+  const [progress, setProgress] = useState(0); // New state for progress
+  const [showAlert, setShowAlert] = useState(false); // New state for alert visibility
+  const { isOpen, onOpen, onClose } = useDisclosure()
+
+
+  useEffect(() => {
+    let timer;
+    if (showAlert) {
+      setProgress(0); // Reset progress when alert is shown
+      timer = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(timer);
+            return 100;
+          }
+          return prev + 0.1; // Increment progress by 0.1 every 10ms
+        });
+      }, 10); // Update every 10ms
+  
+      setTimeout(() => {
+        setShowAlert(false); // Automatically close the alert after 10 seconds
+        clearInterval(timer); // Clear interval on close
+      }, 10000);
+    }
+    return () => {
+      clearInterval(timer); // Cleanup timer on unmount
+    };
+  }, [showAlert]);
+  
+  
 
   return (
     <Flex
@@ -218,7 +252,64 @@ export default function HeaderLinks(props) {
             <Text>• Changing positions</Text>
           </div>
         </div>
-      </div>
+            </div>
+            <Button onClick={() => {
+              onClose();
+              setShowAlert(true);
+            }}>Save</Button>
+
+{showAlert && ( // Conditional rendering of the alert
+  <Modal isOpen={showAlert} onClose={() => setShowAlert(false)} isCentered>
+    <ModalOverlay backdropFilter='blur(5px)' /> {/* Blur effect */}
+    <ModalContent bg='transparent' boxShadow='none'>
+      <ModalBody>
+        <Progress colorScheme='green' size='sm' width='100%' value={progress} borderRadius='none' />
+
+        <Alert
+          status='success'
+          variant='subtle'
+          flexDirection='column'
+          alignItems='center'
+          justifyContent='center'
+          textAlign='center'
+          height='200px'
+        >
+          {progress < 80 ? ( // Show spinner for the first 8 seconds (80% progress)
+            <Spinner
+              thickness='4px'
+              speed='0.65s'
+              emptyColor='gray.200'
+              color='green.500'
+              size='xl'
+            />
+          ) : (
+            <AlertIcon boxSize='40px' mr={0} /> // Show green check for the last 2 seconds
+          )}
+
+          <AlertTitle mt={4} mb={1} fontSize='lg'>
+            Application submitted!
+          </AlertTitle>
+          <AlertDescription maxWidth='sm'>
+            {progress < 80 
+              ? 'Submitting your application...' // Show loading message while progress < 80%
+              : 'Thanks for submitting your application. Our team will get back to you soon.' // Show final message when progress >= 80%
+            }
+          </AlertDescription>
+          <CloseButton
+            alignSelf='flex-start'
+            position='absolute'
+            right={2}
+            top={2}
+            onClick={() => setShowAlert(false)}
+          />
+        </Alert>
+
+      </ModalBody>
+    </ModalContent>
+  </Modal>
+)}
+
+
 
     </ModalBody>
   </ModalContent>

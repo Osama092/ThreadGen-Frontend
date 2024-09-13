@@ -19,54 +19,20 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-import {
-  Input,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
-  useDisclosure
-} from '@chakra-ui/react';
-import { IconButton, Icon } from '@chakra-ui/react';
-import { FiUpload } from 'react-icons/fi';
-import { BsMic } from 'react-icons/bs';
+import { Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
 
 import Upload from "views/admin/marketplace/components/Upload";
 
 // Chakra imports
-import {
-  Box,
-  Button,
-  Flex,
-  Grid,
-
-  Text,
-  VStack,
-
-  useColorModeValue,
-  SimpleGrid,
-  FormControl,
-  FormLabel
-
-} from "@chakra-ui/react";
+import { Box, Button, Flex, Grid, Text, VStack, useColorModeValue, SimpleGrid, FormControl, FormLabel } from "@chakra-ui/react";
 
 
-import {
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
-} from '@chakra-ui/react'
+import { Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react'
 import { CloseButton } from '@chakra-ui/react'; // Add this import
 import { Progress } from '@chakra-ui/react'
-// Custom components
 
 //import Card from "components/card/Card.js";
 import { Card, CardBody, Image, Stack, Heading, Divider  } from '@chakra-ui/react';
@@ -75,10 +41,6 @@ import { useDropzone } from 'react-dropzone';
 
 import { AddIcon } from '@chakra-ui/icons'
 import useGetFlows from 'hooks/flows/useGetFlows';
-
-
-import tempvid from 'assets/img/tempvid.mp4';
-import countdown from 'assets/img/countdown.mp4';
 
 
 export default function FlowManagement() {  
@@ -138,7 +100,6 @@ export default function FlowManagement() {
   // Chakra Color Mode
 
   const textColor = useColorModeValue("secondaryGray.900", "white");
-  const textColorBrand = useColorModeValue("brand.500", "white");
 
   
 
