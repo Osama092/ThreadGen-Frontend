@@ -5,9 +5,9 @@ import './assets/css/App.css';
 import App from './App';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { SSEProvider } from 'contexts/SSEContext';
-import { SubscriptionsProvider } from 'contexts/SubscriptionContext'
-const PUBLISHABLE_KEY = process.env.REACT_APP_PUBLISHABLE_KEY
+import { SubscriptionProvider } from 'contexts/paddle/SubscriptionContext'; // Import the context provider
 
+const PUBLISHABLE_KEY = process.env.REACT_APP_PUBLISHABLE_KEY
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key")
 }
@@ -18,12 +18,12 @@ root.render(
 
   <BrowserRouter>
     <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-    <SubscriptionsProvider>
+    <SubscriptionProvider>
 
       <SSEProvider>
         <App />
         </SSEProvider>
-        </SubscriptionsProvider>
+      </SubscriptionProvider>
 
     </ClerkProvider>
   </BrowserRouter>

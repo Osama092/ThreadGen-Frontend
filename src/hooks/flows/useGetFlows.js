@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getFlows } from 'services/flowsServices';
+import { getFlows } from '../../services/flowsServices';
 
 const useGetFlows = () => {
   const [flows, setFlows] = useState([]);

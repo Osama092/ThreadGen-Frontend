@@ -1,43 +1,19 @@
-/*!
-  _   _  ___  ____  ___ ________  _   _   _   _ ___   
- | | | |/ _ \|  _ \|_ _|__  / _ \| \ | | | | | |_ _| 
- | |_| | | | | |_) || |  / / | | |  \| | | | | || | 
- |  _  | |_| |  _ < | | / /| |_| | |\  | | |_| || |
- |_| |_|\___/|_| \_\___/____\___/|_| \_|  \___/|___|
-                                                                                                                                                                                                                                                                                                                                      
-=========================================================
-* Horizon UI - v1.1.0
-=========================================================
-
-* Product Page: https://www.horizon-ui.com/
-* Copyright 2023 Horizon UI (https://www.horizon-ui.com/)
-
-* Designed and Coded by Simmmple
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect, useRef } from "react";
 
 import { Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
 
-import Upload from "views/admin/marketplace/components/Upload";
+import Upload from "views/admin/flowsManagement/components/Upload";
 
-// Chakra imports
 import { Box, Button, Flex, Grid, Text, VStack, useColorModeValue, SimpleGrid, FormControl, FormLabel } from "@chakra-ui/react";
 
 
 import { Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react'
-import { CloseButton } from '@chakra-ui/react'; // Add this import
+import { CloseButton } from '@chakra-ui/react';
 import { Progress } from '@chakra-ui/react'
 
-//import Card from "components/card/Card.js";
 import { Card, CardBody, Image, Stack, Heading, Divider  } from '@chakra-ui/react';
 import { useDropzone } from 'react-dropzone';
-// Assets
 
 import { AddIcon } from '@chakra-ui/icons'
 import useGetFlows from 'hooks/flows/useGetFlows';
@@ -50,8 +26,8 @@ export default function FlowManagement() {
 
   const [file, setFile] = useState(null);
 
-  const [showAlert, setShowAlert] = useState(false); // New state for alert visibility
-  const [progress, setProgress] = useState(0); // New state for progress
+  const [showAlert, setShowAlert] = useState(false); 
+  const [progress, setProgress] = useState(0);
 
   const navigate = useNavigate();
   const handleCardClick = (flow) => {
@@ -59,7 +35,6 @@ export default function FlowManagement() {
   };
 
   useEffect(() => {
-    // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
     return () => {
       if (file) {
         URL.revokeObjectURL(file.preview);
@@ -72,55 +47,51 @@ export default function FlowManagement() {
   useEffect(() => {
     let timer;
     if (showAlert) {
-      setProgress(0); // Reset progress when alert is shown
+      setProgress(0);
       timer = setInterval(() => {
         setProgress(prev => {
           if (prev >= 100) {
             clearInterval(timer);
             return 100;
           }
-          return prev + (0.25); // Increment progress over 6 seconds
+          return prev + (0.25);
         });
-      }, 7.5); // Update every 100ms
+      }, 7.5);
   
       setTimeout(() => {
-        setShowAlert(false); // Automatically close the alert after 6 seconds
-        clearInterval(timer); // Clear interval on close
+        setShowAlert(false); 
+        clearInterval(timer); 
       }, 3000);
     }
     return () => {
-      clearInterval(timer); // Cleanup timer on unmount
+      clearInterval(timer); 
     };
   }, [showAlert]);
   
 
-  console.log(flows)
-
-
-  // Chakra Color Mode
-
   const textColor = useColorModeValue("secondaryGray.900", "white");
 
   
-
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
-      {/* Main Fields */}
       <Grid
         mb='20px'
-        gridTemplateColumns={{ base: "1fr", md: "1fr", xl: "1fr" }} // Changed to one column
+        gridTemplateColumns={{ base: "1fr", md: "1fr", xl: "1fr" }}
         gap={{ base: "20px", xl: "20px" }}
-        display={{ base: "block", xl: "grid" }}>
+        display={{ base: "block", xl: "grid" }}
+      >
         <Flex
           flexDirection='column'
-          gridArea={{ xl: "1 / 1 / 2 / 3", "2xl": "1 / 1 / 2 / 2" }}>
+          gridArea={{ xl: "1 / 1 / 2 / 3", "2xl": "1 / 1 / 2 / 2" }}
+        >
           <Flex direction='column'>
             <Flex
               mt='45px'
               mb='20px'
               justifyContent='space-between'
               direction={{ base: "column", md: "row" }}
-              align={{ base: "start", md: "center" }}>
+              align={{ base: "start", md: "center" }}
+            >
               <Text color={textColor} fontSize='2xl' ms='24px' fontWeight='700'>
                 Current flows:
               </Text>
@@ -157,34 +128,32 @@ export default function FlowManagement() {
                       </FormControl>
 
                       <Grid align="center"justify="center">
-                      <Upload
-                        minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
-                        pe='20px'
-                        pb={{ base: "100px", lg: "20px" }}
-                      />
+                        <Upload
+                          minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
+                          pe='20px'
+                          pb={{ base: "100px", lg: "20px" }}
+                        />
                       </Grid>
-
 
                     </VStack>   
                   </ModalBody>
                 </ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                </ModalBody>
-                <ModalFooter>
                   
+                <ModalCloseButton />
 
+                <ModalFooter>
                   <Button colorScheme="teal" onClick={() => {
                     onClose();
                     setShowAlert(true);
-                }}>
-                  Done
-                </Button>
+                    }}>
+                    Done
+                  </Button>
                   
                 </ModalFooter>
               </ModalContent>
             </Modal>
-            {showAlert && ( // Conditional rendering of the alert
+              
+            {showAlert && (
               <Modal isOpen={showAlert} onClose={() => setShowAlert(false)} isCentered>
                 <ModalOverlay backdropFilter='blur(5px)' /> {/* Blur effect */}
                 <ModalContent bg='transparent' boxShadow='none'>
@@ -222,8 +191,6 @@ export default function FlowManagement() {
                 </ModalContent>
               </Modal>
             )}
-
-       
               
             {loading && <Text>Loading...</Text>}
             {error && <Text>Error: {error.message}</Text>}
@@ -292,6 +259,5 @@ export default function FlowManagement() {
         </Flex>
       </Grid>
     </Box>
-    
   );
 }

@@ -1,62 +1,48 @@
-/* eslint-disable */
-
-import {
-  Box,
-  Flex,
-  Icon,
-  Progress,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Th,
-  Thead,
-  Tr,
-  useColorModeValue,
-} from '@chakra-ui/react';
-
-import {
-  Tag,
-  TagLabel,
-  TagLeftIcon,
-  TagRightIcon,
-  TagCloseButton,
-} from '@chakra-ui/react'
-
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-// Custom components
+import React, { useState, useEffect } from 'react';
+import { Box, Button, Flex, Icon, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
+import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
+import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
-import * as React from 'react';
-import { useState, useEffect } from 'react';
-
-// Assets
-import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
-
-import useBills from 'hooks/bills/useGetBills'; // Import the custom hook
+import useBills from 'hooks/bills/useGetBills';
+import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 
 const columnHelper = createColumnHelper();
 
 export default function ComplexTable(props) {
   const user = "tempuser0999@gmail.com";
-  const { bills, loading, error } = useBills(user);
+  const { transactionDataTable } = useSubscription();
+  const [tableData, setTableData] = useState([]);
+  const { loading, error } = useBills(user);
 
-  console.log('chekc here for the bills', bills)
+  useEffect(() => {
+    if (transactionDataTable && transactionDataTable.length > 0) {
+      const transformedData = transactionDataTable.map((transaction) => {
+        const startDate = new Date(transaction.billing_period.starts_at);
+        const endDate = new Date(transaction.billing_period.ends_at);
+        const formattedStartDate = startDate.toLocaleDateString('en-CA').replace(/-/g, '/');
+        const formattedEndDate = endDate.toLocaleDateString('en-CA').replace(/-/g, '/');
 
-  const { tableData } = props;
-  const [sorting, setSorting] = React.useState([]);
+        return {
+          invoice_number: transaction.invoice_number,
+          subscription_type: transaction.items[0].price.name,
+          amount: transaction.details.adjusted_totals.grand_total,
+          issued_date: `${formattedStartDate} - ${formattedEndDate}`,
+          status: transaction.status,
+        };
+      });
+      
+      setTableData(transformedData);
+    }
+  }, [transactionDataTable]);
+
+  const [sorting, setSorting] = useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
   const columns = [
-    columnHelper.accessor('id', {
-      id: 'id',
+    columnHelper.accessor('invoice_number', {
+      id: 'invoice_number',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -64,7 +50,7 @@ export default function ComplexTable(props) {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          REFERENCE
+          BILL ID
         </Text>
       ),
       cell: (info) => (
@@ -122,7 +108,7 @@ export default function ComplexTable(props) {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          ISSUED DATE
+          BILLING PERIOD
         </Text>
       ),
       cell: (info) => (
@@ -150,20 +136,20 @@ export default function ComplexTable(props) {
             h="24px"
             me="5px"
             color={
-              info.getValue() === 'Approved'
+              info.getValue() === 'completed'
                 ? 'green.500'
-                : info.getValue() === 'Disable'
+                : info.getValue() === 'cancled'
                 ? 'red.500'
-                : info.getValue() === 'Error'
+                : info.getValue() === 'ready'
                 ? 'orange.500'
                 : null
             }
             as={
-              info.getValue() === 'Approved'
+              info.getValue() === 'completed'
                 ? MdCheckCircle
-                : info.getValue() === 'Disable'
+                : info.getValue() === 'cancled'
                 ? MdCancel
-                : info.getValue() === 'Error'
+                : info.getValue() === 'ready'
                 ? MdOutlineError
                 : null
             }
@@ -175,8 +161,9 @@ export default function ComplexTable(props) {
       ),
     }),
   ];
+
   const table = useReactTable({
-    data: bills, // Use the subscription data
+    data: tableData,
     columns,
     state: {
       sorting,
@@ -184,6 +171,8 @@ export default function ComplexTable(props) {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 5 } },
     debugTable: true,
   });
 
@@ -208,7 +197,7 @@ export default function ComplexTable(props) {
         </Text>
         <Menu />
       </Flex>
-      <Box>
+      <Box data-testid="complex-table">
         <Table variant="simple" color="gray.500" mb="24px" mt="12px">
           <Thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -245,32 +234,47 @@ export default function ComplexTable(props) {
             ))}
           </Thead>
           <Tbody>
-            {table
-              .getRowModel()
-              .rows.slice(0, 11)
-              .map((row) => {
-                return (
-                  <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <Td
-                          key={cell.id}
-                          fontSize={{ sm: '14px' }}
-                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                          borderColor="transparent"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </Td>
-                      );
-                    })}
-                  </Tr>
-                );
-              })}
+            {table.getRowModel().rows.map((row) => {
+              return (
+                <Tr key={row.id}>
+                  {row.getVisibleCells().map((cell) => {
+                    return (
+                      <Td
+                        key={cell.id}
+                        fontSize={{ sm: '14px' }}
+                        minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                        borderColor="transparent"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </Td>
+                    );
+                  })}
+                </Tr>
+              );
+            })}
           </Tbody>
         </Table>
+        <Flex justifyContent="space-between" alignItems="center" mt="4">
+          <Button
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Text>
+            Page {table.getState().pagination.pageIndex + 1} of{' '}
+            {table.getPageCount()}
+          </Text>
+          <Button
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </Flex>
       </Box>
     </Card>
   );

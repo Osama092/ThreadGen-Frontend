@@ -1,4 +1,3 @@
-// src/services/servicesApi.js
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api-keys'; // Update this URL based on your Express server setup

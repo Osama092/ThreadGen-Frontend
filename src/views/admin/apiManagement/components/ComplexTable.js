@@ -23,15 +23,6 @@ const ComplexTable = React.memo(() => {
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
-
-  console.log('apiKeys:', apiKeys);
-  if (apiKeys.length > 0) {
-    console.log('Headers:', Object.keys(apiKeys[0]));
-  }
-  
-
-
-  // Define columns
   const columns = [
     columnHelper.accessor('apiKey', {
       id: 'apiKey',
@@ -107,7 +98,6 @@ const ComplexTable = React.memo(() => {
     }),
   ];
 
-  // Configure React Table
   const table = useReactTable({
     columns,
     data: apiKeys, // Use messages from SSE
@@ -174,7 +164,8 @@ const ComplexTable = React.memo(() => {
         </Text>
         <Button colorScheme='blue' onClick={handleAddKey}>Add Key</Button>
       </Flex>
-      <Box>
+
+      <Box data-testid="complex-table">
         <Table variant="simple" color="gray.500" mb="24px" mt="12px">
           <Thead>
             {table.getHeaderGroups().map((headerGroup) => (

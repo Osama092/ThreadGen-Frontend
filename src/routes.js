@@ -12,10 +12,10 @@ import { MdSettings } from 'react-icons/md';
 import { LockIcon } from '@chakra-ui/icons';
 
 // Admin Imports
-import MainDashboard from 'views/admin/default';
+import MainDashboard from 'views/admin/mainDashboard';
 import SingleFlow from 'views/admin/singleFlow'
-import NFTMarketplace from 'views/admin/marketplace';
-import DataTables from 'views/admin/dataTables';
+import NFTMarketplace from 'views/admin/flowsManagement';
+import DataTables from 'views/admin/billsManagement';
 import ApiKeys from 'views/admin/apiManagement';
 import SignInPage from 'views/auth/';
 // Auth Imports
@@ -57,7 +57,7 @@ const routes = [
     name: 'Billing',
     layout: '/admin',
     icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
-    path: '/data-tables',
+    path: '/billing',
     component: <DataTables />,
   },
 

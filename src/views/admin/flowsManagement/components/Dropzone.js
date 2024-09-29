@@ -1,20 +1,10 @@
-// Chakra imports
 import { Button, Flex, Input, useColorModeValue, Box, Image, Text } from "@chakra-ui/react";
-// Assets
-import Upload from "views/admin/marketplace/components/Upload";
 import { useDropzone } from "react-dropzone";
 import React, { useState, useRef, useEffect } from 'react';
-import { MdGraphicEq } from 'react-icons/md';
-//import { MdGraphicEq } from '@chakra-ui/icons';
-import { CloseButton,  Fade, IconButton} from '@chakra-ui/react'; // Add this import
+import { Fade, IconButton} from '@chakra-ui/react'; // Add this import
 import { FaPlay, FaPause } from 'react-icons/fa';
 
-import {
-  RangeSlider,
-  RangeSliderTrack,
-  RangeSliderFilledTrack,
-  RangeSliderThumb,
-} from '@chakra-ui/react'
+import { RangeSlider, RangeSliderTrack, RangeSliderFilledTrack, RangeSliderThumb } from '@chakra-ui/react'
 
 function Dropzone(props) {
   const { content, ...rest } = props;
@@ -43,8 +33,6 @@ function Dropzone(props) {
   };
 
   
-
-
   const [videoSrc, setVideoSrc] = useState(null);
   const [videoDuration, setVideoDuration] = useState(100);
   const [range, setRange] = useState([0, 100]);
@@ -118,10 +106,6 @@ function Dropzone(props) {
       videoPlayerRef.current.currentTime = range[0];
     }
   };
-
-
-
-
 
 
   return (

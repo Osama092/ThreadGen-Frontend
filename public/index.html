@@ -28,12 +28,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <title itemprop="name">Horizon UI Dashboard</title>
+    
     <!-- Manifest and apple icon -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <script type="text/javascript">
+      Paddle.Environment.set("sandbox");
+      Paddle.Initialize({ 
+        token: "test_77cffaba1e413299f5fec86bb21" //  client-side token
+      });
+    </script>
     <div id="root"></div>
   </body>
 </html>

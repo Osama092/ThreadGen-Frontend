@@ -1,13 +1,9 @@
-/* eslint-disable */
-
-import {
-  Box, Flex, Button, Icon, Progress, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
+import { Box, Flex, Button, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
 
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
-//import * as React from 'react';
-//import useSSE from 'hooks/requests/useSSE';
+
 import axios from 'axios';
 import { useUser } from '@clerk/clerk-react';
 import { SSEContext } from 'contexts/SSEContext';
@@ -230,8 +226,8 @@ export default function ComplexTable() {
       </Box>
       
       <form onSubmit={handleSubmit}>
-          <Button type="submit" colorScheme="blue">Add Request</Button>
-        </form>
+        <Button type="submit" colorScheme="blue">Add Request</Button>
+      </form>
     </Card>
   );
 }

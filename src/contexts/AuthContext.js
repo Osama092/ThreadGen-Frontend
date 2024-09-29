@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
 
     }
   }, [isSignedIn, user]); // Effect dependencies to trigger on auth status change
-
   console.log('AuthProvider render:', user);
 
   return (

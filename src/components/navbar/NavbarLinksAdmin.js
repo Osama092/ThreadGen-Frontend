@@ -40,11 +40,13 @@ import { FaEthereum } from 'react-icons/fa';
 import routes from 'routes';
 import { Modal,Container, Grid, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
 import { useModal } from 'contexts/ModalContext';
-import useUserStatus from 'hooks/useUserStatus';
 import { motion } from 'framer-motion';
 import { css, keyframes } from '@emotion/react';
 import { CloseIcon } from '@chakra-ui/icons';
 import { redirect } from 'react-router-dom';
+import useAudioCloning from 'hooks/useClone';
+import { useUser } from '@clerk/clerk-react';
+import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 
 const PUBLISHABLE_KEY = process.env.REACT_APP_PUBLISHABLE_KEY;
 
@@ -53,10 +55,33 @@ if (!PUBLISHABLE_KEY) {
 }
 
 export default function HeaderLinks(props) {
-  useUserStatus();
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [file, setFile] = useState(null);
+  const { isSubbed, subscriptionData, transactionData } = useSubscription();
 
+  const { cloneUserAudio, loading, error, success } = useAudioCloning();
+  
+  
+  const { user } = useUser();
+
+  const text = "osama"
+
+  const userEmail = user.primaryEmailAddress.emailAddress;
+
+
+  const hellowWorld = async () => {
+    console.log("Hello World", user.primaryEmailAddress.emailAddress);
+  }
+
+  const handleClick = async () => {
+    if (userEmail) {
+      console.log("User Email in cloing thing:", userEmail);
+      cloneUserAudio(userEmail, text);  // Automatically use user email and hardcoded 'osama' text
+      setShowAlert(true);  // Trigger the alert after cloning is successful
+    }else{
+      console.log("not working")
+    }
+  };
 
   const { secondary } = props;
   const bg = useColorModeValue("gray.100", "navy.700");
@@ -253,10 +278,16 @@ export default function HeaderLinks(props) {
           </div>
         </div>
             </div>
-            <Button onClick={() => {
-              onClose();
-              setShowAlert(true);
-            }}>Save</Button>
+            <Button
+              onClick={async () => {
+                hellowWorld()
+     handleClick();  // Run the cloning logic
+    setShowAlert(true);    // Trigger the alert
+    onClose();             // Close the modal/dialog
+  }}
+>
+  Save
+</Button>
 
 {showAlert && ( // Conditional rendering of the alert
   <Modal isOpen={showAlert} onClose={() => setShowAlert(false)} isCentered>

@@ -12,7 +12,9 @@ import initialTheme from './theme/theme'; //  { themeGreen }
 import { useState } from 'react';
 import { ModalProvider } from 'contexts/ModalContext'
 // Chakra imports
-import SignInPage  from 'views/auth/index';
+import SignInPage from 'views/auth/index';
+
+
 export default function Main() {
   // eslint-disable-next-line
   const [currentTheme, setCurrentTheme] = useState(initialTheme);

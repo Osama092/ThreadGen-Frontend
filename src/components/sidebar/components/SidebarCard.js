@@ -5,11 +5,35 @@ import {
   Link,
   Text,
   useColorModeValue,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from "@chakra-ui/react";
 import logoWhite from "assets/img/layout/logoWhite.png";
-import React from "react";
+import React, { useEffect } from "react";
+import PricingPage from "components/pricingPage/pricing";
+import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 
 export default function SidebarDocs() {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isSubbed, subscriptionData, transactionData } = useSubscription();
+
+  useEffect(() => {
+    if (isSubbed !== null) { // Check if it's not null (i.e., data has been fetched)
+      console.log('Subscription status in SomeComponent:', isSubbed); // This will be a boolean
+      console.log('subscription data', subscriptionData)
+      console.log('new id', subscriptionData.data.items[0].price.id)
+      if (isSubbed) {
+        onOpen(); // Open the modal if isSubbed is true
+      }
+    }
+  }, [isSubbed, onOpen]);
+
   const bgColor = "linear-gradient(135deg, #868CFF 0%, #4318FF 100%)";
   const borderColor = useColorModeValue("white", "navy.800");
 
@@ -66,20 +90,34 @@ export default function SidebarDocs() {
           PRO!
         </Text>
       </Flex>
-      <Link href='https://horizon-ui.com/pro?ref=horizon-chakra-free'>
-        <Button
-          bg='whiteAlpha.300'
-          _hover={{ bg: "whiteAlpha.200" }}
-          _active={{ bg: "whiteAlpha.100" }}
-          mb={{ sm: "16px", xl: "24px" }}
-          color={"white"}
-          fontWeight='regular'
-          fontSize='sm'
-          minW='185px'
-          mx='auto'>
-          Upgrade to PRO
-        </Button>
-      </Link>
+      <Button
+        bg='whiteAlpha.300'
+        _hover={{ bg: "whiteAlpha.200" }}
+        _active={{ bg: "whiteAlpha.100" }}
+        mb={{ sm: "16px", xl: "24px" }}
+        color={"white"}
+        fontWeight='regular'
+        fontSize='sm'
+        minW='185px'
+        mx='auto'
+        onClick={onOpen}>
+        Upgrade to PRO
+      </Button>
+
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent maxW="100%" width="70%">
+          <ModalCloseButton />
+          <ModalBody>
+            <PricingPage />
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme='blue' mr={3} onClick={onClose}>
+              Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Flex>
   );
 }
