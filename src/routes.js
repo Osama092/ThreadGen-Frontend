@@ -10,6 +10,7 @@ import {
 } from 'react-icons/md';
 import { MdSettings } from 'react-icons/md';
 import { LockIcon } from '@chakra-ui/icons';
+import ProtectedRoute from 'protection';
 
 // Admin Imports
 import MainDashboard from 'views/admin/mainDashboard';
@@ -21,9 +22,9 @@ import SignInPage from 'views/auth/';
 // Auth Imports
 const routes = [
   {
-    name: 'Main Dashboard',
+    name: 'Dashboard',
     layout: '/admin',
-    path: '/default',
+    path: '/main-dashboard',
     icon: <Icon as={MdHome} width="20px" height="20px" color="inherit" />,
     component: <MainDashboard />,
   },
@@ -32,9 +33,9 @@ const routes = [
   
 
   {
-    name: 'Flow Managment',
+    name: 'Flows',
     layout: '/admin',
-    path: '/nft-marketplace',
+    path: '/flows-management',
     icon: (
       <Icon
         as={MdSettings}
@@ -43,21 +44,24 @@ const routes = [
         color="inherit"
       />
     ),
-    component: <NFTMarketplace />,
+    component:
+      <ProtectedRoute>
+      <NFTMarketplace />
+    </ProtectedRoute>,
     secondary: true,
   },
   {
-    name: 'Api Key',
+    name: 'Keys',
     layout: '/admin',
-    path: '/apikey',
+    path: '/keys-management',
     icon: <Icon as={LockIcon} width="20px" height="20px" color="inherit" />,
     component: <ApiKeys />,
   },
   {
-    name: 'Billing',
+    name: 'Bills',
     layout: '/admin',
     icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
-    path: '/billing',
+    path: '/bills-management',
     component: <DataTables />,
   },
 
@@ -67,6 +71,7 @@ const routes = [
     path: '/flow/:id',
     icon: <Icon as={MdPerson} width="20px" height="20px" color="inherit" />,
     component: <SingleFlow />,
+    hideInNav: true,
   },
 
 

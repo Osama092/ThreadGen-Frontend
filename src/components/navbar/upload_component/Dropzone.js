@@ -26,7 +26,7 @@ function Dropzone(props) {
     onDrop,
     multiple: false,
     accept: {
-      'video/*': ['.mp4', '.mkv', '.avi', '.mov', '.wmv'] // Accept only video files
+      'audio/*': ['.mp3', '.wav', '.ogg', '.m4a', '.flac'] // Accept only audio files
     }
   });
 
@@ -60,10 +60,10 @@ function Dropzone(props) {
       )}
       {file && (
         <Flex direction='column' mt='20px'>
-          <video width="640">
+          <audio controls>
             <source src={file.preview} type={file.type} />
-            Your browser does not support the video tag.
-          </video>
+            Your browser does not support the audio element.
+          </audio>
           <Button mt='10px' onClick={removeFile}>Remove File</Button>
         </Flex>
       )}

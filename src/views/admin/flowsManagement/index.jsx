@@ -1,48 +1,431 @@
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect, useRef } from "react";
+import { useUser } from '@clerk/clerk-react';
+import useThreadUpload from 'hooks/flows/useThreadUpload';
+import useAddThread from 'hooks/flows/useAddThread'
 
-import { Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
+import useGetUserThreads from 'hooks/flows/useGetUserThreads'
 
-import Upload from "views/admin/flowsManagement/components/Upload";
+//------------------------------------------------
+// CHAKRA UI IMPORTS
+//------------------------------------------------
+import { Circle, Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, useDisclosure, Checkbox, Stack, CircularProgress, CircularProgressLabel, HStack, Badge, useToast, Box, Button, Flex, Grid, Text, VStack, useColorModeValue, SimpleGrid, FormControl, FormLabel, Center } from '@chakra-ui/react';
 
-import { Box, Button, Flex, Grid, Text, VStack, useColorModeValue, SimpleGrid, FormControl, FormLabel } from "@chakra-ui/react";
 
-
-import { Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react'
+import { Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react';
 import { CloseButton } from '@chakra-ui/react';
-import { Progress } from '@chakra-ui/react'
+import { Progress } from '@chakra-ui/react';
 
-import { Card, CardBody, Image, Stack, Heading, Divider  } from '@chakra-ui/react';
+import { Card, CardBody, Image, Stack as ChakraStack, Heading, Divider } from '@chakra-ui/react';
+import { AddIcon, CheckIcon } from '@chakra-ui/icons';
+
+//------------------------------------------------
+// CUSTOM COMPONENTS & HOOKS
+//------------------------------------------------
+import Upload from "views/admin/flowsManagement/components/Upload";
 import { useDropzone } from 'react-dropzone';
 
-import { AddIcon } from '@chakra-ui/icons'
-import useGetFlows from 'hooks/flows/useGetFlows';
-
-
 export default function FlowManagement() {  
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const { flows, loading, error, refetch} = useGetFlows()
+  const navigate = useNavigate();
+  const toast = useToast();
   const videoRef = useRef(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { user } = useUser();
 
+  const { threads, userThreadsLoading, userThreadsError } = useGetUserThreads(user.id);
+
+  const totalSteps = 4;
+
+
+  //------------------------------------------------
+  // STATE MANAGEMENT
+  //------------------------------------------------
+  // Basic states
   const [file, setFile] = useState(null);
-
+  const [currentStep, setCurrentStep] = useState(1);
   const [showAlert, setShowAlert] = useState(false); 
   const [progress, setProgress] = useState(0);
+  const { uploadThread, loadingThread, errorThread, thread } = useThreadUpload();
+  const { addThread, loading: addThreadLoading, error: addThreadError } = useAddThread();
+  const [formIsValid, setFormIsValid] = useState(false);
 
-  const navigate = useNavigate();
-  const handleCardClick = (flow) => {
-    navigate(`/admin/flow/${flow.id}`, { state: { flow } });
+  // Buffer states
+  const [bufferProgress, setBufferProgress] = useState(0);
+  const [showPersonalizations, setShowPersonalizations] = useState(false);
+  const [selectedPersonalization, setSelectedPersonalization] = useState(null);
+
+  // Form data states
+  const [error, setError] = useState(null);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [enableSmartPause, setEnableSmartPause] = useState(false);
+  const [enableFastProgress, setEnableFastProgress] = useState(false);
+  const [enableSubtitle, setEnableSubtitle] = useState(true);
+  const [playerColor, setPlayerColor] = useState("#3182CE");
+  const [startThumbnail, setStartThumbnail] = useState(null);
+  const [pauseThumbnail, setPauseThumbnail] = useState(null);
+  const [exitThumbnail, setExitThumbnail] = useState(null);
+  const [videoFile, setVideoFile] = useState(null);
+  const [stt_names, setSttNames] = useState([]);
+  const [selectedName, setSelectedName] = useState(null);
+  const [ThreadData, setThreadData] = useState(null);
+  const [temporarySelection, setTemporarySelection] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isStepValid, setIsStepValid] = useState(false);
+  const handelFileChange = (file) => {
+    setVideoFile(file);
   };
+
+  // Theme variables
+  const textColor = useColorModeValue("secondaryGray.900", "white");
+  const cardBg = useColorModeValue("white", "gray.700");
+  const hoverBg = useColorModeValue("gray.50", "gray.600");
+
+
+
+
+  //------------------------------------------------
+  // SAMPLE DATA
+  //------------------------------------------------
+
+  const submitThread = async () => {
+    try {
+      const completeUserData = {
+        session_id: ThreadData.user_id || user.id,
+        user_id: ThreadData.user_id || user.id,
+        user_name: ThreadData.user_name || user.fullName,
+        thread_name: ThreadData.title,
+        description: ThreadData.description,
+        ttsText: ThreadData.ttsText || "", 
+        color: ThreadData.color || "#3182CE",
+        smart_pause: ThreadData.smart_pause,
+        subtitle: ThreadData.subtitle ,
+        fast_progress: ThreadData.fast_progress
+      };
+
+  
+      if (startThumbnail?.file && pauseThumbnail?.file && exitThumbnail?.file) {
+        const result = await addThread(
+          startThumbnail.file,
+          pauseThumbnail.file,
+          exitThumbnail.file,
+          completeUserData
+        );
+        
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      return false;
+    }
+  };
+  
+
+  //------------------------------------------------
+  // EVENT HANDLERS
+  //------------------------------------------------
+  const handleCardClick = (thread) => {
+    navigate(`/admin/flow/${thread.thread_name}`, { state: { thread } });
+  };
+
+  const handleClose = () => {
+    setCurrentStep(1);
+    setTitle("");
+    setDescription("");
+
+    setEnableSmartPause(false);
+    setEnableFastProgress(false);
+    setEnableSubtitle(true);
+    setPlayerColor("#3182CE");
+    setStartThumbnail(null);
+    setPauseThumbnail(null);
+    setExitThumbnail(null);
+    setShowPersonalizations(false);
+    setBufferProgress(0);
+    onClose();
+  };
+  useEffect(() => {
+    validateCurrentStep();
+  }, [
+    // Dependencies for step 1
+    currentStep, title, description, videoFile,
+    // Dependencies for step 2
+    temporarySelection,
+    // Dependencies for step 3
+    // (playerSettings are already state variables, no validation needed)
+    // Dependencies for step 4
+    startThumbnail, pauseThumbnail, exitThumbnail
+  ]);
+  
+  const validateCurrentStep = () => {
+    let valid = false;
+    
+    switch (currentStep) {
+      case 1:
+        valid = !!title && !!description && !!videoFile;
+        break;
+        
+      case 2:
+        valid = !!temporarySelection;
+        break;
+        
+      case 3:
+        valid = true;
+        break;
+        
+      case 4:
+        valid = !!startThumbnail?.file && !!pauseThumbnail?.file && !!exitThumbnail?.file;
+        break;
+        
+      default:
+        valid = false;
+    }
+    
+    setIsStepValid(valid);
+  };
+
+  const nextStep = async () => {
+    let canProceed = true; // Flag to determine if we can proceed to next step
+  
+    if (currentStep === 1) {
+      if (videoFile) {
+        setIsLoading(true);
+        
+        try {
+          const userData = {
+            user_id: user.id,
+            user_name: user.fullName,
+            flow_name: title
+          };
+  
+          const result = await uploadThread(videoFile, userData);
+          
+          if (!result || result.error) {
+            // Handle API error response
+            setError(result?.error?.message || "Failed to upload video. Please try again.");
+            canProceed = false;
+          } else {
+            // Success case
+            setSttNames(result.stt_names || []);
+            setThreadData({
+              user_id: userData.user_id,
+              user_name: userData.user_name,
+              title: title,
+              description: description
+            });
+            setError(null); // Clear any previous errors
+          }
+        } catch (error) {
+          console.error("Error uploading video:", error);
+          setError(error?.message || "An unexpected error occurred while uploading the video.");
+          canProceed = false;
+        } finally {
+          setIsLoading(false);
+        }
+        
+        // If there was an error, don't proceed
+        if (!canProceed) return;
+      }
+    }
+  
+    if (currentStep === 2) {
+      if (temporarySelection) {
+        const { word, start, end } = temporarySelection;
+        const formatted = `${word} ${start}-${end}`;
+        setThreadData(prev => ({
+          ...prev,
+          ttsText: formatted
+        }));
+      } else {
+        console.error("No text selection made");
+        setError("Please select text before proceeding.");
+        return;
+      }
+    }
+    
+    if (currentStep === 3) {
+      setIsLoading(true);
+      
+      try {
+        const playerSettings = {
+          enableSmartPause,
+          enableFastProgress,
+          enableSubtitle,
+          playerColor
+        };
+        
+        setThreadData(prev => ({
+          ...prev,
+          fast_progress: playerSettings.enableFastProgress,
+          subtitle: playerSettings.enableSubtitle,
+          smart_pause: playerSettings.enableSmartPause,
+          color: playerSettings.playerColor
+        }));
+        
+        setError(null); // Clear any previous errors
+      } catch (error) {
+        console.error("Error in step 3:", error);
+        setError(error?.message || "An error occurred while saving player settings.");
+        canProceed = false;
+      } finally {
+        setIsLoading(false);
+      }
+      
+      // If there was an error, don't proceed
+      if (!canProceed) return;
+    }
+  
+    if (currentStep === 4) {
+      if (!startThumbnail?.file || !pauseThumbnail?.file || !exitThumbnail?.file) {
+        setError("Please upload all required thumbnails before proceeding.");
+        return;
+      }
+      
+      setIsLoading(true);
+      
+      try {
+        // Prepare the complete userData object with all collected information
+        const completeUserData = {
+          session_id: ThreadData.userData?.session_id,
+          user_id: ThreadData.userData?.user_id,
+          user_name: ThreadData.userData?.user_name,
+          thread_name: ThreadData.title,
+          description: ThreadData.description,
+          smart_pause: ThreadData.smart_pause,
+          subtitle: ThreadData.subtitle,
+          fast_progress: ThreadData.fast_progress,
+          ttsText: ThreadData.selectedSpeaker
+        };
+  
+        // You would add your API call here
+        // const response = await createThread(completeUserData, thumbnails);
+        
+        setError(null); // Clear any previous errors
+  
+      } catch (error) {
+        console.error("Error creating thread:", error);
+        setError(error?.message || "An error occurred while creating the thread.");
+        canProceed = false;
+      } finally {
+        setIsLoading(false);
+      }
+      
+      // If there was an error, don't proceed
+      if (!canProceed) return;
+    }
+  
+    // Only advance to the next step if:
+    // 1. The current step is valid
+    // 2. We're not currently loading data
+    // 3. We're not on the final step
+    // 4. No errors occurred during processing
+    if (isStepValid && !isLoading && currentStep < totalSteps && canProceed) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+  
+  const prevStep = () => {
+    if (currentStep === 3) { 
+      const playerSettings = {
+        enableSmartPause,
+        enableFastProgress,
+        enableSubtitle,
+        playerColor
+      };
+    }
+    setError(null); // Clear errors when going back a step
+    setCurrentStep(prev => prev - 1);
+  };
+
+
+  //------------------------------------------------
+  // IMAGE UPLOAD HANDLERS
+  //------------------------------------------------
+  const handleImageUpload = (acceptedFiles, setter) => {
+    if (acceptedFiles && acceptedFiles.length > 0) {
+      const file = acceptedFiles[0];
+      const preview = URL.createObjectURL(file);
+      setter({
+        file,
+        preview
+      });
+    }
+  };
+
+  // Call useDropzone directly for each thumbnail
+  const { getRootProps: getStartRootProps, getInputProps: getStartInputProps } = useDropzone({
+    accept: {
+      'image/*': []
+    },
+    onDrop: (acceptedFiles) => handleImageUpload(acceptedFiles, setStartThumbnail)
+  });
+
+  const { getRootProps: getPauseRootProps, getInputProps: getPauseInputProps } = useDropzone({
+    accept: {
+      'image/*': []
+    },
+    onDrop: (acceptedFiles) => handleImageUpload(acceptedFiles, setPauseThumbnail)
+  });
+
+  const { getRootProps: getExitRootProps, getInputProps: getExitInputProps } = useDropzone({
+    accept: {
+      'image/*': []
+    },
+    onDrop: (acceptedFiles) => handleImageUpload(acceptedFiles, setExitThumbnail)
+  });
+
+  const handleSpeakerSelect = (item) => {
+    // Toggle selection if clicking the same name
+    if (selectedName?.word === item.word) {
+      setSelectedName(null);
+    } else {
+      setSelectedName(item);
+    }
+    setTemporarySelection(temporarySelection?.word === item.word ? null : item);
+  };
+
+  //------------------------------------------------
+  // EFFECTS
+  //------------------------------------------------
+  // Buffer effect for transcription step
+  useEffect(() => {
+  }, [ThreadData]);
+
+
+  
+  useEffect(() => {
+    let bufferTimer;
+    if (currentStep === 2 && !showPersonalizations) {
+      setBufferProgress(0);
+      bufferTimer = setInterval(() => {
+        setBufferProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(bufferTimer);
+            setShowPersonalizations(true);
+            return 100;
+          }
+          return prev + 4;
+        });
+      }, 200);
+    }
+
+    return () => {
+      clearInterval(bufferTimer);
+    };
+  }, [currentStep, showPersonalizations]);
 
   useEffect(() => {
     return () => {
       if (file) {
         URL.revokeObjectURL(file.preview);
       }
+      if (startThumbnail) URL.revokeObjectURL(startThumbnail.preview);
+      if (pauseThumbnail) URL.revokeObjectURL(pauseThumbnail.preview);
+      if (exitThumbnail) URL.revokeObjectURL(exitThumbnail.preview);
     };
-  }, [file]);
-
-
+  }, [file, startThumbnail, pauseThumbnail, exitThumbnail]);
 
   useEffect(() => {
     let timer;
@@ -67,11 +450,380 @@ export default function FlowManagement() {
       clearInterval(timer); 
     };
   }, [showAlert]);
-  
 
-  const textColor = useColorModeValue("secondaryGray.900", "white");
+  //------------------------------------------------
+  // STEP CONTENT RENDERING
+  //------------------------------------------------
+  // Render step content based on current step
+  const renderStepContent = () => {
+    switch(currentStep) {
+      case 1:
+        return renderBasicInfoStep();
+      case 2:
+        return renderTranscriptionStep();
+      case 3:
+        return renderPlayerSettingsStep();
+      case 4:
+        return renderThumbnailsStep();
+      default:
+        return null;
+    }
+  };
 
+  // Step 1: Basic Information
+  const renderBasicInfoStep = () => {
+    return (
+      <VStack spacing={4} align="stretch">
+        <FormControl>
+          <Grid templateColumns="repeat(2, 1fr)" gap={8}>
+            <FormControl>
+              <FormLabel htmlFor='title'>Title</FormLabel>
+              <Input 
+                id='title' 
+                type='text' 
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel htmlFor='description'>Description</FormLabel>
+              <Input 
+                id='description' 
+                type='text'
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </FormControl>
+          </Grid>
+        </FormControl>
+
+        <Grid align="center" justify="center">
+          <Upload
+            minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
+            pe='20px'
+            pb={{ base: "100px", lg: "20px" }}
+            onFileChange={handelFileChange}
+          />
+        </Grid>
+      </VStack>
+    );
+  };
+
+  // Step 2: Transcription Settings
+  const renderTranscriptionStep = () => {
+    return (
+      <VStack spacing={6} align="stretch">
+        <Heading size="md">Transcription Settings</Heading>
   
+        <Box textAlign="center" py={6}>
+          <VStack spacing={6}>
+            {/* Speakers Section */}
+            <Box width="100%">
+              <Text fontSize="lg" fontWeight="medium" mb={3}>Identified Names:</Text>
+              
+              {/* Scrollable container for names */}
+              <Box 
+                width="100%" 
+                overflowX="auto" 
+                pb={2} 
+                css={{
+                  '&::-webkit-scrollbar': {
+                    height: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    background: 'transparent',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: '#CBD5E0',
+                    borderRadius: '4px',
+                  },
+                }}
+              >
+                <Flex gap={2} pb={1} wrap="nowrap">
+                  {stt_names.length > 0 ? (
+                    stt_names.map((item, index) => {
+                      const colors = ["#4299E1", "#48BB78", "#F6AD55", "#F56565", "#9F7AEA", "#ED64A6"];
+                      const colorIndex = index % colors.length;
+                      const bgColor = colors[colorIndex];
+                      const softColor = `${bgColor}33`;
+                      const isSelected = selectedName?.word === item.word;
+                      
+                      return (
+                        <Badge
+                          key={index}
+                          px={3}
+                          py={2}
+                          borderRadius="full"
+                          bg={isSelected ? softColor : "gray.100"}
+                          color={isSelected ? `${bgColor.replace('#', 'gray.')}` : "gray.700"}
+                          borderWidth="1px"
+                          borderColor={isSelected ? bgColor : "transparent"}
+                          cursor="pointer"
+                          onClick={() => handleSpeakerSelect(item)}
+                          _hover={{ 
+                            bg: isSelected ? softColor : "gray.200",
+                            transform: "translateY(-1px)"
+                          }}
+                          transition="all 0.2s"
+                          display="flex"
+                          alignItems="center"
+                          flexShrink={0}
+                        >
+                          {item.word}
+                        </Badge>
+                      );
+                    })
+                  ) : (
+                    <Text>No names identified</Text>
+                  )}
+                </Flex>
+              </Box>
+              
+              {/* Add validation message */}
+              {currentStep === 2 && !temporarySelection && (
+                <Text color="red.500" mt={2}>Please select a speaker before continuing</Text>
+              )}
+            </Box>
+          </VStack>
+        </Box>
+      </VStack>
+    );
+  };
+
+  // Step 3: Player Settings
+  const renderPlayerSettingsStep = () => {
+    return (
+      <VStack spacing={4} align="stretch">
+        <Heading size="md">Player Settings</Heading>
+        <FormControl>
+          <Checkbox 
+            isChecked={enableSmartPause}
+            onChange={(e) => setEnableSmartPause(e.target.checked)}
+          >
+            Enable Smart Pause
+          </Checkbox>
+        </FormControl>
+        <FormControl>
+          <Checkbox 
+            isChecked={enableFastProgress}
+            onChange={(e) => setEnableFastProgress(e.target.checked)}
+          >
+            Enable Fast Progress Bar
+          </Checkbox>
+        </FormControl>
+        <FormControl>
+          <Checkbox 
+            isChecked={enableSubtitle}
+            onChange={(e) => setEnableSubtitle(e.target.checked)}
+          >
+            Enable Subtitle
+          </Checkbox>
+        </FormControl>
+        <FormControl>
+          <FormLabel htmlFor='playerColor'>Player Color</FormLabel>
+          <Flex align="center">
+            <Input 
+              id='playerColor' 
+              type='color' 
+              value={playerColor}
+              onChange={(e) => setPlayerColor(e.target.value)}
+              width="100px"
+            />
+            <Text ml={4}>{playerColor}</Text>
+          </Flex>
+        </FormControl>
+        
+        <Box mt={4} p={4} borderRadius="md" bg={playerColor + "20"}>
+          <Text fontWeight="medium">Preview:</Text>
+          <Flex mt={3} align="center" justify="center">
+            <Box 
+              w="200px" 
+              h="120px" 
+              bg="gray.200" 
+              borderRadius="md" 
+              position="relative"
+              overflow="hidden"
+            >
+              <Center position="absolute" top={0} left={0} right={0} bottom={0}>
+                <Box as="button" 
+                  w="40px" 
+                  h="40px" 
+                  borderRadius="full" 
+                  bg={playerColor} 
+                  display="flex" 
+                  alignItems="center" 
+                  justifyContent="center"
+                >
+                  <Box 
+                    borderLeft="15px solid white" 
+                    borderTop="8px solid transparent" 
+                    borderBottom="8px solid transparent" 
+                    ml={1}
+                  />
+                </Box>
+              </Center>
+              <Box position="absolute" bottom={0} left={0} right={0} h="24px" bg={playerColor} >
+                <Box w="30%" h="4px" mt="10px" ml="10px" bg="white" borderRadius="full" />
+              </Box>
+
+            </Box>
+          </Flex>
+        </Box>
+      </VStack>
+    );
+  };
+
+  // Step 4: Thumbnails
+  // Step 4: Thumbnails
+  const renderThumbnailsStep = () => {
+    return (
+      <VStack spacing={6} align="stretch">
+        <Heading size="md">Thumbnail Images</Heading>
+        
+        {addThreadError && (
+          <Alert status="error">
+            <AlertIcon />
+            <AlertTitle>Error creating thread</AlertTitle>
+            <AlertDescription>{addThreadError}</AlertDescription>
+          </Alert>
+        )}
+        
+        <FormControl>
+          <FormLabel>Start Thumbnail</FormLabel>
+          <Box 
+            {...getStartRootProps()} 
+            p={4} 
+            border="2px dashed" 
+            borderColor="gray.300" 
+            borderRadius="md"
+            height="150px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            cursor={addThreadLoading ? "not-allowed" : "pointer"}
+            bg={startThumbnail ? "transparent" : "gray.50"}
+            opacity={addThreadLoading ? 0.6 : 1}
+          >
+            <input {...getStartInputProps()} disabled={addThreadLoading} />
+            {startThumbnail ? (
+              <Image 
+                src={startThumbnail.preview} 
+                alt="Start thumbnail" 
+                maxHeight="140px"
+                objectFit="contain"
+              />
+            ) : (
+              <Text>Drag and drop or click to upload start thumbnail</Text>
+            )}
+          </Box>
+        </FormControl>
+        
+        <FormControl>
+          <FormLabel>Pause Thumbnail</FormLabel>
+          <Box 
+            {...getPauseRootProps()} 
+            p={4} 
+            border="2px dashed" 
+            borderColor="gray.300" 
+            borderRadius="md"
+            height="150px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            cursor={addThreadLoading ? "not-allowed" : "pointer"}
+            bg={pauseThumbnail ? "transparent" : "gray.50"}
+            opacity={addThreadLoading ? 0.6 : 1}
+          >
+            <input {...getPauseInputProps()} disabled={addThreadLoading} />
+            {pauseThumbnail ? (
+              <Image 
+                src={pauseThumbnail.preview} 
+                alt="Pause thumbnail" 
+                maxHeight="140px"
+                objectFit="contain"
+              />
+            ) : (
+              <Text>Drag and drop or click to upload pause thumbnail</Text>
+            )}
+          </Box>
+        </FormControl>
+        
+        <FormControl>
+          <FormLabel>Exit Thumbnail</FormLabel>
+          <Box 
+            {...getExitRootProps()} 
+            p={4} 
+            border="2px dashed" 
+            borderColor="gray.300" 
+            borderRadius="md"
+            height="150px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            cursor={addThreadLoading ? "not-allowed" : "pointer"}
+            bg={exitThumbnail ? "transparent" : "gray.50"}
+            opacity={addThreadLoading ? 0.6 : 1}
+          >
+            <input {...getExitInputProps()} disabled={addThreadLoading} />
+            {exitThumbnail ? (
+              <Image 
+                src={exitThumbnail.preview} 
+                alt="Exit thumbnail" 
+                maxHeight="140px"
+                objectFit="contain"
+              />
+            ) : (
+              <Text>Drag and drop or click to upload exit thumbnail</Text>
+            )}
+          </Box>
+        </FormControl>
+        
+        {/* You might also want to modify your navigation buttons to show loading state */}
+      </VStack>
+    );
+  };
+
+  //------------------------------------------------
+  // STEP INDICATOR RENDERING
+  //------------------------------------------------
+  const renderStepIndicator = () => {
+    return (
+      <Flex justify="center" mb={6}>
+        {[1, 2, 3, 4].map((step) => (
+          <React.Fragment key={step}>
+            <Box
+              w="30px"
+              h="30px"
+              borderRadius="50%"
+              bg={currentStep >= step ? "blue.500" : "gray.200"}
+              color="white"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              fontWeight="bold"
+            >
+              {step}
+            </Box>
+            {step < 4 && (
+              <Box
+                w="60px"
+                h="2px"
+                bg={currentStep > step ? "blue.500" : "gray.200"}
+                alignSelf="center"
+              />
+            )}
+          </React.Fragment>
+        ))}
+      </Flex>
+    );
+  };
+
+  //------------------------------------------------
+  // MAIN COMPONENT RENDER
+  //------------------------------------------------
+
+
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
       <Grid
@@ -95,67 +847,77 @@ export default function FlowManagement() {
               <Text color={textColor} fontSize='2xl' ms='24px' fontWeight='700'>
                 Current flows:
               </Text>
-
             </Flex>
             <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap='20px'>
 
-            <Box as='button' onClick={onOpen} borderRadius='md'  color='blue' px={4} h={8} width='auto' height='auto' border='2px' borderColor='blue.600' maxW='sm'>
+            {/* Add New Flow Button */}
+            <Box as='button' onClick={onOpen} borderRadius='md' color='blue' px={4} h={8} width='auto' height='auto' border='2px' borderColor='blue.600' maxW='sm'>
               <AddIcon boxSize={20} />
             </Box>
 
-
-            <Modal isOpen={isOpen} size={'xl'} onClose={onClose}>
+            {/* New Flow Modal */}
+            <Modal isOpen={isOpen} size={'xl'} onClose={handleClose}>
               <ModalOverlay />
               <ModalContent>
                 <ModalHeader>
-                  Modal Title
-                  <ModalBody>
-                    <VStack spacing={4} align="stretch">
-                      <FormControl>
-                        <Grid templateColumns="repeat(2, 1fr)" gap={8}> {/* Adjust gap as needed */}
-
-                          <FormControl>
-                            <FormLabel htmlFor='title'>Title</FormLabel>
-                            <Input id='title' type='text' />
-                          </FormControl>
-
-                          <FormControl>
-                            <FormLabel htmlFor='lastName'>Category</FormLabel>
-                            <Input id='lastName' type='text' />
-                          </FormControl>
-
-                        </Grid>
-                      </FormControl>
-
-                      <Grid align="center"justify="center">
-                        <Upload
-                          minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
-                          pe='20px'
-                          pb={{ base: "100px", lg: "20px" }}
-                        />
-                      </Grid>
-
-                    </VStack>   
-                  </ModalBody>
+                  {currentStep === 1 && "Add New Flow - Step 1: Basic Information"}
+                  {currentStep === 2 && "Add New Flow - Step 2: Transcription"}
+                  {currentStep === 3 && "Add New Flow - Step 3: Player Settings"}
+                  {currentStep === 4 && "Add New Flow - Step 4: Thumbnails"}
                 </ModalHeader>
-                  
                 <ModalCloseButton />
-
+                
+                <ModalBody>
+                  {renderStepIndicator()}
+                  {renderStepContent()}
+                </ModalBody>
+                
                 <ModalFooter>
-                  <Button colorScheme="teal" onClick={() => {
-                    onClose();
-                    setShowAlert(true);
-                    }}>
-                    Done
-                  </Button>
+                  {currentStep > 1 && (
+                    <Button mr={3} onClick={prevStep}>
+                      Back
+                    </Button>
+                  )}
                   
+                  {currentStep < 4 ? (
+                    <Button 
+                      colorScheme="blue" 
+                      onClick={nextStep}
+                      isDisabled={!isStepValid || isLoading || !!error} 
+                      isLoading={isLoading}
+                      loadingText="Processing"
+                    >
+                      Next
+                    </Button>
+                  ) : (
+                    <Button 
+                      colorScheme="teal" 
+                      isLoading={addThreadLoading}
+                      loadingText="Creating thread..."
+                      isDisabled={!isStepValid || addThreadLoading}
+                      onClick={async () => {
+                        if (currentStep === 4) {
+                          const success = await submitThread();
+                          if (success) {
+                            handleClose();
+                            setShowAlert(true);
+                          }
+                        } else {
+                          handleClose();
+                        }
+                      }}
+                    >
+                      Finish
+                    </Button>
+                  )}
                 </ModalFooter>
               </ModalContent>
             </Modal>
               
+            {/* Success Alert Modal */}
             {showAlert && (
               <Modal isOpen={showAlert} onClose={() => setShowAlert(false)} isCentered>
-                <ModalOverlay backdropFilter='blur(5px)' /> {/* Blur effect */}
+                <ModalOverlay backdropFilter='blur(5px)' />
                 <ModalContent bg='transparent' boxShadow='none'>
                   <ModalBody>
                     <Progress colorScheme='green' size='sm' width='100%' value={progress} borderRadius='none' />
@@ -171,11 +933,10 @@ export default function FlowManagement() {
                     >
                       <AlertIcon boxSize='40px' mr={0} />
                       <AlertTitle mt={4} mb={1} fontSize='lg'>
-
-                        Application submitted!
+                        Flow created successfully!
                       </AlertTitle>
                       <AlertDescription maxWidth='sm'>
-                        Thanks for submitting your application. Our team will get back to you soon.
+                        Your new flow has been created and saved. You can now manage it from the dashboard.
                       </AlertDescription>
                       <CloseButton
                         alignSelf='flex-start'
@@ -183,77 +944,87 @@ export default function FlowManagement() {
                         right={2}
                         top={2}
                         onClick={() => setShowAlert(false)}
-
                       />
                     </Alert>
-
                   </ModalBody>
                 </ModalContent>
               </Modal>
             )}
               
-            {loading && <Text>Loading...</Text>}
-            {error && <Text>Error: {error.message}</Text>}
-            {flows && flows.map((flow, index) => (
-              <Box  onClick={() => handleCardClick(flow)} cursor="pointer"> 
-                <Card key={index} maxW='sm'  variant='unstyled'>
-                  <CardBody>
-                    <div
-                      style={{
-                        width: '100%',
-                        borderTopLeftRadius: '10px',
-                        borderTopRightRadius:'10px',
-                        height: '300px', // Fixed height for all videos
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        overflow: 'hidden',
-                        background: '#000', // Background color for empty space
-                      }}
-                    >
-                      <video  controls re= {videoRef} style={{
-                        display: 'block', // Block-level to fill container width
-                        width: '100%',
-                        height: '100%',
+            {/* Flow List */}
 
-                        objectFit: 'cover', // Maintain aspect ratio while filling the container
-                      }}>
-                        <source src={flow.video} type="video/mp4" />
-                      </video>
-                    </div>
-                  </CardBody>
-                </Card>
-                <Card
-                  maxW='sm'
-                  pl={2}
-                  variant='unstyled' 
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    borderBottomLeftRadius: '10px',
-                    borderBottomRightRadius: '10px',
-                    borderTopLeftRadius: '0px',
-                    borderTopRightRadius: '0px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                  }}
+            {userThreadsLoading && <Text>Loading...</Text>}
+        
+            {userThreadsError && <Text>Error: {userThreadsError.message}</Text>}
+            {threads && threads.length > 0 ? (
+                threads.map((thread) => (
+
+                <Box 
+                  key={thread._id} 
+                  onClick={thread.status !== 'pending' ? () => handleCardClick(thread) : undefined} 
+                  cursor={thread.status !== 'pending' ? "pointer" : "not-allowed"}
+                  opacity={thread.status === 'pending' ? 0.6 : 1}
+                  position="relative"
                 >
-                  <CardBody >
-                    <Stack mt='2' mb='2' spacing='3'>
-                      <Heading size='md'>{flow.name}</Heading>
-                      <Text>{flow.description}</Text>
-                      {flow.timeframe.map((tf, tfIndex) => (
-                        <Text key={tfIndex}>
-                          {`Start: ${tf.start_time} - End: ${tf.end_time}`}
-                        </Text>
-                      ))}
-                      <Divider />
-                      <Text as="sup">{flow.created_date}</Text>
-                    </Stack>
-                  </CardBody>
-                </Card>
-              </Box>
-            ))}
+                  {thread.status === 'pending' && (
+                    <Badge 
+                      position="absolute" 
+                      top="10px" 
+                      right="10px" 
+                      zIndex="1" 
+                      colorScheme="red" 
+                      fontSize="md" 
+                      px={3} 
+                      py={1}
+                      borderRadius="md"
+                    >
+                      PENDING
+                    </Badge>
+                  )}
+                  <Card maxW='sm' variant='unstyled'>
+                    <CardBody>
+                      <div style={{ width: '100%', height: '300px', background: '#000' }}>
+                      <video 
+                        controls={thread.status !== 'pending'} 
+                        ref={videoRef} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      >
+                        {(() => {
+                          const videoUrl = `http://localhost:5000/userData/temp/${user.fullName}_${user.id}/${thread.thread_name}/${thread.thread_name}.mp4`;
+                          return (
+                            <source 
+                              src={videoUrl}
+                              type="video/mp4" 
+                            />
+                          );
+                        })()}
+                      </video>
+                      </div>
+                    </CardBody>
+                  </Card>
+                  <Card maxW='sm' pl={2} variant='unstyled'>
+                    <CardBody>
+                      <ChakraStack mt='2' mb='2' spacing='3'>
+                        <Heading size='md'>{thread.thread_name}</Heading>
+                        <Flex justifyContent="space-between" align="center">
+                          <Text>{thread.description}</Text>
+                          <Text as="sup" fontSize="sm" color="gray.500" whiteSpace="nowrap">
+                            {new Date(thread.created_at).toLocaleString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </Text>
+                        </Flex>
+                        <Divider />
+                      </ChakraStack>
+                    </CardBody>
+                  </Card>
+                </Box>
+              ))
+            ) : (
+              !userThreadsLoading && <Text>No flows found</Text>
+            )}
             </SimpleGrid>
           </Flex>
         </Flex>

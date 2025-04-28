@@ -1,17 +1,21 @@
 import {  MdPieChart } from 'react-icons/md';
 import { Box, Icon, Grid, SimpleGrid, useColorModeValue, Button } from "@chakra-ui/react";
-
+import { useUser } from '@clerk/clerk-react';
 import MiniStatistics from "components/card/MiniStatistics";
 import IconBox from "components/icons/IconBox";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { MdAttachMoney, MdBarChart } from "react-icons/md";
 import ComplexTable from "views/admin/mainDashboard/components/ComplexTable";
 import TotalSpent from "views/admin/mainDashboard/components/TotalSpent";
+
+
 
 export default function Dashboard() {
 
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
+
+
 
   return (
     <Box pt={{ base: "130px", md: "80px", xl: "80px" }}>
@@ -100,6 +104,9 @@ export default function Dashboard() {
 
       </Grid>
       
+      
     </Box>
+
+    
   );
 }

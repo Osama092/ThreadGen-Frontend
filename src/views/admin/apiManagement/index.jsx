@@ -6,13 +6,20 @@ import useGenerateVideo from "hooks/apiKeys/useGenVid";
 
 export default function ApiManagement() {
   const [apiKey, setApiKey] = useState('');
-  const [flowId, setFlowId] = useState('');
+  const [threadName, setThreadName] = useState('');
   const [ttsText, setTtsText] = useState('');
-  const { generate, loading, error, videoUrl } = useGenerateVideo();
+  const [iframeUrl, setIframeUrl] = useState('');
+  const [showIframe, setShowIframe] = useState(false);
+  const { generate, loading, error, videoUrl, configPath } = useGenerateVideo();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await generate(apiKey, flowId, ttsText);
+    await generate(apiKey, threadName, ttsText);
+    
+    // Create and set the iframe URL with the form parameters
+    const url = `http://localhost:5000/player/index.html?apiKey=${encodeURIComponent(apiKey)}&threadName=${encodeURIComponent(threadName)}&ttsText=${encodeURIComponent(ttsText)}`;
+    setIframeUrl(url);
+    setShowIframe(true);
   };
 
   const brandColor = useColorModeValue("brand.500", "white");
@@ -53,7 +60,7 @@ export default function ApiManagement() {
           
           <Card>
             <CardHeader>
-              lksdfjlsdjk
+              SANDBOX
             </CardHeader>
             <CardBody>
               <Box>
@@ -63,8 +70,8 @@ export default function ApiManagement() {
                     <Input id='apiKey' type='text' value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
                   </FormControl>
                   <FormControl>
-                    <FormLabel htmlFor='flowId'>Flow id</FormLabel>
-                    <Input id='flowId' type='text' value={flowId} onChange={(e) => setFlowId(e.target.value)} />
+                    <FormLabel htmlFor='threadName'>Thread id</FormLabel>
+                    <Input id='threadName' type='text' value={threadName} onChange={(e) => setThreadName(e.target.value)} />
                   </FormControl>
                   <FormControl>
                     <FormLabel htmlFor='ttsText'>TTS text</FormLabel>
@@ -73,7 +80,6 @@ export default function ApiManagement() {
                   <Button mt={4} type="submit" isLoading={loading}>Submit</Button>
                 </VStack>
                 {error && <p>Error: {error.message}</p>}
-
               </Box>
             </CardBody>
           </Card>
@@ -81,22 +87,29 @@ export default function ApiManagement() {
         
         <Card>
           <CardBody>
-            {videoUrl ? (
-              <video controls style={{ width: '100%', height: 'auto' }}>
-                <source src={videoUrl} type="video/mp4" />
-              </video>
-            ) : (
+            {!showIframe ? (
               <Flex textAlign="center" py={10} px={6} alignItems="center" justifyContent="center" height="100%">
                 <Box>
                   <Icon as={MdVideoLibrary} w={20} h={20} color="gray.500" />
                   <Text mt={3} fontSize="xl" color="gray.500">
-                    No video available
+                    No video available - Submit form to load video
                   </Text>
                 </Box>
               </Flex>
+            ) : (
+              <Box>
+                <iframe
+                  id="dynamicIframe"
+                  src={iframeUrl}
+                  width="640"
+                  height="360"
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
+                ></iframe>
+              </Box>
             )}
           </CardBody>
-        </Card>  
+        </Card> 
       </Grid>
     </Box>
   );

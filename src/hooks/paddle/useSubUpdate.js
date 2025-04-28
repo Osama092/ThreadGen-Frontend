@@ -1,4 +1,3 @@
-// hooks/useUpdateSubscription.js
 import { useState } from 'react';
 import { updateSubscription } from 'services/paddle/subUpdateService';
 

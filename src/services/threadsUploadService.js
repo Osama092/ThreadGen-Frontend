@@ -1,11 +1,10 @@
 import axios from 'axios';
+
 const API_BASE_URL = 'http://localhost:5000';
 
-
-
-export const cloneAudio = async (formData) => {
+export const uploadThread = async (formData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/clone-audio`, formData, {
+    const response = await axios.post(`${API_BASE_URL}/threads/upload-thread`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

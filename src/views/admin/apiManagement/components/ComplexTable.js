@@ -1,31 +1,42 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Flex, IconButton, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, useToast, Button } from '@chakra-ui/react';
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import useVisibility from 'hooks/useVisibility';
-import useGetApiKeys from 'hooks/apiKeys/useGetKeys';
-import useDeleteApiKey from 'hooks/apiKeys/useDeleteKey';
+import useGetUserApiKeys from 'hooks/apiKeys/useGetUserApiKeys'; // Adjust the path as necessary
+import { useUser } from '@clerk/clerk-react';
+
 import useAddApiKey from 'hooks/apiKeys/useAddKey';
+import useDeleteApiKey from 'hooks/apiKeys/useDeleteKey';
 
 const columnHelper = createColumnHelper();
 
-
-
 const ComplexTable = React.memo(() => {
-  const { apiKeys, loading: loadingKeys, error: errorKeys, refetch: getApiKeys } = useGetApiKeys();
-  const { removeApiKey, loading: loadingDelete, error: errorDelete } = useDeleteApiKey();
-  const { addKey, loading: loadingAdd, error: errorAdd } = useAddApiKey();
+  const { user } = useUser();
+  const { keys, loading, error, fetchKeys } = useGetUserApiKeys(user?.id);
+
+  const { createApiKey, loading: createLoading, error: createError, apiKey } = useAddApiKey();
+  const { removeApiKey, loading: deleteLoading, error: deleteError, successMessage } = useDeleteApiKey();
 
   const [sorting, setSorting] = React.useState([]);
-  const { visibility, toggleVisibility } = useVisibility(); // Use custom hook for visibility
+  const { visibility, toggleVisibility } = useVisibility();
   const toast = useToast();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
 
+  const handleButtonClick = async () => {
+    if (!user?.id) return;  
+    await createApiKey(user.id); 
+  };
+
+  const handleDeleteApiKey = async (api_key) => {
+    await removeApiKey(api_key);
+  };
+
   const columns = [
-    columnHelper.accessor('apiKey', {
-      id: 'apiKey',
+    columnHelper.accessor('api_key', {
+      id: 'api_key',
       header: () => (
         <Text align="center" fontSize={{ sm: '10px', lg: '12px' }} color="gray.400">
           API KEY
@@ -35,7 +46,11 @@ const ComplexTable = React.memo(() => {
         const apiKey = info.getValue();
         const id = info.row.id;
         const isVisible = visibility[id];
-        const displayKey = isVisible ? apiKey : apiKey.slice(0, 5) + '*'.repeat(apiKey.length - 5);
+
+        // Ensure we don't try to show more characters than exist
+        const visibleLength = Math.min(5, apiKey.length);
+        const displayKey = isVisible ? apiKey : apiKey.slice(0, visibleLength) + '*'.repeat(Math.max(0, apiKey.length - visibleLength));
+        
         const handleDoubleClick = () => {
           navigator.clipboard.writeText(apiKey).then(() => {
             toast({
@@ -47,7 +62,7 @@ const ComplexTable = React.memo(() => {
             });
           });
         };
-        
+      
         return (
           <Flex alignItems="center" justify="space-between">
             <Text
@@ -70,8 +85,8 @@ const ComplexTable = React.memo(() => {
       },
     }),
 
-    columnHelper.accessor('creationDate', {
-      id: 'creationDate',
+    columnHelper.accessor('created_at', {
+      id: 'created_at',
       header: () => (
         <Text justifyContent="space-between" align="center" fontSize={{ sm: '10px', lg: '12px' }} color="gray.400">
           CREATION DATE
@@ -100,7 +115,7 @@ const ComplexTable = React.memo(() => {
 
   const table = useReactTable({
     columns,
-    data: apiKeys, // Use messages from SSE
+    data: keys,
     state: {
       sorting,
     },
@@ -110,10 +125,10 @@ const ComplexTable = React.memo(() => {
     debugTable: true,
   });
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (api_key) => {
     try {
-      await removeApiKey(id);
-      await getApiKeys();
+      await handleDeleteApiKey(api_key);
+      await fetchKeys();
       toast({
         position: 'top-center',
         title: 'Entry deleted successfully',
@@ -135,8 +150,8 @@ const ComplexTable = React.memo(() => {
 
   const handleAddKey = async () => {
     try {
-      await addKey();
-      await getApiKeys();
+      await handleButtonClick();
+      await fetchKeys();
       toast({
         position: 'top-center',
         title: 'New key added successfully',
@@ -169,9 +184,9 @@ const ComplexTable = React.memo(() => {
         <Table variant="simple" color="gray.500" mb="24px" mt="12px">
           <Thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <Tr key={headerGroup.id}>
+              <Tr api_key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <Th key={header.id} colSpan={header.colSpan} pe="10px" borderColor={borderColor} cursor="pointer" onClick={header.column.getToggleSortingHandler()}>
+                  <Th api_key={header.id} colSpan={header.colSpan} pe="10px" borderColor={borderColor} cursor="pointer" onClick={header.column.getToggleSortingHandler()}>
                     <Flex justifyContent="space-between" align="center" fontSize={{ sm: '10px', lg: '12px' }} color="gray.400">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {{ asc: '', desc: '' }[header.column.getIsSorted()] ?? null}
@@ -182,17 +197,17 @@ const ComplexTable = React.memo(() => {
             ))}
           </Thead>
           <Tbody>
-            {loadingKeys ? (
+            {loading ? (
               <Tr>
                 <Td colSpan={columns.length}>
                   <Text textAlign="center">Loading...</Text>
                 </Td>
               </Tr>
-            ) : errorKeys ? (
+            ) : error ? (
               <Tr>
                 <Td colSpan={columns.length}>
                   <Text textAlign="center" color="red.500">
-                    {errorKeys.message || 'Failed to load API keys.'}
+                    {error.message || 'Failed to load API keys.'}
                   </Text>
                 </Td>
               </Tr>
@@ -206,7 +221,7 @@ const ComplexTable = React.memo(() => {
                   ))}
                   <Td borderColor="transparent">
                     <Flex justify="flex-end">
-                      <Button colorScheme="teal" size="sm" onClick={() => handleDelete(row.original.id)}>
+                      <Button colorScheme="teal" size="sm" onClick={() => handleDelete(row.original.api_key)}>
                         Delete
                       </Button>
                     </Flex>

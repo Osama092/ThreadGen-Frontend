@@ -17,11 +17,11 @@ import {
   HStack,
 } from '@chakra-ui/react';
 
-import { Table, Thead, Tbody, Tr, Th, Td } from '@chakra-ui/react';
 import { Spinner } from '@chakra-ui/react'
 
 import { CloseButton } from '@chakra-ui/react'; // Add this import
 import { Progress } from '@chakra-ui/react'
+import { useAddUser } from 'hooks/users/useAddUser';
 
 import { ItemContent } from 'components/menu/ItemContent';
 import { SidebarResponsive } from 'components/sidebar/Sidebar';
@@ -30,13 +30,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Alert, AlertIcon, AlertTitle, AlertDescription, VStack } from '@chakra-ui/react';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
 import { ClerkProvider } from '@clerk/clerk-react';
-import Upload from 'components/dropzone/Upload';
-import { useDropzone } from 'react-dropzone';
-import { FiUpload } from 'react-icons/fi';
-import navImage from 'assets/img/layout/Navbar.png';
-import { MdNotificationsNone, MdInfoOutline } from 'react-icons/md';
-import { IoMdMoon, IoMdSunny } from 'react-icons/io';
-import { FaEthereum } from 'react-icons/fa';
+import Upload from 'components/navbar/upload_component/Upload';
+
 import routes from 'routes';
 import { Modal,Container, Grid, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
 import { useModal } from 'contexts/ModalContext';
@@ -47,6 +42,7 @@ import { redirect } from 'react-router-dom';
 import useAudioCloning from 'hooks/useClone';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';
+//      <Button onClick={() => setIsModalOpen(true)}>Open Modal</Button>
 
 const PUBLISHABLE_KEY = process.env.REACT_APP_PUBLISHABLE_KEY;
 
@@ -58,28 +54,54 @@ export default function HeaderLinks(props) {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [file, setFile] = useState(null);
   const { isSubbed, subscriptionData, transactionData } = useSubscription();
-
-  const { cloneUserAudio, loading, error, success } = useAudioCloning();
-  
-  
   const { user } = useUser();
+  
+  const { cloneAudio, loadingAudio, error, audio } = useAudioCloning();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [audioFile, setAudioFile] = useState(null);
 
-  const text = "osama"
+  const handelFileChange = (file) => {
+    setAudioFile(file);
+  };
 
-  const userEmail = user.primaryEmailAddress.emailAddress;
+  const { postUser, loading, userError, data } = useAddUser();
+  const voice_cloned = error?.voice_cloned ?? false; // Save in a boolean variable
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  console.log("Voice cloned status:", voice_cloned);
 
 
-  const hellowWorld = async () => {
-    console.log("Hello World", user.primaryEmailAddress.emailAddress);
-  }
+  useEffect(() => {
+    if (voice_cloned === false) {
+      setIsModalOpen(true);
+    }
+  }, [voice_cloned]);
 
   const handleClick = async () => {
-    if (userEmail) {
-      console.log("User Email in cloing thing:", userEmail);
-      cloneUserAudio(userEmail, text);  // Automatically use user email and hardcoded 'osama' text
-      setShowAlert(true);  // Trigger the alert after cloning is successful
-    }else{
-      console.log("not working")
+    console.log(user.id)
+    console.log(user.fullName)
+    if (audioFile && audioFile instanceof File) {
+      setIsLoading(true);
+      try {
+        const userData = {
+          user_id: user.id,
+          user_name: user.fullName,
+        }
+        console.log('Audio file details:', {
+          name: audioFile.name,
+          type: audioFile.type,
+          size: audioFile.size
+        });
+        const result = await cloneAudio( audioFile, userData );
+        console.log(result);
+      } catch (error) {
+        console.error('Error during audio cloning:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      console.log('No audio file selected');
+      console.log("audioFile", audioFile) 
     }
   };
 
@@ -112,6 +134,16 @@ export default function HeaderLinks(props) {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
+        
+        // Create a File object from the Blob that can be used with your upload service
+        const recordedFile = new File([audioBlob], "recorded-audio.wav", {
+          type: "audio/wav",
+          lastModified: new Date().getTime()
+        });
+        
+        // Set this file to be used by your cloning service
+        setAudioFile(recordedFile);
+        
         audioChunksRef.current = [];
       };
       mediaRecorderRef.current.start();
@@ -121,6 +153,7 @@ export default function HeaderLinks(props) {
 
   const handleDiscardAudio = () => {
     setAudioUrl('');
+    setAudioFile(null); // Also clear the audioFile when discarding
   };
 
   const pulse = keyframes`
@@ -170,18 +203,18 @@ export default function HeaderLinks(props) {
       w={{ sm: '100%', md: 'auto' }}
       alignItems="center"
       flexDirection="row"
-      bg={menuBg}
+      //bg={menuBg}
       flexWrap={secondary ? { base: 'wrap', md: 'nowrap' } : 'unset'}
       p="10px"
+      bg="transparent"
       borderRadius="30px"
-      boxShadow={shadow}
+      //boxShadow={shadow}
       gap={{ base: '10px', md: '20px' }}
     >
       <SidebarResponsive routes={routes} />
 
-      <Button onClick={() => setIsModalOpen(true)}>Open Modal</Button>
 
-      <Box display="flex" alignItems="center">
+      <Box display="flex" alignItems="center" bg="transparent">
         <SignedOut>
           <SignInButton />
         </SignedOut>
@@ -190,7 +223,9 @@ export default function HeaderLinks(props) {
         </SignedIn>
       </Box>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      { voice_cloned === false && (
+
+      <Modal isOpen={isVoiceModalOpen} onClose={() => setIsVoiceModalOpen(false)}>
   <ModalOverlay backdropFilter="blur(10px)" />
   <ModalContent maxW="fit-content">
     <ModalHeader textAlign="center" fontSize="xl" fontWeight="bold">
@@ -242,6 +277,7 @@ export default function HeaderLinks(props) {
               minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
               pe='20px'
               pb={{ base: "100px", lg: "20px" }}
+              onFileChange={handelFileChange}
             />
           </>
         )}
@@ -280,7 +316,6 @@ export default function HeaderLinks(props) {
             </div>
             <Button
               onClick={async () => {
-                hellowWorld()
      handleClick();  // Run the cloning logic
     setShowAlert(true);    // Trigger the alert
     onClose();             // Close the modal/dialog
@@ -344,7 +379,7 @@ export default function HeaderLinks(props) {
 
     </ModalBody>
   </ModalContent>
-</Modal>
+</Modal>)}
 
 
 

@@ -15,7 +15,7 @@ export default function SingleFlow() {
   const textColor = useColorModeValue("secondaryGray.900", "white");
 
   const location = useLocation();
-  const { flow } = location.state || {};
+  const { thread } = location.state || {};
 
   const [isEditing, setIsEditing] = useState(false);
   
@@ -45,7 +45,7 @@ export default function SingleFlow() {
           <Card maxW='xl'>
             <CardBody>
               <video controls borderRadius='xl'width='200%' >
-                <source src={flow.video} type="video/mp4" />
+                <source src={`http://localhost:5000/userData/temp/${thread?.user_name}_${thread?.user_id}/${thread?.thread_name}/${thread?.thread_name}.mp4`} type="video/mp4" />
               </video>        
               
             </CardBody>
@@ -68,7 +68,7 @@ export default function SingleFlow() {
                     
                 <GridItem colSpan={2} >
                   <Heading as='h4' size='md'>Title</Heading>
-                  <Input focusBorderColor='lime' value={flow.name} ref={nameInputRef} isReadOnly={isReadOnly} />
+                  <Input focusBorderColor='lime' value={thread.thread_name} ref={nameInputRef} isReadOnly={isReadOnly} />
                   </GridItem>
                 <GridItem colSpan={2} display="flex" justifyContent="flex-end" alignItems="flex-end">
                 <Button w='50%' size="lg" variant="brand" onClick={handleToggle}>
@@ -80,21 +80,14 @@ export default function SingleFlow() {
 
                 <GridItem colSpan={4} >
                   <Heading as='h4' size='md'>Description</Heading>
-                  <Input focusBorderColor='lime' value={flow.description} ref={nameInputRef} isReadOnly={isReadOnly} />
+                  <Input focusBorderColor='lime' value={thread.description} ref={nameInputRef} isReadOnly={isReadOnly} />
                 </GridItem>
 
                 <GridItem colSpan={2}>
                   <Heading as='h4' size='md'>Creation date</Heading>
-                  <Text>{flow.created_date}</Text>
+                  <Text>{thread.created_date}</Text>
                 </GridItem>
-                <GridItem colSpan={2} >
-                <Heading as='h4' size='md'>Time frame</Heading>
-                      {flow.timeframe.map((tf, tfIndex) => (
-                        <Text key={tfIndex}>
-                          {`Start: ${tf.start_time} - End: ${tf.end_time}`}
-                        </Text>
-                      ))}
-                </GridItem>
+
 
               </Grid>
             </CardBody>

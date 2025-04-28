@@ -17,7 +17,6 @@ import { FaCheckCircle } from 'react-icons/fa'
 import usePrices from 'hooks/paddle/usePrices'; // Import the custom hook
 import React, { useState, useEffect, useContext } from 'react';
 import { initializePaddle } from '@paddle/paddle-js';
-import { SSEContext } from 'contexts/SSEContext';
 import { useUser } from '@clerk/clerk-react';
 import { useUpdateSubscription } from 'hooks/paddle/useSubUpdate';
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';

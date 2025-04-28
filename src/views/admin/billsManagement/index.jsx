@@ -29,15 +29,11 @@ export default function Billing() {
 
 
   useEffect(() => {
-    // Log the values to the console
-    console.log('Is Subscribed:', isSubbed);
-    console.log('Subscription Data:', subscriptionData);
-    console.log('Transaction Data:', transactionData);
+
     if (transactionData && transactionData.length > 0) {
       setCardInfo(transactionData[0]);
-      console.log("Card Info:", transactionData[0]);
     }
-  }, [isSubbed, subscriptionData, transactionData]); // Trigger when these values change
+  }, [isSubbed, subscriptionData, transactionData]);
 
   if (subscriptionData && subscriptionData.data && subscriptionData.data.items && subscriptionData.data.items.length > 0) {
     next_billing_cycle = subscriptionData.data.items[0].next_billed_at;
@@ -68,7 +64,6 @@ export default function Billing() {
   const updatePaymentMethod = async () => {
     try {
       const response = await axios.post(`/subscriptions/${subscriptionData.data.id}/update-payment-method-transaction`);
-      console.log(response.data.data.id);
       paddle?.Checkout.open({
         transactionId: response.data.data.id
       });
@@ -152,7 +147,7 @@ export default function Billing() {
                 <Badge colorScheme="blue" fontSize="lg" px={4} py={2}>Renewal</Badge> 
               </Box>
               <Box height='auto' display="flex" alignItems="center">
-                <HStack spacing={2}> {/* Added HStack for spacing */}
+                <HStack spacing={2}>
                   <label>Date</label>
                   <Text type="date">
                     { new Date(next_billing_cycle).toLocaleDateString('en-US', { 

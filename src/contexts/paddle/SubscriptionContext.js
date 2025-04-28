@@ -30,23 +30,16 @@ export const SubscriptionProvider = ({ children }) => {
         setSubscriptionData(subscriptionInfo);
         setTransactionData(transactionInfo);
         setTransactionDataTable(transactionInfoTable);
-        
-        console.log('Is subscribed:', subscriptionStatus);
-        console.log('Subscription data:', subscriptionInfo);
-        console.log('Transaction data:', transactionInfo);
-        console.log('Transaction data table:', transactionInfoTable);
+
       } catch (error) {
         console.error('Error fetching subscription data:', error);
       }
     };
 
     if (user) {
-      console.log('User is logged in:', user);
       const email = user.primaryEmailAddress.emailAddress;
-      console.log("User's email:", email);
       checkSubscription(email);
     } else {
-      console.log('User is not logged in');
       navigate('/sign-in'); // Redirect to sign-in page
     }
   }, [user, navigate]);

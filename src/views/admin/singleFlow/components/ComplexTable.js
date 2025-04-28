@@ -5,14 +5,12 @@ import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
 import React, { useEffect,useContext, useState } from "react";
 
-import { SSEContext } from 'contexts/SSEContext';
 
 
 const columnHelper = createColumnHelper();
 
-// const columns = columnsDataCheck;
 const ComplexTable = React.memo(() => {
-  const data = useContext(SSEContext);
+  const data = "dk"
   const [sorting, setSorting] = React.useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
@@ -131,7 +129,7 @@ const ComplexTable = React.memo(() => {
           fontWeight="700"
           lineHeight="100%"
         >
-          Flows
+          Requests
         </Text>
         <Menu />
       </Flex>

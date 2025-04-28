@@ -1,12 +1,5 @@
 // Chakra imports
-import {
-  Box,
-  Button,
-  Flex,
-  Icon,
-  Text,
-  useColorModeValue,
-} from "@chakra-ui/react";
+import { Box, Button, Flex, Icon, Text, useColorModeValue } from "@chakra-ui/react";
 // Custom components
 import Card from "components/card/Card.js";
 import LineChart from "components/charts/LineChart";
@@ -22,8 +15,6 @@ import {
 
 export default function TotalSpent(props) {
   const { ...rest } = props;
-
-  // Chakra Color Mode
 
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const textColorSecondary = useColorModeValue("secondaryGray.600", "white");
@@ -55,7 +46,7 @@ export default function TotalSpent(props) {
             textAlign='start'
             fontWeight='700'
             lineHeight='100%'>
-            $37.5K
+            1200
           </Text>
           <Flex align='center' mb='20px'>
             <Text
@@ -64,14 +55,8 @@ export default function TotalSpent(props) {
               fontWeight='500'
               mt='4px'
               me='12px'>
-              Total Requestes
+              Total Requests
             </Text>
-            <Flex align='center'>
-              <Icon as={RiArrowUpSFill} color='green.500' me='2px' mt='2px' />
-              <Text color='green.500' fontSize='sm' fontWeight='700'>
-                +2.45%
-              </Text>
-            </Flex>
           </Flex>
 
         </Flex>

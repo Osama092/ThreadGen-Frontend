@@ -25,10 +25,8 @@ export default function SidebarDocs() {
 
   useEffect(() => {
     if (isSubbed !== null) { // Check if it's not null (i.e., data has been fetched)
-      console.log('Subscription status in SomeComponent:', isSubbed); // This will be a boolean
-      console.log('subscription data', subscriptionData)
-      console.log('new id', subscriptionData.data.items[0].price.id)
-      if (isSubbed) {
+      if (!isSubbed) {
+        console.log('User is not subscribed');
         onOpen(); // Open the modal if isSubbed is true
       }
     }
@@ -86,8 +84,7 @@ export default function SidebarDocs() {
           px='10px'
           mb='6px'
           textAlign='center'>
-          Improve your development process and start doing more with Horizon UI
-          PRO!
+          Improve your work process and start doing more with PRO!
         </Text>
       </Flex>
       <Button

@@ -1,24 +1,39 @@
 import React from 'react';
-import { SignIn } from '@clerk/clerk-react';
+import { SignUp } from '@clerk/clerk-react';
 import { Box, Spinner } from '@chakra-ui/react';
 import { useUser } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
+import { useAddUser } from 'hooks/users/useAddUser';
 
-function SignInPage() {
-  const { isSignedIn, isLoaded } = useUser();
+function SignUpPage() {
+  const { isSignedIn, isLoaded, user } = useUser();
   const navigate = useNavigate();
+  const { postUser, loading, error } = useAddUser();
 
   React.useEffect(() => {
     if (isLoaded) {
       if (isSignedIn) {
-        // User is signed in; redirect to a different page, such as a dashboard
-        navigate('/');
+
+        // Check if the user is new by comparing createdAt and lastSignInAt
+        const timeDifference = Math.abs(user.createdAt - user.lastSignInAt);
+        const isNewUser = timeDifference < 5000; // 5 seconds
+        
+        console.log("isNewUser", isNewUser);  
+        if (isNewUser) {
+          const newUserData = {
+            user_id: user.id,
+            full_name: user.fullName
+          };
+
+          postUser(newUserData);
+        }
+        // Redirect to dashboard after sign-up
+        navigate('/admin/main-dashboard');
       }
     }
-  }, [isLoaded, isSignedIn, navigate]);
+  }, [isLoaded, isSignedIn, navigate, user]);
 
   if (!isLoaded) {
-    // Show a loading spinner or any loading state while Clerk is checking authentication status
     return (
       <Box
         display="flex"
@@ -40,9 +55,9 @@ function SignInPage() {
       width="100vw"
       bg="#f0f0f0"
     >
-      <SignIn />
+      <SignUp />
     </Box>
   );
 }
 
-export default SignInPage;
+export default SignUpPage;

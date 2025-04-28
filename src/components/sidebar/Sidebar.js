@@ -27,6 +27,9 @@ import { IoMenuOutline } from "react-icons/io5";
 
 function Sidebar(props) {
   const { routes } = props;
+  
+  // Filter out routes that have hideInNav set to true
+  const filteredRoutes = routes.filter(route => !route.hideInNav);
 
   let variantChange = "0.2s linear";
   let shadow = useColorModeValue(
@@ -54,7 +57,7 @@ function Sidebar(props) {
           renderTrackVertical={renderTrack}
           renderThumbVertical={renderThumb}
           renderView={renderView}>
-          <Content routes={routes} />
+          <Content routes={filteredRoutes} />
         </Scrollbars>
       </Box>
     </Box>
@@ -70,6 +73,10 @@ export function SidebarResponsive(props) {
   const btnRef = React.useRef();
 
   const { routes } = props;
+  
+  // Filter out routes that have hideInNav set to true
+  const filteredRoutes = routes.filter(route => !route.hideInNav);
+  
   // let isWindows = navigator.platform.startsWith("Win");
   //  BRAND
 
@@ -105,7 +112,7 @@ export function SidebarResponsive(props) {
               renderTrackVertical={renderTrack}
               renderThumbVertical={renderThumb}
               renderView={renderView}>
-              <Content routes={routes} />
+              <Content routes={filteredRoutes} />
             </Scrollbars>
           </DrawerBody>
         </DrawerContent>

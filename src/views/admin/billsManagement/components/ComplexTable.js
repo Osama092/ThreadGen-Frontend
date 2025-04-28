@@ -4,7 +4,6 @@ import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
-import useBills from 'hooks/bills/useGetBills';
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 
 const columnHelper = createColumnHelper();
@@ -13,7 +12,7 @@ export default function ComplexTable(props) {
   const user = "tempuser0999@gmail.com";
   const { transactionDataTable } = useSubscription();
   const [tableData, setTableData] = useState([]);
-  const { loading, error } = useBills(user);
+  
 
   useEffect(() => {
     if (transactionDataTable && transactionDataTable.length > 0) {
@@ -176,8 +175,6 @@ export default function ComplexTable(props) {
     debugTable: true,
   });
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <Card

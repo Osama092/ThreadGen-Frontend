@@ -8,7 +8,6 @@ import { FaEthereum } from "react-icons/fa";
 
 export default function NFT(props) {
   const { image, name, author, date, price } = props;
-  // Chakra Color Mode
   const textColor = useColorModeValue("brands.900", "white");
   const bgItem = useColorModeValue(
     { bg: "white", boxShadow: "0px 40px 58px -20px rgba(112, 144, 176, 0.12)" },

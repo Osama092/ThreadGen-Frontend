@@ -1,4 +1,3 @@
-// hooks/usePrices.js
 import { useState, useEffect } from 'react';
 import { fetchPrices } from 'services/paddle/pricesService';
 
