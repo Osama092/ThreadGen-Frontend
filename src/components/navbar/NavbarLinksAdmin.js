@@ -19,7 +19,7 @@ import {
 
 import { Spinner } from '@chakra-ui/react'
 
-import { CloseButton } from '@chakra-ui/react'; // Add this import
+import { CloseButton } from '@chakra-ui/react';
 import { Progress } from '@chakra-ui/react'
 import { useAddUser } from 'hooks/users/useAddUser';
 
@@ -33,7 +33,7 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import Upload from 'components/navbar/upload_component/Upload';
 
 import routes from 'routes';
-import { Modal,Container, Grid, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
+import { Modal, Container, Grid, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from '@chakra-ui/react';
 import { useModal } from 'contexts/ModalContext';
 import { motion } from 'framer-motion';
 import { css, keyframes } from '@emotion/react';
@@ -42,7 +42,6 @@ import { redirect } from 'react-router-dom';
 import useAudioCloning from 'hooks/useClone';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';
-//      <Button onClick={() => setIsModalOpen(true)}>Open Modal</Button>
 
 const PUBLISHABLE_KEY = process.env.REACT_APP_PUBLISHABLE_KEY;
 
@@ -51,8 +50,6 @@ if (!PUBLISHABLE_KEY) {
 }
 
 export default function HeaderLinks(props) {
-  const [isModalOpen, setIsModalOpen] = useState(true);
-  const [file, setFile] = useState(null);
   const { isSubbed, subscriptionData, transactionData } = useSubscription();
   const { user } = useUser();
   
@@ -67,14 +64,13 @@ export default function HeaderLinks(props) {
 
   const { postUser, loading, userError, data } = useAddUser();
   const voice_cloned = error?.voice_cloned ?? false; // Save in a boolean variable
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(!voice_cloned); // Initialize based on voice_cloned status
+  
   console.log("Voice cloned status:", voice_cloned);
 
-
+  // Update modal state whenever voice_cloned status changes
   useEffect(() => {
-    if (voice_cloned === false) {
-      setIsModalOpen(true);
-    }
+    setIsVoiceModalOpen(!voice_cloned);
   }, [voice_cloned]);
 
   const handleClick = async () => {
@@ -92,8 +88,10 @@ export default function HeaderLinks(props) {
           type: audioFile.type,
           size: audioFile.size
         });
-        const result = await cloneAudio( audioFile, userData );
+        const result = await cloneAudio(audioFile, userData);
         console.log(result);
+        // Close the modal after successful cloning
+        setIsVoiceModalOpen(false);
       } catch (error) {
         console.error('Error during audio cloning:', error);
       } finally {
@@ -167,10 +165,9 @@ export default function HeaderLinks(props) {
       box-shadow: 0px 0px 3px 7px rgba(173,0,0,0);
     }
   `;
-  const [progress, setProgress] = useState(0); // New state for progress
-  const [showAlert, setShowAlert] = useState(false); // New state for alert visibility
-  const { isOpen, onOpen, onClose } = useDisclosure()
-
+  const [progress, setProgress] = useState(0);
+  const [showAlert, setShowAlert] = useState(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
     let timer;
@@ -196,23 +193,18 @@ export default function HeaderLinks(props) {
     };
   }, [showAlert]);
   
-  
-
   return (
     <Flex
       w={{ sm: '100%', md: 'auto' }}
       alignItems="center"
       flexDirection="row"
-      //bg={menuBg}
       flexWrap={secondary ? { base: 'wrap', md: 'nowrap' } : 'unset'}
       p="10px"
       bg="transparent"
       borderRadius="30px"
-      //boxShadow={shadow}
       gap={{ base: '10px', md: '20px' }}
     >
       <SidebarResponsive routes={routes} />
-
 
       <Box display="flex" alignItems="center" bg="transparent">
         <SignedOut>
@@ -223,170 +215,154 @@ export default function HeaderLinks(props) {
         </SignedIn>
       </Box>
 
-      { voice_cloned === false && (
-
       <Modal isOpen={isVoiceModalOpen} onClose={() => setIsVoiceModalOpen(false)}>
-  <ModalOverlay backdropFilter="blur(10px)" />
-  <ModalContent maxW="fit-content">
-    <ModalHeader textAlign="center" fontSize="xl" fontWeight="bold">
-      Record Your Voice
-    </ModalHeader>
-    <ModalBody>
-      <Box
-        borderRadius="md"
-        p={2}
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        height="auto"
-        cursor="pointer"
-        position="relative"
-      >
-        {audioUrl ? (
-          <>
-            <Flex 
-              width="100%" 
-              height="100%" 
-              justify="center" 
-                    align="center"
-                    bottom={-4}
+        <ModalOverlay backdropFilter="blur(10px)" />
+        <ModalContent maxW="fit-content">
+          <ModalHeader textAlign="center" fontSize="xl" fontWeight="bold">
+            Record Your Voice
+          </ModalHeader>
+          <ModalBody>
+            <Box
+              borderRadius="md"
+              p={2}
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              height="auto"
+              cursor="pointer"
               position="relative"
             >
-              <IconButton
-                icon={<CloseIcon />}
-                size="sm"
-                position="absolute"
-                onClick={handleDiscardAudio}
-              />
-            </Flex>
-                  <Box  border= "1px dashed #ccc"     p={5}
+              {audioUrl ? (
+                <>
+                  <Flex 
+                    width="100%" 
+                    height="100%" 
+                    justify="center" 
+                    align="center"
+                    bottom={-4}
+                    position="relative"
                   >
-                  <Box mt={4}       bg={bg}       p={audioUrl ? 2 : 0}    
-
-
->
-  <audio controls src={audioUrl} />
-</Box>
+                    <IconButton
+                      icon={<CloseIcon />}
+                      size="sm"
+                      position="absolute"
+                      onClick={handleDiscardAudio}
+                    />
+                  </Flex>
+                  <Box border="1px dashed #ccc" p={5}>
+                    <Box mt={4} bg={bg} p={audioUrl ? 2 : 0}>
+                      <audio controls src={audioUrl} />
+                    </Box>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <Upload
+                    minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
+                    pe='20px'
+                    pb={{ base: "100px", lg: "20px" }}
+                    onFileChange={handelFileChange}
+                  />
+                </>
+              )}
             </Box>
-            
-          </>
-        ) : (
-          <>
-            <Upload
-              minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
-              pe='20px'
-              pb={{ base: "100px", lg: "20px" }}
-              onFileChange={handelFileChange}
-            />
-          </>
-        )}
-      </Box>
 
-      <Box display='flex' justifyContent='center' mb={7} size="xs"> 
-        <Button onClick={handleRecordClick} size="xs">
-          <Box
-            as="div"
-            width="12px"
-            height="12px"
-            borderRadius="50%"
-            backgroundColor="red"
-            marginRight="8px"
-            animation={isRecording ? `${pulse} 1.5s infinite` : 'none'}
-          />
-          {audioUrl ? 'Save' : (isRecording ? 'Recording' : 'Record')}
-        </Button>
-      </Box>
+            <Box display='flex' justifyContent='center' mb={7} size="xs"> 
+              <Button onClick={handleRecordClick} size="xs">
+                <Box
+                  as="div"
+                  width="12px"
+                  height="12px"
+                  borderRadius="50%"
+                  backgroundColor="red"
+                  marginRight="8px"
+                  animation={isRecording ? `${pulse} 1.5s infinite` : 'none'}
+                />
+                {audioUrl ? 'Save' : (isRecording ? 'Recording' : 'Record')}
+              </Button>
+            </Box>
 
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '10px', width: 'fit-content', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#f9f9f9' }}>
-          <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
-            <Text width="auto">✅ Recommended</Text>
-            <Text>• Talking without pauses</Text>
-            <Text>• Changing positions while</Text>
-            <Text>• Talking without pauses</Text>
-          </div>
-          <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
-            <Text width="auto">❌ Things to avoid</Text>
-            <Text>• Talking without pauses</Text>
-            <Text>• Changing positions</Text>
-            <Text>• Changing positions</Text>
-          </div>
-        </div>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '10px', width: 'fit-content', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#f9f9f9' }}>
+                <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
+                  <Text width="auto">✅ Recommended</Text>
+                  <Text>• Talking without pauses</Text>
+                  <Text>• Changing positions while</Text>
+                  <Text>• Talking without pauses</Text>
+                </div>
+                <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
+                  <Text width="auto">❌ Things to avoid</Text>
+                  <Text>• Talking without pauses</Text>
+                  <Text>• Changing positions</Text>
+                  <Text>• Changing positions</Text>
+                </div>
+              </div>
             </div>
             <Button
               onClick={async () => {
-     handleClick();  // Run the cloning logic
-    setShowAlert(true);    // Trigger the alert
-    onClose();             // Close the modal/dialog
-  }}
->
-  Save
-</Button>
+                handleClick();      // Run the cloning logic
+                setShowAlert(true); // Trigger the alert
+              }}
+              isLoading={isLoading}
+              loadingText="Saving..."
+              mt={4}
+            >
+              Save
+            </Button>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
 
-{showAlert && ( // Conditional rendering of the alert
-  <Modal isOpen={showAlert} onClose={() => setShowAlert(false)} isCentered>
-    <ModalOverlay backdropFilter='blur(5px)' /> {/* Blur effect */}
-    <ModalContent bg='transparent' boxShadow='none'>
-      <ModalBody>
-        <Progress colorScheme='green' size='sm' width='100%' value={progress} borderRadius='none' />
+      {showAlert && (
+        <Modal isOpen={showAlert} onClose={() => setShowAlert(false)} isCentered>
+          <ModalOverlay backdropFilter='blur(5px)' />
+          <ModalContent bg='transparent' boxShadow='none'>
+            <ModalBody>
+              <Progress colorScheme='green' size='sm' width='100%' value={progress} borderRadius='none' />
 
-        <Alert
-          status='success'
-          variant='subtle'
-          flexDirection='column'
-          alignItems='center'
-          justifyContent='center'
-          textAlign='center'
-          height='200px'
-        >
-          {progress < 80 ? ( // Show spinner for the first 8 seconds (80% progress)
-            <Spinner
-              thickness='4px'
-              speed='0.65s'
-              emptyColor='gray.200'
-              color='green.500'
-              size='xl'
-            />
-          ) : (
-            <AlertIcon boxSize='40px' mr={0} /> // Show green check for the last 2 seconds
-          )}
+              <Alert
+                status='success'
+                variant='subtle'
+                flexDirection='column'
+                alignItems='center'
+                justifyContent='center'
+                textAlign='center'
+                height='200px'
+              >
+                {progress < 80 ? (
+                  <Spinner
+                    thickness='4px'
+                    speed='0.65s'
+                    emptyColor='gray.200'
+                    color='green.500'
+                    size='xl'
+                  />
+                ) : (
+                  <AlertIcon boxSize='40px' mr={0} />
+                )}
 
-          <AlertTitle mt={4} mb={1} fontSize='lg'>
-            Application submitted!
-          </AlertTitle>
-          <AlertDescription maxWidth='sm'>
-            {progress < 80 
-              ? 'Submitting your application...' // Show loading message while progress < 80%
-              : 'Thanks for submitting your application. Our team will get back to you soon.' // Show final message when progress >= 80%
-            }
-          </AlertDescription>
-          <CloseButton
-            alignSelf='flex-start'
-            position='absolute'
-            right={2}
-            top={2}
-            onClick={() => setShowAlert(false)}
-          />
-        </Alert>
-
-      </ModalBody>
-    </ModalContent>
-  </Modal>
-)}
-
-
-
-    </ModalBody>
-  </ModalContent>
-</Modal>)}
-
-
-
-
-
-
-
+                <AlertTitle mt={4} mb={1} fontSize='lg'>
+                  Application submitted!
+                </AlertTitle>
+                <AlertDescription maxWidth='sm'>
+                  {progress < 80 
+                    ? 'Submitting your application...'
+                    : 'Thanks for submitting your application. Our team will get back to you soon.'
+                  }
+                </AlertDescription>
+                <CloseButton
+                  alignSelf='flex-start'
+                  position='absolute'
+                  right={2}
+                  top={2}
+                  onClick={() => setShowAlert(false)}
+                />
+              </Alert>
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+      )}
     </Flex>
   );
 }
