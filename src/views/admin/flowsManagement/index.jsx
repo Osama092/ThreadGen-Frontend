@@ -959,46 +959,45 @@ export default function FlowManagement() {
             {threads && threads.length > 0 ? (
                 threads.map((thread) => (
 
-                <Box 
+                  <Box 
                   key={thread._id} 
                   onClick={thread.status !== 'pending' ? () => handleCardClick(thread) : undefined} 
                   cursor={thread.status !== 'pending' ? "pointer" : "not-allowed"}
                   opacity={thread.status === 'pending' ? 0.6 : 1}
-                  position="relative"
                 >
-                  {thread.status === 'pending' && (
-                    <Badge 
-                      position="absolute" 
-                      top="10px" 
-                      right="10px" 
-                      zIndex="1" 
-                      colorScheme="red" 
-                      fontSize="md" 
-                      px={3} 
-                      py={1}
-                      borderRadius="md"
-                    >
-                      PENDING
-                    </Badge>
-                  )}
                   <Card maxW='sm' variant='unstyled'>
                     <CardBody>
-                      <div style={{ width: '100%', height: '300px', background: '#000' }}>
-                      <video 
-                        controls={thread.status !== 'pending'} 
-                        ref={videoRef} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      >
-                        {(() => {
-                          const videoUrl = `http://localhost:5000/userData/temp/${user.fullName}_${user.id}/${thread.thread_name}/${thread.thread_name}.mp4`;
-                          return (
-                            <source 
-                              src={videoUrl}
-                              type="video/mp4" 
-                            />
-                          );
-                        })()}
-                      </video>
+                      <div style={{ width: '100%', height: '300px', background: '#000', position: 'relative' }}>
+                        {thread.status === 'pending' && (
+                          <Badge 
+                            position="absolute" 
+                            top="10px" 
+                            right="10px" 
+                            zIndex="1" 
+                            colorScheme="red" 
+                            fontSize="md" 
+                            px={3} 
+                            py={1}
+                            borderRadius="md"
+                          >
+                            PENDING
+                          </Badge>
+                        )}
+                        <video 
+                          controls={thread.status !== 'pending'} 
+                          ref={videoRef} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        >
+                          {(() => {
+                            const videoUrl = `http://localhost:5000/userData/temp/${user.fullName}_${user.id}/${thread.thread_name}/${thread.thread_name}.mp4`;
+                            return (
+                              <source 
+                                src={videoUrl}
+                                type="video/mp4" 
+                              />
+                            );
+                          })()}
+                        </video>
                       </div>
                     </CardBody>
                   </Card>

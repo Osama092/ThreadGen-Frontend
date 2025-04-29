@@ -70,11 +70,11 @@ export default function ApiManagement() {
                     <Input id='apiKey' type='text' value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
                   </FormControl>
                   <FormControl>
-                    <FormLabel htmlFor='threadName'>Thread id</FormLabel>
+                    <FormLabel htmlFor='threadName'>Thread Name</FormLabel>
                     <Input id='threadName' type='text' value={threadName} onChange={(e) => setThreadName(e.target.value)} />
                   </FormControl>
                   <FormControl>
-                    <FormLabel htmlFor='ttsText'>TTS text</FormLabel>
+                    <FormLabel htmlFor='ttsText'>TTS Text</FormLabel>
                     <Input id='ttsText' type='text' value={ttsText} onChange={(e) => setTtsText(e.target.value)} />
                   </FormControl>
                   <Button mt={4} type="submit" isLoading={loading}>Submit</Button>

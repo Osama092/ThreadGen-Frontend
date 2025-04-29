@@ -6,7 +6,6 @@ import AdminLayout from './layouts/admin';
 import SingleFlow from './views/admin/singleFlow';
 import {
   ChakraProvider,
-  // extendTheme
 } from '@chakra-ui/react';
 import initialTheme from './theme/theme'; //  { themeGreen }
 import { useState } from 'react';
@@ -20,19 +19,18 @@ export default function Main() {
   return (
     <ModalProvider>
       <ChakraProvider theme={currentTheme}>
-
-          <Routes>
-
+        <Routes>
           <Route path="/sign-in" element={<SignInPage />} />
 
-            <Route
-              path="admin/*"
-              element={
-                <AdminLayout theme={currentTheme} setTheme={setCurrentTheme} />
-              }
-            />        
-            <Route path="/" element={<Navigate to="/admin" replace />} />
-            </Routes>
+          <Route
+            path="admin/*"
+            element={
+              <AdminLayout theme={currentTheme} setTheme={setCurrentTheme} />
+            }
+          />        
+          <Route path="/" element={<Navigate to="/admin" replace />} />
+        </Routes>
+
 
       </ChakraProvider>
     </ModalProvider>

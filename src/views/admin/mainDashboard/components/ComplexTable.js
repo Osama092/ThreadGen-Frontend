@@ -1,12 +1,31 @@
-import { Box, Flex, Button, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
+import { 
+  Box, 
+  Flex, 
+  Table, 
+  Tbody, 
+  Td, 
+  Text, 
+  Th, 
+  Thead, 
+  Tr, 
+  useColorModeValue, 
+  Tag 
+} from '@chakra-ui/react';
 
-import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
+import { 
+  createColumnHelper, 
+  flexRender, 
+  getCoreRowModel, 
+  getSortedRowModel, 
+  useReactTable 
+} from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
 
 import { useUser } from '@clerk/clerk-react';
+import useSSE from 'hooks/useSSE'; // Import our custom hook
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 const columnHelper = createColumnHelper();
 
@@ -15,79 +34,14 @@ export default function ComplexTable() {
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
   const { user } = useUser();
-  const [messages, setMessages] = useState([]);
-  const [connectionStatus, setConnectionStatus] = useState('Connecting...');
-  const [isLoading, setIsLoading] = useState(true);
   
   const user_id = user?.id;
-
-  useEffect(() => {
-    if (!user_id) return;
-    
-    const initializeUser = async () => {
-      setIsLoading(true);
-      try {
-        // Register the user for SSE
-        const registerResponse = await fetch('http://localhost:5000/register-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: user_id }),
-        });
-        
-        if (!registerResponse.ok) {
-          throw new Error('Failed to register user');
-        }
-        
-        // Fetch historical requests for this user
-        const requestsResponse = await fetch(`http://localhost:5000/requests/${user_id}`);
-        
-        if (!requestsResponse.ok) {
-          throw new Error('Failed to fetch requests');
-        }
-        
-        const historicalRequests = await requestsResponse.json();
-        setMessages(historicalRequests);
-        console.log(`Loaded ${historicalRequests.length} historical requests`);
-      } catch (error) {
-        console.error('Initialization error:', error);
-        setConnectionStatus('Failed to connect');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeUser();
-  }, [user_id]);
-
-  // Subscribe to SSE updates
-  useEffect(() => {
-    if (!user_id) return;
-
-    const eventSource = new EventSource(`http://localhost:5000/subscribe?user_id=${user_id}`);
-
-    eventSource.onopen = () => {
-      setConnectionStatus('Connected ✅');
-    };
-
-    eventSource.onmessage = (event) => {
-      const newData = JSON.parse(event.data);
-      setMessages((prevMessages) => [...prevMessages, newData]);
-    };
-
-    eventSource.onerror = (error) => {
-      console.error('SSE Error:', error);
-      setConnectionStatus('Disconnected ❌');
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-      setConnectionStatus('Disconnected ❌');
-    };
-  }, [user_id]);
+  
+  // Use our custom SSE hook
+  const { messages, connectionStatus, isLoading } = useSSE(user_id);
 
   const columns = [
-    columnHelper.accessor('id', {
+    columnHelper.accessor('_id', {
       id: 'id',
       header: () => (
         <Text
@@ -102,7 +56,7 @@ export default function ComplexTable() {
       cell: (info) => (
         <Flex align="center">
           <Text color={textColor} fontSize="sm" fontWeight="700">
-            {info.getValue()}
+            {info.getValue()?.toString().slice(-8)}
           </Text>
         </Flex>
       ),

@@ -3,21 +3,28 @@ import { Box, Flex, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Ta
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import Menu from 'components/menu/MainMenu';
-import React, { useEffect,useContext, useState } from "react";
-
-
+import { useUser } from '@clerk/clerk-react';
+import useSSE from 'hooks/useSSE'; // Import the external SSE hook
+import React, { useState } from "react";
 
 const columnHelper = createColumnHelper();
 
-const ComplexTable = React.memo(() => {
-  const data = "dk"
-  const [sorting, setSorting] = React.useState([]);
+const ComplexTable = React.memo(( {thread_name}) => {
+  const [sorting, setSorting] = useState([]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const { user } = useUser();
+  const userId = user?.id;
+  
+  // Use the external SSE hook with the current user's ID
+  const { messages, connectionStatus, isLoading } = useSSE(userId);
 
+  // Filter data based on user ID
+  const filteredData = Array.isArray(messages) ? 
+    messages.filter(row => row.thread_name === thread_name) : [];
 
   const columns = [
-    columnHelper.accessor('id', {
+    columnHelper.accessor('_id', {
       id: 'id',
       header: () => (
         <Text
@@ -32,12 +39,12 @@ const ComplexTable = React.memo(() => {
       cell: (info) => (
         <Flex align="center">
           <Text color={textColor} fontSize="sm" fontWeight="700">
-            {info.getValue()}
+            {info.getValue()?.toString().slice(-8)}
           </Text>
         </Flex>
       ),
     }),
-    columnHelper.accessor('flow', {
+    columnHelper.accessor('thread_name', {
       id: 'flow',
       header: () => (
         <Text
@@ -55,7 +62,7 @@ const ComplexTable = React.memo(() => {
         </Flex>
       ),
     }),
-    columnHelper.accessor('sent_date', {
+    columnHelper.accessor('created_at', {
       id: 'sent_date',
       header: () => (
         <Text
@@ -69,7 +76,22 @@ const ComplexTable = React.memo(() => {
       ),
       cell: (info) => (
         <Text color={textColor} fontSize="sm" fontWeight="700">
-          {info.getValue()}
+          {(() => {
+            const value = info.getValue();
+            const date = new Date(value);
+    
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // MM
+            const day = date.getDate().toString().padStart(2, '0'); // DD
+            const year = date.getFullYear(); // YYYY
+            let hours = date.getHours();
+            const minutes = date.getMinutes().toString().padStart(2, '0'); // MM
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+    
+            hours = hours % 12; // Convert to 12-hour format
+            hours = hours ? hours : 12; // Handle midnight case (0)
+            
+            return `${month}/${day}/${year} ${hours}:${minutes} ${ampm}`;
+          })()}
         </Text>
       ),
     }),
@@ -87,14 +109,11 @@ const ComplexTable = React.memo(() => {
       ),
       cell: (info) => (
         <Flex align="center">
-          <Text color={textColor} fontSize="sm" fontWeight="700"> {info.getValue()} </Text>
+          <Text color={textColor} fontSize="sm" fontWeight="700"> "{info.getValue()}" </Text>
         </Flex>
       ),
     }),
   ];
-
-  const filteredData = data ? data.filter(row => row.user === 'ETuAN') : [];
-
 
   const table = useReactTable({
     columns,
@@ -107,13 +126,6 @@ const ComplexTable = React.memo(() => {
     getSortedRowModel: getSortedRowModel(),
     debugTable: true,
   });
-
-  
-
-  if (!data) {
-    return <div>Loading...</div>;
-  }
-  
 
   return (
     <Card
@@ -134,69 +146,78 @@ const ComplexTable = React.memo(() => {
         <Menu />
       </Flex>
       <Box>
-        <Table variant="simple" color="gray.500" mb="24px" mt="12px">
-          <Thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <Tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <Th
-                      key={header.id}
-                      colSpan={header.colSpan}
-                      pe="10px"
-                      borderColor={borderColor}
-                      cursor="pointer"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      <Flex
-                        justifyContent="space-between"
-                        align="center"
-                        fontSize={{ sm: '10px', lg: '12px' }}
-                        color="gray.400"
+        {isLoading ? (
+          <Text p="25px">Loading Requests...</Text>
+        ) : filteredData.length === 0 ? (
+          <Text p="25px">No requests yet. Waiting for updates...</Text>
+        ) : (
+          <Table variant="simple" color="gray.500" mb="24px" mt="12px">
+            <Thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <Tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <Th
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        pe="10px"
+                        borderColor={borderColor}
+                        cursor="pointer"
+                        onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                        {{
-                          asc: '',
-                          desc: '',
-                        }[header.column.getIsSorted()] ?? null}
-                      </Flex>
-                    </Th>
-                  );
-                })}
-              </Tr>
-            ))}
-          </Thead>
-          <Tbody>
-            {table
-              .getRowModel()
-              .rows
-              .map((row) => {
-                return (
-                  <Tr key={row.id}>
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <Td
-                          key={cell.id}
-                          fontSize={{ sm: '14px' }}
-                          minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-                          borderColor="transparent"
+                        <Flex
+                          justifyContent="space-between"
+                          align="center"
+                          fontSize={{ sm: '10px', lg: '12px' }}
+                          color="gray.400"
                         >
                           {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
+                            header.column.columnDef.header,
+                            header.getContext(),
                           )}
-                        </Td>
-                      );
-                    })}
-                  </Tr>
-                );
-              })}
-          </Tbody>
-        </Table>
+                          {{
+                            asc: '',
+                            desc: '',
+                          }[header.column.getIsSorted()] ?? null}
+                        </Flex>
+                      </Th>
+                    );
+                  })}
+                </Tr>
+              ))}
+            </Thead>
+            <Tbody>
+              {table
+                .getRowModel()
+                .rows
+                .map((row) => {
+                  return (
+                    <Tr key={row.id}>
+                      {row.getVisibleCells().map((cell) => {
+                        return (
+                          <Td
+                            key={cell.id}
+                            fontSize={{ sm: '14px' }}
+                            minW={{ sm: '150px', md: '200px', lg: 'auto' }}
+                            borderColor="transparent"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </Td>
+                        );
+                      })}
+                    </Tr>
+                  );
+                })}
+            </Tbody>
+          </Table>
+        )}
       </Box>
+      <Text px="25px" fontSize="sm" color="gray.500">
+        Connection Status: {connectionStatus}
+      </Text>
     </Card>
   );
 });
