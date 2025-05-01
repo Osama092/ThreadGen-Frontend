@@ -16,10 +16,18 @@ export default function ApiManagement() {
     e.preventDefault();
     await generate(apiKey, threadName, ttsText);
     
-    // Create and set the iframe URL with the form parameters
-    const url = `http://localhost:5000/player/index.html?apiKey=${encodeURIComponent(apiKey)}&threadName=${encodeURIComponent(threadName)}&ttsText=${encodeURIComponent(ttsText)}`;
-    setIframeUrl(url);
-    setShowIframe(true);
+    // Create and set the iframe URL with the form parameters and a timestamp to prevent caching
+    const timestamp = new Date().getTime();
+    const url = `http://localhost:5000/player/index.html?apiKey=${encodeURIComponent(apiKey)}&threadName=${encodeURIComponent(threadName)}&ttsText=${encodeURIComponent(ttsText)}&_t=${timestamp}`;
+    
+    // Force iframe refresh by temporarily hiding it
+    setShowIframe(false);
+    
+    // Use setTimeout to ensure React has time to process the state change
+    setTimeout(() => {
+      setIframeUrl(url);
+      setShowIframe(true);
+    }, 100);
   };
 
   const brandColor = useColorModeValue("brand.500", "white");
@@ -105,6 +113,7 @@ export default function ApiManagement() {
                   height="360"
                   allow="autoplay; fullscreen"
                   allowFullScreen
+                  key={iframeUrl} 
                 ></iframe>
               </Box>
             )}

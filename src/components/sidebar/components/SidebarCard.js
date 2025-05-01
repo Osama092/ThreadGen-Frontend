@@ -15,13 +15,15 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import logoWhite from "assets/img/layout/logoWhite.png";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import PricingPage from "components/pricingPage/pricing";
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 
 export default function SidebarDocs() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isSubbed, subscriptionData, transactionData } = useSubscription();
+  const upgradeButtonRef = useRef(null);
+  const modalCloseButtonRef = useRef(null);
 
   useEffect(() => {
     if (isSubbed !== null) { // Check if it's not null (i.e., data has been fetched)
@@ -31,6 +33,17 @@ export default function SidebarDocs() {
       }
     }
   }, [isSubbed, onOpen]);
+
+  // Handle modal closure properly
+  const handleModalClose = () => {
+    onClose();
+    // Return focus to the upgrade button after modal closes
+    setTimeout(() => {
+      if (upgradeButtonRef.current) {
+        upgradeButtonRef.current.focus();
+      }
+    }, 0);
+  };
 
   const bgColor = "linear-gradient(135deg, #868CFF 0%, #4318FF 100%)";
   const borderColor = useColorModeValue("white", "navy.800");
@@ -88,6 +101,7 @@ export default function SidebarDocs() {
         </Text>
       </Flex>
       <Button
+        ref={upgradeButtonRef}
         bg='whiteAlpha.300'
         _hover={{ bg: "whiteAlpha.200" }}
         _active={{ bg: "whiteAlpha.100" }}
@@ -101,15 +115,21 @@ export default function SidebarDocs() {
         Upgrade to PRO
       </Button>
 
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal 
+        isOpen={isOpen} 
+        onClose={handleModalClose}
+        initialFocusRef={modalCloseButtonRef}
+        returnFocusOnClose={true}
+        autoFocus={true}
+      >
         <ModalOverlay />
         <ModalContent maxW="100%" width="70%">
-          <ModalCloseButton />
+          <ModalCloseButton ref={modalCloseButtonRef} />
           <ModalBody>
             <PricingPage />
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme='blue' mr={3} onClick={onClose}>
+            <Button colorScheme='blue' mr={3} onClick={handleModalClose}>
               Close
             </Button>
           </ModalFooter>

@@ -18,7 +18,9 @@ import SingleFlow from 'views/admin/singleFlow'
 import NFTMarketplace from 'views/admin/flowsManagement';
 import DataTables from 'views/admin/billsManagement';
 import ApiKeys from 'views/admin/apiManagement';
+import CampaignsManagement from 'views/admin/CampaignsManagement';
 import SignInPage from 'views/auth/';
+import SingleCampaign from 'views/admin/singleCampaign';
 // Auth Imports
 const routes = [
   {
@@ -51,6 +53,13 @@ const routes = [
     secondary: true,
   },
   {
+    name: 'Campaigns',
+    layout: '/admin',
+    path: '/campaigns-management',
+    icon: <Icon as={LockIcon} width="20px" height="20px" color="inherit" />,
+    component: <CampaignsManagement />,
+  },
+  {
     name: 'Keys',
     layout: '/admin',
     path: '/keys-management',
@@ -63,6 +72,13 @@ const routes = [
     icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
     path: '/bills-management',
     component: <DataTables />,
+  },
+  {
+    name: 'Single Campaign',
+    layout: '/admin',
+    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
+    path: '/single-campaign',
+    component: <SingleCampaign />,
   },
 
   {

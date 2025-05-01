@@ -47,9 +47,10 @@ const ComplexTable = React.memo(() => {
         const id = info.row.id;
         const isVisible = visibility[id];
 
-        // Ensure we don't try to show more characters than exist
-        const visibleLength = Math.min(5, apiKey.length);
-        const displayKey = isVisible ? apiKey : apiKey.slice(0, visibleLength) + '*'.repeat(Math.max(0, apiKey.length - visibleLength));
+        // Create a masked version with the same length as the original
+        const visiblePart = apiKey.slice(0, 5);
+        const hiddenPart = '*'.repeat(apiKey.length - 5);
+        const displayKey = isVisible ? apiKey : visiblePart + hiddenPart;
         
         const handleDoubleClick = () => {
           navigator.clipboard.writeText(apiKey).then(() => {
@@ -70,6 +71,8 @@ const ComplexTable = React.memo(() => {
               fontSize="md"
               fontWeight="700"
               onDoubleClick={handleDoubleClick}
+              fontFamily="monospace"
+              width="100%"
             >
               {displayKey}
             </Text>
@@ -79,6 +82,7 @@ const ComplexTable = React.memo(() => {
               ml={2}
               size="sm"
               aria-label={isVisible ? 'Hide API Key' : 'Show API Key'}
+              flexShrink={0}
             />
           </Flex>
         );
@@ -184,9 +188,9 @@ const ComplexTable = React.memo(() => {
         <Table variant="simple" color="gray.500" mb="24px" mt="12px">
           <Thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <Tr api_key={headerGroup.id}>
+              <Tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <Th api_key={header.id} colSpan={header.colSpan} pe="10px" borderColor={borderColor} cursor="pointer" onClick={header.column.getToggleSortingHandler()}>
+                  <Th key={header.id} colSpan={header.colSpan} pe="10px" borderColor={borderColor} cursor="pointer" onClick={header.column.getToggleSortingHandler()}>
                     <Flex justifyContent="space-between" align="center" fontSize={{ sm: '10px', lg: '12px' }} color="gray.400">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {{ asc: '', desc: '' }[header.column.getIsSorted()] ?? null}

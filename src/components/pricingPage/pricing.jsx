@@ -15,7 +15,7 @@ import {
 } from '@chakra-ui/react'
 import { FaCheckCircle } from 'react-icons/fa'
 import usePrices from 'hooks/paddle/usePrices'; // Import the custom hook
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { initializePaddle } from '@paddle/paddle-js';
 import { useUser } from '@clerk/clerk-react';
 import { useUpdateSubscription } from 'hooks/paddle/useSubUpdate';
@@ -45,7 +45,7 @@ const ThreeTierPricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const { prices, priceLoading, priceError } = usePrices();
   const [paddle, setPaddle] = useState();
-  //const data = useContext(SSEContext);
+  const checkoutButtonRef = useRef(null);
   const { user } = useUser();
 
   console.log("the product are", prices)
@@ -53,7 +53,6 @@ const ThreeTierPricing = () => {
   useEffect(() => {
     if (isSubbed !== null) { // Check if it's not null (i.e., data has been fetched)
       console.log('subscription data', subscriptionData)
-
     }
   });
 
@@ -73,6 +72,21 @@ const ThreeTierPricing = () => {
       .then((paddleInstance) => {
         if (paddleInstance) {
           setPaddle(paddleInstance);
+          
+          // Add event listeners for Paddle checkout events
+          paddleInstance.Checkout.on('open', () => {
+            console.log('Paddle checkout opened');
+          });
+          
+          paddleInstance.Checkout.on('close', () => {
+            console.log('Paddle checkout closed');
+            // Return focus to the button that opened the checkout
+            if (checkoutButtonRef.current) {
+              setTimeout(() => {
+                checkoutButtonRef.current.focus();
+              }, 0);
+            }
+          });
         } else {
           console.error('Paddle initialization failed');
         }
@@ -81,8 +95,6 @@ const ThreeTierPricing = () => {
         console.error('Error initializing Paddle:', error);
       });
   }, []);
-
-
 
   const updateSub = (priceId) => {
     const subscriptionId = subscriptionData.data.id; // Use subscriptionData.data.id as the subscriptionId
@@ -94,14 +106,28 @@ const ThreeTierPricing = () => {
     }
   };
 
-  const openCheckout = (items) => {
+  const openCheckout = (items, buttonRef) => {
     if (paddle) {
-      paddle.Checkout.open({
-        items: items,
-        customData: {
-          "customer_email": email,
-        }
-      });
+      // The button reference is already saved via the ref callback
+      // so we don't need to set it again
+      
+      // Close any existing modal or focus traps before opening Paddle checkout
+      document.activeElement.blur();
+      
+      // Small delay to ensure any existing focus traps are released
+      setTimeout(() => {
+        paddle.Checkout.open({
+          items: items,
+          customData: {
+            "customer_email": email,
+          },
+          settings: {
+            displayMode: 'overlay', // Use overlay mode to prevent focus issues
+            theme: 'light',
+            locale: 'en'
+          }
+        });
+      }, 100);
     } else {
       console.error('Paddle instance is not available');
     }
@@ -118,7 +144,6 @@ const ThreeTierPricing = () => {
     if (billingInterval) {
       acc[planName][billingInterval] = price;
     }
-
 
     return acc;
   }, {});
@@ -192,18 +217,26 @@ const ThreeTierPricing = () => {
                   </ListItem>
                 </List>
                 <Box w="80%" pt={7}>
-                  <Button colorScheme="teal" mt={3} onClick={() => {
-                    if (isSubscribedPlan(currentPlan.id)) {
-                      // Do nothing or handle cancellation if needed
-                    } else if (isDifferentPlan(currentPlan.id)) {
-                      updateSub(currentPlan.id);
-                    } else {
-                      const itemsList = [
-                        { priceId: currentPlan.id, quantity: 1 }, // Add Subscription Plan
-                      ];
-                      openCheckout(itemsList);
-                    }
-                  }}>
+                  <Button 
+                    ref={(el) => {
+                      // This approach avoids using useRef inside a loop
+                      if (el) checkoutButtonRef.current = el;
+                    }}
+                    colorScheme="teal" 
+                    mt={3} 
+                    onClick={() => {
+                      if (isSubscribedPlan(currentPlan.id)) {
+                        // Do nothing or handle cancellation if needed
+                      } else if (isDifferentPlan(currentPlan.id)) {
+                        updateSub(currentPlan.id);
+                      } else {
+                        const itemsList = [
+                          { priceId: currentPlan.id, quantity: 1 }, // Add Subscription Plan
+                        ];
+                        openCheckout(itemsList, { current: checkoutButtonRef.current });
+                      }
+                    }}
+                  >
                     {isSubscribedPlan(currentPlan.id) ? 'Cancel' : isDifferentPlan(currentPlan.id) ? 'Upgrade' : 'Start trial'}
                   </Button>
                 </Box>

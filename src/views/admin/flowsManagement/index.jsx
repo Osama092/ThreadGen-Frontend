@@ -644,6 +644,8 @@ export default function FlowManagement() {
               borderRadius="md" 
               position="relative"
               overflow="hidden"
+              border="2px solid"
+              borderColor={playerColor}
             >
               <Center position="absolute" top={0} left={0} right={0} bottom={0}>
                 <Box as="button" 
