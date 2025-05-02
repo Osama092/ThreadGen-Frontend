@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   useColorModeValue, 
   Box, 
@@ -18,10 +18,15 @@ import {
   Input,
   Select,
   useDisclosure,
-  VStack
+  VStack,
+  useToast,
+  Spinner
 } from '@chakra-ui/react';
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
+import FileUploadArea from 'views/admin/CampaignsManagement/components/Upload';
+import { useUserCampaigns, useAddCampaign } from 'hooks/useCampaign';
+import { useUser } from '@clerk/clerk-react';
+import useGetUserThreads from 'hooks/flows/useGetUserThreads';
+import useGetUserApiKeys from 'hooks/apiKeys/useGetUserApiKeys';
 
 // CampaignRow Component
 function CampaignRow(props) {
@@ -29,7 +34,7 @@ function CampaignRow(props) {
   const textColor = useColorModeValue("gray.700", "white");
   const bgColor = useColorModeValue("#F8F9FA", "gray.800");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
-
+  
   return (
     <Flex
       my="1rem"
@@ -63,103 +68,72 @@ function CampaignRow(props) {
   );
 }
 
-// File Upload Component
-function FileUploadArea({ onFileUpload }) {
-  const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const inputRef = useRef(null);
-  
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-  
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0]);
-    }
-  };
-  
-  const handleChange = (e) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      processFile(e.target.files[0]);
-    }
-  };
-  
-  const processFile = (file) => {
-    setSelectedFile(file);
-    onFileUpload(file);
-  };
-  
-  const handleClick = () => {
-    inputRef.current.click();
-  };
-  
-  const bgColor = useColorModeValue("gray.100", "gray.700");
-  const bgActiveColor = useColorModeValue("gray.200", "gray.600");
-  const borderColor = useColorModeValue("gray.300", "gray.500");
-  
-  return (
-    <Box
-      onDragEnter={handleDrag}
-      onDragLeave={handleDrag}
-      onDragOver={handleDrag}
-      onDrop={handleDrop}
-      onClick={handleClick}
-      bg={dragActive ? bgActiveColor : bgColor}
-      borderRadius="md"
-      border="2px dashed"
-      borderColor={borderColor}
-      p={6}
-      textAlign="center"
-      cursor="pointer"
-      transition="all 0.2s"
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".csv,.xlsx,.xls"
-        onChange={handleChange}
-        style={{ display: "none" }}
-      />
-      {selectedFile ? (
-        <VStack>
-          <Text>File selected: {selectedFile.name}</Text>
-          <Text fontSize="sm" color="green.500">Click or drag to change file</Text>
-        </VStack>
-      ) : (
-        <VStack>
-          <Text>Upload CSV or Excel file</Text>
-          <Text fontSize="sm">Click or drag and drop</Text>
-        </VStack>
-      )}
-    </Box>
-  );
-}
-
 // Add Campaign Modal Component
-function AddCampaignModal({ isOpen, onClose, onAddCampaign }) {
+function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
+  const { user } = useUser();
+  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     threadName: "",
     apiKey: "",
-    file: null
+    file: null,
+    user_id: user_id // Use the prop passed from parent
   });
-  
+
   const [fileData, setFileData] = useState(null);
-  const [availableThreads] = useState(["summer_2025", "reactivate_q2", "newproduct_2025", "holiday_2025", "custom_thread"]);
-  const [availableApiKeys] = useState(["API_KEY_1", "API_KEY_2", "API_KEY_3", "API_KEY_4"]);
+  const toast = useToast();
+  const { createCampaign, loading, error, success } = useAddCampaign();
+  
+  // Use hooks to fetch threads and API keys
+  const { threads, loading: threadsLoading, error: threadsError } = useGetUserThreads(user_id);
+  const { keys, loading: keysLoading, error: keysError } = useGetUserApiKeys(user_id);
+
+  // Handle API error notifications
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error creating campaign",
+        description: error,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+    
+    if (threadsError) {
+      toast({
+        title: "Error loading threads",
+        description: "Could not load available threads",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+    
+    if (keysError) {
+      toast({
+        title: "Error loading API keys",
+        description: "Could not load available API keys",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  }, [error, threadsError, keysError, toast]);
+  
+  // Handle API success notifications
+  useEffect(() => {
+    if (success) {
+      toast({
+        title: "Campaign created",
+        description: "Your campaign was successfully created",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  }, [success, toast]);
   
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -168,95 +142,35 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign }) {
   
   const handleFileUpload = (file) => {
     setFormData(prev => ({ ...prev, file }));
-    
-    // Process file content
-    if (file.name.endsWith('.csv')) {
-      Papa.parse(file, {
-        complete: (results) => {
-          // Check if "names" column exists
-          const hasNamesColumn = results.meta.fields && results.meta.fields.includes('names');
-          const namesData = hasNamesColumn 
-            ? results.data.map(row => row.names).filter(Boolean)
-            : [];
-            
-          setFileData({
-            type: 'csv',
-            records: results.data.length,
-            preview: results.data.slice(0, 3),
-            namesColumn: hasNamesColumn,
-            names: namesData
-          });
-        },
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: true
-      });
-    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const data = e.target.result;
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { header: "A" });
-        
-        // Find "names" column in the first row
-        const headerRow = json[0];
-        let namesColumnIndex = null;
-        
-        // Look for "names" column (case insensitive)
-        for (const key in headerRow) {
-          if (typeof headerRow[key] === 'string' && headerRow[key].toLowerCase() === 'names') {
-            namesColumnIndex = key;
-            break;
-          }
-        }
-        
-        // Extract names if the column exists
-        const namesData = [];
-        if (namesColumnIndex) {
-          for (let i = 1; i < json.length; i++) {
-            const row = json[i];
-            if (row[namesColumnIndex]) {
-              namesData.push(row[namesColumnIndex]);
-            }
-          }
-        }
-        
-        // Convert to standard format with headers for preview
-        const jsonWithHeaders = XLSX.utils.sheet_to_json(worksheet);
-        
-        setFileData({
-          type: 'excel',
-          records: jsonWithHeaders.length,
-          preview: jsonWithHeaders.slice(0, 3),
-          namesColumn: !!namesColumnIndex,
-          names: namesData
-        });
-      };
-      reader.readAsArrayBuffer(file);
-    }
   };
   
-  const handleSubmit = () => {
-    // Calculate total requests based on file data
-    const totalRequests = fileData ? fileData.records : 0;
-    
-    onAddCampaign({
-      ...formData,
-      totalRequests
-    });
-    
-    // Reset form and close modal
-    setFormData({
-      name: "",
-      description: "",
-      threadName: "",
-      apiKey: "",
-      file: null
-    });
-    setFileData(null);
-    onClose();
+  const handleDataProcessed = (data) => {
+    setFileData(data);
+    setFormData(prev => ({ ...prev, fileData: data }));
+  };
+  
+  const handleSubmit = async () => {
+    try {
+      // Calculate total requests based on file data
+      const totalRequests = fileData ? fileData.records : 0;
+      
+      const campaignData = {
+        ...formData,
+        totalRequests
+      };
+      
+      await createCampaign(campaignData, (newCampaign) => {
+        // Pass new campaign to parent component
+        onAddCampaign({
+          name: newCampaign.campaign_name,
+          description: newCampaign.campaign_description,
+          threadName: newCampaign.used_thread,
+          totalRequests: newCampaign.tts_text_list.length || 0
+        });
+      });
+    } catch (err) {
+      console.error("Error creating campaign:", err);
+    }
   };
   
   return (
@@ -289,55 +203,58 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign }) {
             
             <FormControl isRequired>
               <FormLabel>Thread Name</FormLabel>
-              <Select 
-                name="threadName" 
-                value={formData.threadName} 
-                onChange={handleInputChange} 
-                placeholder="Select thread"
-              >
-                {availableThreads.map((thread) => (
-                  <option key={thread} value={thread}>{thread}</option>
-                ))}
-              </Select>
+              {threadsLoading ? (
+                <Spinner size="sm" />
+              ) : (
+                <Select 
+                  name="threadName" 
+                  value={formData.threadName} 
+                  onChange={handleInputChange} 
+                  placeholder="Select thread"
+                  isDisabled={threadsLoading || threads.length === 0}
+                >
+                  {threads.map((thread) => (
+                    <option key={thread.thread_id} value={thread.thread_name}>{thread.thread_name}</option>
+                  ))}
+                </Select>
+              )}
+              {threads.length === 0 && !threadsLoading && (
+                <Text fontSize="sm" color="red.500" mt={1}>
+                  No threads available
+                </Text>
+              )}
             </FormControl>
             
             <FormControl isRequired>
               <FormLabel>API Key</FormLabel>
-              <Select 
-                name="apiKey" 
-                value={formData.apiKey} 
-                onChange={handleInputChange} 
-                placeholder="Select API key"
-              >
-                {availableApiKeys.map((key) => (
-                  <option key={key} value={key}>{key}</option>
-                ))}
-              </Select>
+              {keysLoading ? (
+                <Spinner size="sm" />
+              ) : (
+                <Select 
+                  name="apiKey" 
+                  value={formData.apiKey} 
+                  onChange={handleInputChange} 
+                  placeholder="Select API key"
+                  isDisabled={keysLoading || keys.length === 0}
+                >
+                  {keys.map((key) => (
+                    <option key={key.key_id} value={key.api_key}>{key.api_key}</option>
+                  ))}
+                </Select>
+              )}
+              {keys.length === 0 && !keysLoading && (
+                <Text fontSize="sm" color="red.500" mt={1}>
+                  No API keys available
+                </Text>
+              )}
             </FormControl>
             
             <FormControl isRequired>
               <FormLabel>Upload File</FormLabel>
-              <FileUploadArea onFileUpload={handleFileUpload} />
-              {fileData && (
-                <Box mt={2}>
-                  <Text fontSize="sm" color="green.500">
-                    {fileData.records} records found in the {fileData.type} file
-                  </Text>
-                  
-                  {fileData.namesColumn ? (
-                    <Box mt={3} maxH="200px" overflowY="auto" borderWidth="1px" borderRadius="md" p={3}>
-                      <Text fontWeight="bold" mb={2}>Names Column Found ({fileData.names.length} entries):</Text>
-                      {fileData.names.map((name, index) => (
-                        <Text key={index} fontSize="sm">{name}</Text>
-                      ))}
-                    </Box>
-                  ) : (
-                    <Text mt={2} fontSize="sm" color="orange.500">
-                      No column named "names" found in the file.
-                    </Text>
-                  )}
-                </Box>
-              )}
+              <FileUploadArea 
+                onFileUpload={handleFileUpload}
+                onDataProcessed={handleDataProcessed}
+              />
             </FormControl>
           </VStack>
         </ModalBody>
@@ -349,7 +266,17 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign }) {
           <Button 
             colorScheme="blue" 
             onClick={handleSubmit}
-            isDisabled={!formData.name || !formData.threadName || !formData.apiKey || !formData.file}
+            isDisabled={
+              !formData.name || 
+              !formData.threadName || 
+              !formData.apiKey || 
+              !formData.file || 
+              loading || 
+              threadsLoading || 
+              keysLoading
+            }
+            isLoading={loading}
+            loadingText="Creating..."
           >
             Create Campaign
           </Button>
@@ -362,40 +289,64 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign }) {
 // Main CampaignsManagement Component
 export default function CampaignsManagement() {  
   const textColor = useColorModeValue("secondaryGray.900", "white");
+  const bgColor = useColorModeValue("#F8F9FA", "gray.800");
+
   const tableTextColor = useColorModeValue("gray.700", "white");
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
+  const { user, isLoaded: isUserLoaded } = useUser();
+
+  // Local state for campaigns (combine backend data with any local additions)
+  const [campaigns, setCampaigns] = useState([]);
   
-  // Campaigns state
-  const [campaigns, setCampaigns] = useState([
-    {
-      name: "Summer Promotion",
-      description: "Seasonal discount campaign for summer products",
-      threadName: "summer_2025",
-      totalRequests: 5000
-    },
-    {
-      name: "Customer Reactivation",
-      description: "Campaign targeting inactive customers with special offers",
-      threadName: "reactivate_q2",
-      totalRequests: 3000
-    },
-    {
-      name: "Product Launch",
-      description: "New product announcement campaign for loyal customers",
-      threadName: "newproduct_2025",
-      totalRequests: 10000
-    },
-    {
-      name: "Holiday Special",
-      description: "End of year holiday promotion with gift bundles",
-      threadName: "holiday_2025",
-      totalRequests: 7500
+  // Use the custom hook to fetch campaigns, but only if user is loaded
+  const { campaigns: fetchedCampaigns, loading, error, refetch } = 
+    useUserCampaigns(isUserLoaded && user ? user.id : null);
+  
+  // Update local campaigns state when fetched data changes
+  useEffect(() => {
+    if (fetchedCampaigns && fetchedCampaigns.length > 0) {
+      // Transform the API data format to component format
+      const formattedCampaigns = fetchedCampaigns.map(campaign => ({
+        name: campaign.campaign_name,
+        description: campaign.campaign_description,
+        threadName: campaign.used_thread,
+        totalRequests: campaign.tts_text_list?.length || 0,
+        status: campaign.status
+      }));
+      
+      setCampaigns(formattedCampaigns);
     }
-  ]);
+  }, [fetchedCampaigns]);
+  
+  // Show error toast if API fetch fails
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error loading campaigns",
+        description: error,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }, [error, toast]);
   
   const handleAddCampaign = (newCampaign) => {
     setCampaigns([...campaigns, newCampaign]);
+    // Refetch from backend to ensure we have the latest data
+    refetch();
   };
+
+  // Show loading state if user data is not yet loaded
+  if (!isUserLoaded) {
+    return (
+      <Box pt={{ base: "180px", md: "80px", xl: "80px" }} textAlign="center">
+        <Spinner size="xl" color="brand.500" thickness="4px" />
+        <Text mt={4}>Loading user data...</Text>
+      </Box>
+    );
+  }
 
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
@@ -476,28 +427,48 @@ export default function CampaignsManagement() {
 
             {/* Campaign Data Rows */}
             <Flex direction="column">
-              {campaigns.map((campaign, index) => {
-                return (
-                  <CampaignRow
-                    key={index}
-                    name={campaign.name}
-                    description={campaign.description}
-                    threadName={campaign.threadName}
-                    totalRequests={campaign.totalRequests}
-                  />
-                );
-              })}
+              {loading ? (
+                <Flex justify="center" align="center" p={8}>
+                  <Spinner size="xl" color="brand.500" thickness="4px" />
+                </Flex>
+              ) : campaigns.length > 0 ? (
+                campaigns.map((campaign, index) => {
+                  return (
+                    <CampaignRow
+                      key={index}
+                      name={campaign.name}
+                      description={campaign.description}
+                      threadName={campaign.threadName}
+                      totalRequests={campaign.totalRequests}
+                    />
+                  );
+                })
+              ) : (
+                <Flex 
+                  justify="center" 
+                  align="center" 
+                  p={8} 
+                  borderRadius="md" 
+                  bg={bgColor} 
+                  color={textColor}
+                >
+                  <Text fontSize="lg">No campaigns found. Create your first campaign using the "Add Campaign" button.</Text>
+                </Flex>
+              )}
             </Flex>
           </Flex>
         </Flex>
       </Grid>
       
-      {/* Add Campaign Modal */}
-      <AddCampaignModal 
-        isOpen={isOpen} 
-        onClose={onClose} 
-        onAddCampaign={handleAddCampaign} 
-      />
+      {/* Add Campaign Modal - Only pass user_id if user is loaded */}
+      {user && (
+        <AddCampaignModal 
+          isOpen={isOpen} 
+          onClose={onClose} 
+          onAddCampaign={handleAddCampaign}
+          user_id={user.id}
+        />
+      )}
     </Box>
   );
 }
