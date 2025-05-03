@@ -77,9 +77,9 @@ const routes = [
     name: 'Single Campaign',
     layout: '/admin',
     icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
-    path: '/single-campaign/:campaignId', // Updated to include parameter
+    path: '/single-campaign/:campaignName',
     component: <SingleCampaign />,
-    secondary: true, 
+    hideInNav: true, 
   },
 
   {

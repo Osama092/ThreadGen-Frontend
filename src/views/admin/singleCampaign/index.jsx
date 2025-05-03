@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// SingleCampaign.jsx
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -20,87 +21,279 @@ import {
   Progress,
   Input,
   Textarea,
-  Button
+  Button,
+  Spinner,
+  Alert,
+  AlertIcon,
+  useToast,
 } from "@chakra-ui/react";
 import { EditIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
+import { useEditCampaign } from "hooks/useCampaign";
 
 export default function SingleCampaign() {
+  const { campaignName } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const toast = useToast();
+  
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const bgCard = useColorModeValue("white", "navy.700");
   const borderColor = useColorModeValue("secondaryGray.100", "whiteAlpha.100");
   
-  // Hardcoded campaign data with state for editing
-  const [campaignData, setCampaignData] = useState({
-    name: "Summer Marketing Campaign 2025",
-    description: "Digital marketing campaign targeting millennials and Gen Z for our new product line",
-    usedThread: "Marketing-Thread-2025-04",
-    status: "processing", // "pending", "processing", or "done"
-    completionPercentage: 60 // Hardcoded percentage of completion
-  });
-  
   // State for editing mode
   const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(campaignData.name);
-  const [editedDescription, setEditedDescription] = useState(campaignData.description);
+  const [editedName, setEditedName] = useState("");
+  const [editedDescription, setEditedDescription] = useState("");
+  
+  // State for campaign data - initialize from location state if available
+  const [campaign, setCampaign] = useState(location.state?.campaignData || null);
+  const [loading, setLoading] = useState(!location.state?.campaignData);
+  const [error, setError] = useState(null);
+  
+  // State for currently playing video
+  const [currentVideoUrl, setCurrentVideoUrl] = useState("");
+
+  // Get edit campaign hook
+  const { 
+    updateCampaign: editCampaignRequest, 
+    loading: editLoading, 
+    error: editError
+  } = useEditCampaign();
+
+  // If campaign data wasn't passed through navigation state, fetch it
+  useEffect(() => {
+    const fetchCampaign = async () => {
+      if (location.state?.campaignData) {
+        // We already have the data from navigation
+        return;
+      }
+      
+      if (!isUserLoaded || !user?.id || !campaignName) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        
+        // Only fetch if we don't have data from navigation
+        const response = await fetch(`/api/campaigns/${user.id}/${encodeURIComponent(campaignName)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch campaign: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        setCampaign(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching campaign:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCampaign();
+  }, [isUserLoaded, user, campaignName, location.state]);
+
+  // Set default video URL if campaign has ready items
+  useEffect(() => {
+    if (campaign?.tts_text_list && campaign.tts_text_list.length > 0) {
+      const readyItems = campaign.tts_text_list.filter(item => item.status === "ready" && item.video_url);
+      if (readyItems.length > 0) {
+        setCurrentVideoUrl(readyItems[0].video_url);
+      } else {
+        // Fallback to a default placeholder if no ready videos exist
+        setCurrentVideoUrl("https://www.w3schools.com/html/mov_bbb.mp4");
+      }
+    }
+  }, [campaign]);
+
+  // Handle row click - change video URL
+  const handleRowClick = (item, index) => {
+    // Only allow clicking on items with "ready" status
+    if (item.status !== "ready" || !item.video_url) {
+      return;
+    }
+    
+    setCurrentVideoUrl(item.video_url);
+    
+    toast({
+      title: "Video changed",
+      description: `Now playing item: "${item.text.substring(0, 30)}${item.text.length > 30 ? '...' : ''}"`,
+      status: "info",
+      duration: 2000,
+      isClosable: true,
+    });
+  };
+
+  // Update campaign data in the API using the hook
+  const handleUpdateCampaign = async () => {
+    if (!isUserLoaded || !user?.id || !campaign?._id) {
+      toast({
+        title: "Error",
+        description: "Missing campaign ID or user information",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      });
+      return false;
+    }
+
+    const campaignData = {
+      user_id: user.id,
+      campaign_name: editedName,
+      campaign_description: editedDescription
+    };
+
+    try {
+      const result = await editCampaignRequest(campaign._id, campaignData);
+      
+      if (result.success) {
+        // Update local campaign state with the edited values
+        setCampaign({
+          ...campaign,
+          campaign_name: editedName,
+          campaign_description: editedDescription
+        });
+        
+        return true;
+      } else {
+        throw new Error(result.error || "Failed to update campaign");
+      }
+    } catch (err) {
+      toast({
+        title: "Update failed",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      return false;
+    }
+  };
+
+  // Update form state when campaign data loads
+  useEffect(() => {
+    if (campaign) {
+      setEditedName(campaign.campaign_name);
+      setEditedDescription(campaign.campaign_description);
+    }
+  }, [campaign]);
 
   // Get status color
   const getStatusColor = (status) => {
-    switch(status) {
-      case "pending": return "red";
-      case "processing": return "yellow";
-      case "done": return "green";
+    switch (status) {
+      case "pending": return "yellow";
+      case "ready": return "green";
       default: return "gray";
     }
   };
   
-  // Hardcoded table data
-  const tableData = [
-    { name: "Email Sequence", status: "done" },
-    { name: "Social Media Posts", status: "pending" },
-    { name: "Influencer Outreach", status: "pending" },
-    { name: "Content Creation", status: "done" },
-    { name: "PPC Ads", status: "pending" },
-    { name: "Analytics Setup", status: "done" },
-    { name: "Landing Page", status: "done" },
-    { name: "SEO Optimization", status: "pending" },
-    { name: "Video Production", status: "pending" },
-    { name: "Market Research", status: "done" }
-  ];
-  
-  // Hardcoded video URL
-  const videoUrl = "https://www.youtube.com/embed/dQw4w9WgXcQ";
+  // Calculate completion percentage based on tts_text_list status
+  const calculateCompletionPercentage = () => {
+    if (!campaign?.tts_text_list || campaign.tts_text_list.length === 0) return 0;
+    
+    const readyItems = campaign.tts_text_list.filter(item => item.status === "ready").length;
+    return Math.round((readyItems / campaign.tts_text_list.length) * 100);
+  };
 
   // Handle edit click
-  const handleEditClick = () => {
+  const handleEditClick = async () => {
     if (isEditing) {
       // Save changes
-      setCampaignData({
-        ...campaignData,
-        name: editedName,
-        description: editedDescription
-      });
-      setIsEditing(false);
+      setLoading(true);
+      const success = await handleUpdateCampaign();
+      setLoading(false);
+      
+      if (success) {
+        toast({
+          title: "Campaign updated",
+          description: "Your changes have been saved successfully.",
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+        
+        setIsEditing(false);
+      }
     } else {
       // Enter edit mode
       setIsEditing(true);
-      setEditedName(campaignData.name);
-      setEditedDescription(campaignData.description);
     }
   };
 
   // Handle cancel edit
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setEditedName(campaignData.name);
-    setEditedDescription(campaignData.description);
+    // Reset to original values
+    if (campaign) {
+      setEditedName(campaign.campaign_name);
+      setEditedDescription(campaign.campaign_description);
+    }
   };
+
+  // Handle back navigation
+  const handleBackToList = () => {
+    navigate('/admin/campaigns-management');
+  };
+
+  // Loading state
+  if (loading || !isUserLoaded || editLoading) {
+    return (
+      <Box pt={{ base: "180px", md: "80px", xl: "80px" }} textAlign="center">
+        <Spinner size="xl" color="brand.500" thickness="4px" />
+        <Text mt={4}>Loading campaign data...</Text>
+      </Box>
+    );
+  }
+
+  // Error state
+  if ((error && !campaign) || editError) {
+    return (
+      <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
+        <Alert status="error" borderRadius="md">
+          <AlertIcon />
+          {error || editError}
+        </Alert>
+        <Button mt={4} onClick={handleBackToList}>
+          Back to Campaigns
+        </Button>
+      </Box>
+    );
+  }
+
+  // If no campaign data is found
+  if (!campaign) {
+    return (
+      <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
+        <Alert status="warning" borderRadius="md">
+          <AlertIcon />
+          Campaign not found
+        </Alert>
+        <Button mt={4} onClick={handleBackToList}>
+          Back to Campaigns
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
-      {/* Campaign Title */}
-      <Text color={textColor} fontSize="2xl" ms="24px" fontWeight="700" mb="20px">
-        Campaign Details
-      </Text>
+      {/* Back button and Campaign Title */}
+      <Flex justify="space-between" align="center" mb="20px">
+        <Button variant="outline" size="sm" onClick={handleBackToList}>
+          ← Back to Campaigns
+        </Button>
+        <Text color={textColor} fontSize="2xl" ms="24px" fontWeight="700">
+          Campaign Details
+        </Text>
+        <Box width="100px" /> {/* Spacer for alignment */}
+      </Flex>
       
       {/* Campaign Details Card */}
       <Card
@@ -119,6 +312,7 @@ export default function SingleCampaign() {
               size="sm"
               colorScheme="green"
               onClick={handleEditClick}
+              isLoading={editLoading}
             />
             <IconButton
               aria-label="Cancel edit"
@@ -126,6 +320,7 @@ export default function SingleCampaign() {
               size="sm"
               colorScheme="red"
               onClick={handleCancelEdit}
+              isDisabled={editLoading}
             />
           </Flex>
         ) : (
@@ -141,8 +336,8 @@ export default function SingleCampaign() {
             onClick={handleEditClick}
           />
         )}
-        <Badge 
-          colorScheme={getStatusColor(campaignData.status)}
+        <Badge
+          colorScheme={getStatusColor(campaign.status)}
           variant="solid"
           px="3"
           py="1"
@@ -153,7 +348,7 @@ export default function SingleCampaign() {
           top="50%"
           transform="translateY(-50%)"
         >
-          {campaignData.status.charAt(0).toUpperCase() + campaignData.status.slice(1)}
+          {campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)}
         </Badge>
         <CardBody>
           <Flex direction="column" w="100%" pr="70px">
@@ -168,7 +363,7 @@ export default function SingleCampaign() {
               />
             ) : (
               <Text color={textColor} fontSize="xl" fontWeight="700" mb="10px">
-                {campaignData.name}
+                {campaign.campaign_name}
               </Text>
             )}
             
@@ -184,13 +379,13 @@ export default function SingleCampaign() {
               />
             ) : (
               <Text color="gray.500" mb="10px">
-                {campaignData.description}
+                {campaign.campaign_description}
               </Text>
             )}
             
             <Text color="gray.600" fontSize="sm" mb="2">
               <Text as="span" fontWeight="600">Thread: </Text>
-              {campaignData.usedThread}
+              {campaign.used_thread}
             </Text>
             
             <Flex align="center" mt="2" mb="2">
@@ -198,12 +393,12 @@ export default function SingleCampaign() {
                 Completion:
               </Text>
               <Text color="gray.600" fontSize="sm" mr="3">
-                {campaignData.completionPercentage}%
+                {calculateCompletionPercentage()}%
               </Text>
-              <Progress 
-                value={campaignData.completionPercentage} 
-                size="sm" 
-                colorScheme={campaignData.completionPercentage === 100 ? "green" : "blue"} 
+              <Progress
+                value={calculateCompletionPercentage()}
+                size="sm"
+                colorScheme={calculateCompletionPercentage() === 100 ? "green" : "blue"}
                 borderRadius="md"
                 flex="1"
               />
@@ -212,36 +407,80 @@ export default function SingleCampaign() {
         </CardBody>
       </Card>
       
-      {/* Two Columns: Table and Video */}
+      {/* Two Columns: TTS Items and Video */}
       <Grid
         templateColumns={{ base: "1fr", md: "30% 70%" }}
         gap="20px"
         mb="20px"
       >
-        {/* Left Column - Table */}
+        {/* Left Column - TTS Text List - Fixed height to match video card */}
         <Card
           bg={bgCard}
           border="1px solid"
           borderColor={borderColor}
           borderRadius="20px"
           p="0"
-          h="100%"
+          display="flex"
+          flexDirection="column"
         >
-          <CardBody p="0" overflow="auto" maxH="400px">
-            <TableContainer>
+          <CardBody p="4">
+            <Flex justify="space-between" align="center" mb="15px">
+              <Text color={textColor} fontSize="lg" fontWeight="700">
+                Campaign Items
+              </Text>
+              
+              <Text color="gray.500" fontSize="sm">
+                {campaign.tts_text_list?.length || 0} items
+              </Text>
+            </Flex>
+            
+            <TableContainer 
+              maxH="450px" 
+              overflowY="auto"
+              css={{
+                '&::-webkit-scrollbar': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: '#F7FAFC',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#CBD5E0',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  background: '#A0AEC0',
+                },
+              }}
+            >
               <Table variant="simple" size="sm">
-                <Thead bg="gray.50">
+                <Thead bg="gray.50" position="sticky" top="0" zIndex="1">
                   <Tr>
-                    <Th>Name</Th>
-                    <Th>Status</Th>
+                    <Th width="70%">Text</Th>
+                    <Th width="30%">Status</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {tableData.map((item, index) => (
-                    <Tr key={index}>
-                      <Td>{item.name}</Td>
+                  {campaign.tts_text_list?.map((item, index) => (
+                    <Tr 
+                      key={index}
+                      onClick={() => handleRowClick(item, index)}
+                      cursor={item.status === "ready" ? "pointer" : "not-allowed"}
+                      _hover={{ bg: item.status === "ready" ? "gray.50" : "inherit" }}
+                      opacity={item.status === "ready" ? 1 : 0.6}
+                      transition="background-color 0.2s, opacity 0.2s"
+                    >
+                      <Td
+                        height="40px"
+                        overflow="hidden"
+                        textOverflow="ellipsis"
+                        whiteSpace="nowrap"
+                        maxW="200px"
+                      >
+                        {item.text}
+                      </Td>
                       <Td>
-                        <Badge 
+                        <Badge
                           colorScheme={getStatusColor(item.status)}
                           variant="subtle"
                           px="2"
@@ -268,16 +507,34 @@ export default function SingleCampaign() {
           overflow="hidden"
         >
           <CardBody p="4">
-            <AspectRatio ratio={16/9}>
-              <iframe
-                title="campaign video"
-                src={videoUrl}
-                allowFullScreen
-              />
-            </AspectRatio>
+            <Flex direction="column" h="100%">
+              <Text color={textColor} fontSize="lg" fontWeight="700" mb="15px">
+                Preview
+              </Text>
+              <AspectRatio ratio={16 / 9}>
+                {currentVideoUrl ? (
+                  <video 
+                    controls
+                    key={currentVideoUrl} // Force re-render when URL changes
+                    src={currentVideoUrl}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <Box 
+                    display="flex" 
+                    alignItems="center" 
+                    justifyContent="center" 
+                    bg="gray.100"
+                  >
+                    <Text color="gray.500">No video available</Text>
+                  </Box>
+                )}
+              </AspectRatio>
+            </Flex>
           </CardBody>
         </Card>
       </Grid>
     </Box>
-  );
+  )
 }

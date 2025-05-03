@@ -12,6 +12,24 @@ import {
   ListIcon,
   Button,
   Switch,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
+  useDisclosure,
+  Radio,
+  RadioGroup,
+  Stack,
+  Alert,
+  AlertIcon,
+  Divider
 } from '@chakra-ui/react'
 import { FaCheckCircle } from 'react-icons/fa'
 import usePrices from 'hooks/paddle/usePrices'; // Import the custom hook
@@ -38,6 +56,107 @@ const PriceWrapper = ({ children }) => {
   )
 }
 
+const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price }) => {
+  const [reason, setReason] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleSubmit = () => {
+    setIsSubmitting(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      handleAction();
+      setIsSubmitting(false);
+      setIsSuccess(true);
+      
+      // Close the modal after showing success message
+      setTimeout(() => {
+        onClose();
+        setIsSuccess(false);
+      }, 2000);
+    }, 1000);
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
+      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
+      <ModalContent borderRadius="xl" shadow="xl">
+        <ModalHeader borderBottomWidth="1px" pb={3}>
+          {type === 'cancel' ? 'Cancel Your Subscription' : 'Upgrade Your Plan'}
+        </ModalHeader>
+        <ModalCloseButton />
+        
+        <ModalBody py={6}>
+          {isSuccess ? (
+            <Alert status="success" borderRadius="md">
+              <AlertIcon />
+              {type === 'cancel' 
+                ? 'Your subscription has been canceled successfully.' 
+                : `Your subscription has been upgraded to ${planName} successfully.`}
+            </Alert>
+          ) : (
+            <>
+              <Text mb={4}>
+                {type === 'cancel' 
+                  ? 'We\'re sorry to see you go. Please let us know why you\'re canceling:' 
+                  : `You're about to upgrade to the ${planName} plan at ${price}.`}
+              </Text>
+              
+              {type === 'cancel' && (
+                <FormControl mb={4}>
+                  <FormLabel>Reason for cancellation</FormLabel>
+                  <RadioGroup onChange={setReason} value={reason}>
+                    <Stack spacing={2}>
+                      <Radio value="too_expensive">Too expensive</Radio>
+                      <Radio value="not_enough_features">Not enough features</Radio>
+                      <Radio value="switching_to_competitor">Switching to a competitor</Radio>
+                      <Radio value="temporary_pause">Just taking a break</Radio>
+                      <Radio value="other">Other</Radio>
+                    </Stack>
+                  </RadioGroup>
+                </FormControl>
+              )}
+              
+              <FormControl>
+                <FormLabel>
+                  {type === 'cancel' ? 'Additional feedback (optional)' : 'Any specific features you\'re looking forward to?'}
+                </FormLabel>
+                <Textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder={type === 'cancel' 
+                    ? 'Tell us how we can improve...' 
+                    : 'Share what you\'re most excited about...'
+                  }
+                  size="md"
+                  resize="vertical"
+                />
+              </FormControl>
+            </>
+          )}
+        </ModalBody>
+
+        {!isSuccess && (
+          <ModalFooter borderTopWidth="1px" pt={3}>
+            <Button variant="outline" mr={3} onClick={onClose}>
+              {type === 'cancel' ? 'Keep Subscription' : 'Cancel'}
+            </Button>
+            <Button 
+              colorScheme={type === 'cancel' ? 'red' : 'teal'} 
+              onClick={handleSubmit}
+              isLoading={isSubmitting}
+            >
+              {type === 'cancel' ? 'Confirm Cancellation' : 'Confirm Upgrade'}
+            </Button>
+          </ModalFooter>
+        )}
+      </ModalContent>
+    </Modal>
+  );
+};
+
 const ThreeTierPricing = () => {
   const { loading, error, data, handleUpdateSubscription } = useUpdateSubscription();
   const { isSubbed, subscriptionData, transactionData } = useSubscription();
@@ -47,6 +166,11 @@ const ThreeTierPricing = () => {
   const [paddle, setPaddle] = useState();
   const checkoutButtonRef = useRef(null);
   const { user } = useUser();
+  
+  // Modal control
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [modalType, setModalType] = useState('cancel');
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   console.log("the product are", prices)
 
@@ -156,6 +280,22 @@ const ThreeTierPricing = () => {
     return subscriptionData && subscriptionData.data && subscriptionData.data.items && subscriptionData.data.items[0] && subscriptionData.data.items[0].price.id !== planId;
   };
 
+  const handlePlanAction = (plan, actionType) => {
+    setSelectedPlan(plan);
+    setModalType(actionType);
+    onOpen();
+  };
+
+  const executeAction = () => {
+    if (modalType === 'upgrade' && selectedPlan) {
+      updateSub(selectedPlan.id);
+    } else if (modalType === 'cancel' && subscriptionData && subscriptionData.data) {
+      // Implement cancellation logic here
+      console.log('Cancelling subscription:', subscriptionData.data.id);
+      // You would typically call an API endpoint to cancel the subscription
+    }
+  };
+
   return (
     <Box py={12}>
       <VStack spacing={2} textAlign="center">
@@ -179,6 +319,8 @@ const ThreeTierPricing = () => {
           const currentPlan = isAnnual ? groupedPlans[planName].year : groupedPlans[planName].month;
 
           if (!currentPlan) return null;
+          
+          const priceDisplay = `$${(currentPlan.unit_price.amount / 100).toFixed(2)} ${currentPlan.unit_price.currency_code}/${isAnnual ? 'year' : 'month'}`;
           
           return (
             <PriceWrapper key={currentPlan.id}>
@@ -222,13 +364,16 @@ const ThreeTierPricing = () => {
                       // This approach avoids using useRef inside a loop
                       if (el) checkoutButtonRef.current = el;
                     }}
-                    colorScheme="teal" 
+                    colorScheme={isSubscribedPlan(currentPlan.id) ? "red" : "teal"} 
+                    variant={isSubscribedPlan(currentPlan.id) ? "outline" : "solid"}
                     mt={3} 
                     onClick={() => {
                       if (isSubscribedPlan(currentPlan.id)) {
-                        // Do nothing or handle cancellation if needed
+                        // Open cancellation modal
+                        handlePlanAction(currentPlan, 'cancel');
                       } else if (isDifferentPlan(currentPlan.id)) {
-                        updateSub(currentPlan.id);
+                        // Open upgrade modal
+                        handlePlanAction(currentPlan, 'upgrade');
                       } else {
                         const itemsList = [
                           { priceId: currentPlan.id, quantity: 1 }, // Add Subscription Plan
@@ -245,6 +390,16 @@ const ThreeTierPricing = () => {
           );
         })}
       </Flex>
+      
+      {/* Feedback Modal */}
+      <FeedbackModal 
+        isOpen={isOpen} 
+        onClose={onClose} 
+        type={modalType}
+        handleAction={executeAction}
+        planName={selectedPlan?.name || ''}
+        price={selectedPlan ? `$${(selectedPlan.unit_price.amount / 100).toFixed(2)} ${selectedPlan.unit_price.currency_code}/${selectedPlan.billing_cycle.interval}` : ''}
+      />
     </Box>
   )
 }

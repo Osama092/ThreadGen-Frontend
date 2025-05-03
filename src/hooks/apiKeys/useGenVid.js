@@ -17,8 +17,10 @@ const useGenerateVideo = () => {
       const data = await generateVideo(apiKey, threadName, ttsText);
       setVideoUrl(data.video);
       setConfigPath(data.configPath);
+      return data; // Return the data so it's available in the calling function
     } catch (err) {
       setError(err);
+      return null;
     } finally {
       setLoading(false);
     }

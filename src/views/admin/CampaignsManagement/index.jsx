@@ -22,6 +22,7 @@ import {
   useToast,
   Spinner
 } from '@chakra-ui/react';
+import { useNavigate } from "react-router-dom";
 import FileUploadArea from 'views/admin/CampaignsManagement/components/Upload';
 import { useUserCampaigns, useAddCampaign } from 'hooks/useCampaign';
 import { useUser } from '@clerk/clerk-react';
@@ -30,10 +31,11 @@ import useGetUserApiKeys from 'hooks/apiKeys/useGetUserApiKeys';
 
 // CampaignRow Component
 function CampaignRow(props) {
-  const { name, description, threadName, totalRequests } = props;
+  const { name, description, threadName, totalRequests, onClick } = props;
   const textColor = useColorModeValue("gray.700", "white");
   const bgColor = useColorModeValue("#F8F9FA", "gray.800");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
+  const hoverBgColor = useColorModeValue("gray.100", "gray.700");
   
   return (
     <Flex
@@ -45,6 +47,14 @@ function CampaignRow(props) {
       boxShadow="0px 2px 5.5px rgba(0, 0, 0, 0.02)"
       border="1px solid"
       borderColor={borderColor}
+      _hover={{
+        bg: hoverBgColor,
+        cursor: "pointer",
+        boxShadow: "lg",
+        transition: "all 0.3s ease"
+      }}
+      onClick={onClick}
+      transition="all 0.2s ease"
     >
       <Flex direction="column" width="50%">
         <Text color={textColor} fontSize="md" fontWeight="700">
@@ -165,8 +175,11 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
           name: newCampaign.campaign_name,
           description: newCampaign.campaign_description,
           threadName: newCampaign.used_thread,
-          totalRequests: newCampaign.tts_text_list.length || 0
+          totalRequests: newCampaign.tts_text_list.length || 0,
+          status: newCampaign.status || "pending",
+          tts_text_list: newCampaign.tts_text_list || []
         });
+        onClose();
       });
     } catch (err) {
       console.error("Error creating campaign:", err);
@@ -213,8 +226,10 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
                   placeholder="Select thread"
                   isDisabled={threadsLoading || threads.length === 0}
                 >
-                  {threads.map((thread) => (
-                    <option key={thread.thread_id} value={thread.thread_name}>{thread.thread_name}</option>
+                  {threads.filter((thread) => thread.status === "ready").map((thread) => (
+                      <option key={thread.thread_id} value={thread.thread_name}>
+                        {thread.thread_name}
+                      </option>
                   ))}
                 </Select>
               )}
@@ -290,11 +305,11 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
 export default function CampaignsManagement() {  
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const bgColor = useColorModeValue("#F8F9FA", "gray.800");
-
   const tableTextColor = useColorModeValue("gray.700", "white");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
   const { user, isLoaded: isUserLoaded } = useUser();
+  const navigate = useNavigate();
 
   // Local state for campaigns (combine backend data with any local additions)
   const [campaigns, setCampaigns] = useState([]);
@@ -306,13 +321,16 @@ export default function CampaignsManagement() {
   // Update local campaigns state when fetched data changes
   useEffect(() => {
     if (fetchedCampaigns && fetchedCampaigns.length > 0) {
-      // Transform the API data format to component format
+      // Transform the API data format to component format but preserve all original data
       const formattedCampaigns = fetchedCampaigns.map(campaign => ({
         name: campaign.campaign_name,
         description: campaign.campaign_description,
         threadName: campaign.used_thread,
         totalRequests: campaign.tts_text_list?.length || 0,
-        status: campaign.status
+        status: campaign.status || "pending",
+        id: campaign.campaign_id,
+        // Store the complete original data for passing to single campaign view
+        raw: campaign
       }));
       
       setCampaigns(formattedCampaigns);
@@ -331,6 +349,22 @@ export default function CampaignsManagement() {
       });
     }
   }, [error, toast]);
+
+  // Navigate to campaign details page with campaign data
+  const handleCampaignClick = (campaignName) => {
+    // Find the clicked campaign in our local state
+    const campaign = campaigns.find(c => c.name === campaignName);
+    
+    if (campaign) {
+      // URL-encode the campaign name to handle special characters in the URL
+      const encodedName = encodeURIComponent(campaignName);
+      
+      // Navigate with state containing the full campaign data
+      navigate(`/admin/single-campaign/${encodedName}`, { 
+        state: { campaignData: campaign.raw }
+      });
+    }
+  };
   
   const handleAddCampaign = (newCampaign) => {
     setCampaigns([...campaigns, newCampaign]);
@@ -440,6 +474,7 @@ export default function CampaignsManagement() {
                       description={campaign.description}
                       threadName={campaign.threadName}
                       totalRequests={campaign.totalRequests}
+                      onClick={() => handleCampaignClick(campaign.name)}
                     />
                   );
                 })
