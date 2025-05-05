@@ -5,8 +5,8 @@ export const columnsDataComplex = [
     accessor: "id",
   },
   {
-    Header: "FLOW",
-    accessor: "flow",
+    Header: "Thread",
+    accessor: "thread",
   },
   {
     Header: "SENT_DATE",

@@ -23,7 +23,6 @@ export default function SidebarDocs() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isSubbed, subscriptionData, transactionData } = useSubscription();
   const upgradeButtonRef = useRef(null);
-  const modalCloseButtonRef = useRef(null);
 
   useEffect(() => {
     if (isSubbed !== null) { // Check if it's not null (i.e., data has been fetched)
@@ -118,21 +117,17 @@ export default function SidebarDocs() {
       <Modal 
         isOpen={isOpen} 
         onClose={handleModalClose}
-        initialFocusRef={modalCloseButtonRef}
+        closeOnOverlayClick={false}
+        closeOnEsc={isSubbed} // Only allow ESC key if user is subscribed
         returnFocusOnClose={true}
         autoFocus={true}
       >
         <ModalOverlay />
         <ModalContent maxW="100%" width="70%">
-          <ModalCloseButton ref={modalCloseButtonRef} />
+          {isSubbed && <ModalCloseButton />} {/* Only show close button if user is subscribed */}
           <ModalBody>
             <PricingPage />
           </ModalBody>
-          <ModalFooter>
-            <Button colorScheme='blue' mr={3} onClick={handleModalClose}>
-              Close
-            </Button>
-          </ModalFooter>
         </ModalContent>
       </Modal>
     </Flex>

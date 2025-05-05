@@ -38,7 +38,7 @@ export default function Footer() {
         {" "}
         &copy; {1900 + new Date().getYear()}
         <Text as='span' fontWeight='500' ms='4px'>
-          Flow Gen . All Rights Reserved.
+          Thread Gen . All Rights Reserved.
 
         </Text>
       </Text>

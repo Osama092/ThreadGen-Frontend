@@ -237,10 +237,6 @@ export default function SingleCampaign() {
     }
   };
 
-  // Handle back navigation
-  const handleBackToList = () => {
-    navigate('/admin/campaigns-management');
-  };
 
   // Loading state
   if (loading || !isUserLoaded || editLoading) {
@@ -252,47 +248,15 @@ export default function SingleCampaign() {
     );
   }
 
-  // Error state
-  if ((error && !campaign) || editError) {
-    return (
-      <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
-        <Alert status="error" borderRadius="md">
-          <AlertIcon />
-          {error || editError}
-        </Alert>
-        <Button mt={4} onClick={handleBackToList}>
-          Back to Campaigns
-        </Button>
-      </Box>
-    );
-  }
 
-  // If no campaign data is found
-  if (!campaign) {
-    return (
-      <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
-        <Alert status="warning" borderRadius="md">
-          <AlertIcon />
-          Campaign not found
-        </Alert>
-        <Button mt={4} onClick={handleBackToList}>
-          Back to Campaigns
-        </Button>
-      </Box>
-    );
-  }
 
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
       {/* Back button and Campaign Title */}
       <Flex justify="space-between" align="center" mb="20px">
-        <Button variant="outline" size="sm" onClick={handleBackToList}>
-          ← Back to Campaigns
-        </Button>
         <Text color={textColor} fontSize="2xl" ms="24px" fontWeight="700">
           Campaign Details
         </Text>
-        <Box width="100px" /> {/* Spacer for alignment */}
       </Flex>
       
       {/* Campaign Details Card */}

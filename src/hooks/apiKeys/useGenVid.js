@@ -10,15 +10,18 @@ const useGenerateVideo = () => {
   const generate = async (apiKey, threadName, ttsText) => {
     setLoading(true);
     setError(null);
-    setVideoUrl(null);
-    setConfigPath(null);
-
+    
     try {
       const data = await generateVideo(apiKey, threadName, ttsText);
+      
+      // Update state with the result
       setVideoUrl(data.video);
       setConfigPath(data.configPath);
-      return data; // Return the data so it's available in the calling function
+      
+      // Return the actual response data
+      return data;
     } catch (err) {
+      console.error("Video generation error:", err);
       setError(err);
       return null;
     } finally {

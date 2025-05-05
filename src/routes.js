@@ -8,7 +8,7 @@ import {
   MdLock,
   MdOutlineShoppingCart,
 } from 'react-icons/md';
-import { MdSettings } from 'react-icons/md';
+import { MdSettings, MdCampaign } from 'react-icons/md';
 import { LockIcon } from '@chakra-ui/icons';
 import ProtectedRoute from 'protection';
 
@@ -35,9 +35,9 @@ const routes = [
   
 
   {
-    name: 'Flows',
+    name: 'Threads',
     layout: '/admin',
-    path: '/flows-management',
+    path: '/threads-management',
     icon: (
       <Icon
         as={MdSettings}
@@ -52,12 +52,13 @@ const routes = [
     </ProtectedRoute>,
     secondary: true,
   },
-  {
-    name: 'Campaigns',
-    layout: '/admin',
-    path: '/campaigns-management',
-    icon: <Icon as={LockIcon} width="20px" height="20px" color="inherit" />,
-    component: <CampaignsManagement />,
+  
+  { 
+    name: 'Campaigns', 
+    layout: '/admin', 
+    path: '/campaigns-management', 
+    icon: <Icon as={MdCampaign} width="20px" height="20px" color="inherit" />, 
+    component: <CampaignsManagement />, 
   },
   {
     name: 'Keys',

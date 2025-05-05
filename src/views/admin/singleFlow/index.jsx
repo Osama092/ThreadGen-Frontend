@@ -30,7 +30,7 @@ export default function SingleFlow() {
   useEffect(() => {
     if (!thread) {
       // Redirect to flows management if no thread data
-      navigate('/admin/flowsManagement');
+      navigate('/admin/threads-Management');
       return;
     }
     

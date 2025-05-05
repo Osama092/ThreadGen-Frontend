@@ -45,7 +45,7 @@ const ComplexTable = React.memo(( {thread_name}) => {
       ),
     }),
     columnHelper.accessor('thread_name', {
-      id: 'flow',
+      id: 'thread',
       header: () => (
         <Text
           justifyContent="space-between"
@@ -53,7 +53,7 @@ const ComplexTable = React.memo(( {thread_name}) => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          FLOW
+          Thread
         </Text>
       ),
       cell: (info) => (

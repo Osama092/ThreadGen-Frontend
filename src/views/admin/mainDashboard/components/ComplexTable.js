@@ -160,7 +160,6 @@ export default function ComplexTable() {
         >
           Requests
         </Text>
-        <Menu />
       </Flex>
       <Box>
         {isLoading ? (

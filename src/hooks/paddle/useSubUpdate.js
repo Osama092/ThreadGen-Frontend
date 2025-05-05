@@ -12,8 +12,10 @@ export const useUpdateSubscription = () => {
     try {
       const response = await updateSubscription(subscriptionId, priceId);
       setData(response);
+      return response; // Return the response to make the function return a Promise
     } catch (err) {
       setError(err.message);
+      throw err; // Re-throw the error to allow caller to catch it
     } finally {
       setLoading(false);
     }

@@ -408,7 +408,7 @@ export default function CampaignsManagement() {
               <Flex me="24px">
                 <Box
                   as="button"
-                  bg="brand.500"
+                  bg="blue.500"
                   color="white"
                   py="10px"
                   px="20px"

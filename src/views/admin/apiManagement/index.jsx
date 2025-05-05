@@ -1,28 +1,37 @@
-import { Box, Button, Grid, Flex, SimpleGrid, useColorModeValue, Card, CardBody, VStack, Input, FormLabel, FormControl, CardHeader, Text, Icon } from "@chakra-ui/react";
+import { Box, Button, Spinner, Grid, Flex, SimpleGrid, useColorModeValue, Card, CardBody, VStack, Input, FormLabel, FormControl, CardHeader, Text, Icon, Select } from "@chakra-ui/react";
 import { MdVideoLibrary } from "react-icons/md";
 import React, { useState } from "react";
 import ComplexTable from "views/admin/apiManagement/components/ComplexTable";
 import useGenerateVideo from "hooks/apiKeys/useGenVid";
-
+import useGetUserThreads from 'hooks/flows/useGetUserThreads';
+import { useUser } from "@clerk/clerk-react"
 export default function ApiManagement() {
   const [apiKey, setApiKey] = useState('');
   const [threadName, setThreadName] = useState('');
   const [ttsText, setTtsText] = useState('');
   const [iframeUrl, setIframeUrl] = useState('');
   const [showIframe, setShowIframe] = useState(false);
-  const { generate, loading, error, videoUrl, configPath } = useGenerateVideo();
+  const { generate, loading, error, videoUrl } = useGenerateVideo();
+  const { user } = useUser();
+  
+  const { threads, loading: threadsLoading, error: threadsError } = useGetUserThreads(user.id);
+
+  const handleInputChange = (e) => {
+    setThreadName(e.target.value); // Update threadName directly
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Generate the video first
+    // Generate the video and get the result directly
     const result = await generate(apiKey, threadName, ttsText);
     console.log("Result from generate:", result);
-    // Only proceed if we have a video URL
-    if (videoUrl) {
-      // Create and set the iframe URL with the form parameters and the video URL
+    
+    // Use the result from the generate function instead of relying on the state
+    if (result && result.video) {
+      // Create and set the iframe URL with the form parameters and the video URL from the result
       const timestamp = new Date().getTime();
-      const url = `http://localhost:5000/player/index.html?apiKey=${encodeURIComponent(apiKey)}&threadName=${encodeURIComponent(threadName)}&ttsText=${encodeURIComponent(ttsText)}&video=${encodeURIComponent(videoUrl)}&_t=${timestamp}`;
+      const url = `http://localhost:5000/player/index.html?apiKey=${encodeURIComponent(apiKey)}&threadName=${encodeURIComponent(threadName)}&ttsText=${encodeURIComponent(ttsText)}&video=${encodeURIComponent(result.video)}&_t=${timestamp}`;
       
       // Force iframe refresh by temporarily hiding it
       setShowIframe(false);
@@ -78,15 +87,43 @@ export default function ApiManagement() {
             <CardBody>
               <Box>
                 <VStack spacing={4} as="form" onSubmit={handleSubmit}>
-                  <FormControl>
+                  
+                  <FormControl isRequired>
+                    <FormLabel htmlFor='threadName'>Thread Name</FormLabel>
+
+                    {
+                      threadsLoading ? (
+                        <Spinner size="sm" />
+
+                      ) : (
+                          <Select
+                            name="threadName"
+                            value={threadName}
+                            onChange={handleInputChange}
+                            placeholder="Select Thread"
+                            isDisabled={threadsLoading || threads.length === 0}
+                          >
+                            {threads.filter((thread) => thread.status === "ready").map((thread) => (
+                              <option key={thread.thread_id} value={thread.thread_name}>
+                                {thread.thread_name}
+                              </option>
+                              ))}
+                          </Select>
+                      )
+                    }
+                    {threads.length === 0 && !threadsLoading && (
+                      <Text fontSize="sm" color="red.500" mt={1}>
+                        No Threads available
+                      </Text>
+                    )}
+                     
+                  </FormControl>
+                  <FormControl isRequired>
                     <FormLabel htmlFor='apiKey'>API key</FormLabel>
                     <Input id='apiKey' type='text' value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
                   </FormControl>
                   <FormControl>
-                    <FormLabel htmlFor='threadName'>Thread Name</FormLabel>
-                    <Input id='threadName' type='text' value={threadName} onChange={(e) => setThreadName(e.target.value)} />
-                  </FormControl>
-                  <FormControl>
+
                     <FormLabel htmlFor='ttsText'>TTS Text</FormLabel>
                     <Input id='ttsText' type='text' value={ttsText} onChange={(e) => setTtsText(e.target.value)} />
                   </FormControl>

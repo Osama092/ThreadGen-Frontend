@@ -3,7 +3,6 @@ import { Box, Button, Flex, Icon, Table, Tbody, Td, Text, Th, Thead, Tr, useColo
 import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
-import Menu from 'components/menu/MainMenu';
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 
 const columnHelper = createColumnHelper();
@@ -175,6 +174,11 @@ export default function ComplexTable(props) {
     debugTable: true,
   });
 
+  // Calculate pagination state
+  const totalPages = table.getPageCount();
+  const currentPage = table.getState().pagination.pageIndex + 1;
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
 
   return (
     <Card
@@ -192,7 +196,6 @@ export default function ComplexTable(props) {
         >
           Billing History
         </Text>
-        <Menu />
       </Flex>
       <Box data-testid="complex-table">
         <Table variant="simple" color="gray.500" mb="24px" mt="12px">
@@ -254,24 +257,33 @@ export default function ComplexTable(props) {
             })}
           </Tbody>
         </Table>
-        <Flex justifyContent="space-between" alignItems="center" mt="4">
-          <Button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Text>
-            Page {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount()}
-          </Text>
-          <Button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </Flex>
+        {tableData.length > 0 ? (
+          <Flex justifyContent="space-between" alignItems="center" mt="4" px="4">
+            <Button
+              onClick={() => table.previousPage()}
+              isDisabled={!hasPrevPage}
+              colorScheme="blue"
+              size="sm"
+            >
+              Previous
+            </Button>
+            <Text>
+              Page {currentPage} of {totalPages || 1}
+            </Text>
+            <Button
+              onClick={() => table.nextPage()}
+              isDisabled={!hasNextPage}
+              colorScheme="blue"
+              size="sm"
+            >
+              Next
+            </Button>
+          </Flex>
+        ) : (
+          <Flex justifyContent="center" p="4">
+            <Text color="gray.500">No billing history available</Text>
+          </Flex>
+        )}
       </Box>
     </Card>
   );

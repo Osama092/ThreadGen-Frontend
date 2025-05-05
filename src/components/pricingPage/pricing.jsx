@@ -37,6 +37,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { initializePaddle } from '@paddle/paddle-js';
 import { useUser } from '@clerk/clerk-react';
 import { useUpdateSubscription } from 'hooks/paddle/useSubUpdate';
+import { useSubscriptionCancel } from 'hooks/paddle/useCancelSub';
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 
 const PriceWrapper = ({ children }) => {
@@ -65,18 +66,23 @@ const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price })
   const handleSubmit = () => {
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      handleAction();
-      setIsSubmitting(false);
-      setIsSuccess(true);
-      
-      // Close the modal after showing success message
-      setTimeout(() => {
-        onClose();
-        setIsSuccess(false);
-      }, 2000);
-    }, 1000);
+    // Call the actual action handler
+    handleAction(reason, feedback)
+      .then(() => {
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        
+        // Close the modal after showing success message
+        setTimeout(() => {
+          onClose();
+          setIsSuccess(false);
+        }, 2000);
+      })
+      .catch((error) => {
+        setIsSubmitting(false);
+        console.error("Action failed:", error);
+        // Optionally show an error message
+      });
   };
 
   return (
@@ -158,7 +164,8 @@ const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price })
 };
 
 const ThreeTierPricing = () => {
-  const { loading, error, data, handleUpdateSubscription } = useUpdateSubscription();
+  const { loading: updateLoading, error: updateError, data: updateData, handleUpdateSubscription } = useUpdateSubscription();
+  const { loading: cancelLoading, error: cancelError, data: cancelData, handleCancelSubscription } = useSubscriptionCancel();
   const { isSubbed, subscriptionData, transactionData } = useSubscription();
 
   const [isAnnual, setIsAnnual] = useState(false);
@@ -224,9 +231,21 @@ const ThreeTierPricing = () => {
     const subscriptionId = subscriptionData.data.id; // Use subscriptionData.data.id as the subscriptionId
   
     if (subscriptionId && priceId) {
-      handleUpdateSubscription(subscriptionId, priceId);
+      return handleUpdateSubscription(subscriptionId, priceId);
     } else {
       console.error('Subscription ID or Price ID is missing.');
+      return Promise.reject('Subscription ID or Price ID is missing');
+    }
+  };
+  
+  const cancelSub = () => {
+    const subscriptionId = subscriptionData.data.id;
+    
+    if (subscriptionId) {
+      return handleCancelSubscription(subscriptionId);
+    } else {
+      console.error('Subscription ID is missing.');
+      return Promise.reject('Subscription ID is missing');
     }
   };
 
@@ -273,11 +292,27 @@ const ThreeTierPricing = () => {
   }, {});
 
   const isSubscribedPlan = (planId) => {
-    return subscriptionData && subscriptionData.data && subscriptionData.data.items && subscriptionData.data.items[0] && subscriptionData.data.items[0].price.id === planId;
+    return subscriptionData && 
+           subscriptionData.data && 
+           subscriptionData.data.items && 
+           subscriptionData.data.items[0] && 
+           subscriptionData.data.items[0].price.id === planId &&
+           subscriptionData.data.status !== 'canceled';
+  };
+
+  const isSubscriptionCanceled = () => {
+    return subscriptionData && 
+           subscriptionData.data && 
+           subscriptionData.data.status === 'canceled';
   };
 
   const isDifferentPlan = (planId) => {
-    return subscriptionData && subscriptionData.data && subscriptionData.data.items && subscriptionData.data.items[0] && subscriptionData.data.items[0].price.id !== planId;
+    return subscriptionData && 
+           subscriptionData.data && 
+           subscriptionData.data.items && 
+           subscriptionData.data.items[0] && 
+           subscriptionData.data.items[0].price.id !== planId &&
+           subscriptionData.data.status !== 'canceled';
   };
 
   const handlePlanAction = (plan, actionType) => {
@@ -286,14 +321,14 @@ const ThreeTierPricing = () => {
     onOpen();
   };
 
-  const executeAction = () => {
+  const executeAction = (reason, feedback) => {
     if (modalType === 'upgrade' && selectedPlan) {
-      updateSub(selectedPlan.id);
-    } else if (modalType === 'cancel' && subscriptionData && subscriptionData.data) {
-      // Implement cancellation logic here
-      console.log('Cancelling subscription:', subscriptionData.data.id);
-      // You would typically call an API endpoint to cancel the subscription
+      return updateSub(selectedPlan.id);
+    } else if (modalType === 'cancel') {
+      // Call the actual cancelSub function
+      return cancelSub();
     }
+    return Promise.resolve();
   };
 
   return (
@@ -321,6 +356,31 @@ const ThreeTierPricing = () => {
           if (!currentPlan) return null;
           
           const priceDisplay = `$${(currentPlan.unit_price.amount / 100).toFixed(2)} ${currentPlan.unit_price.currency_code}/${isAnnual ? 'year' : 'month'}`;
+          
+          // Determine button state and text
+          let buttonText = 'Start trial';
+          let buttonColor = "teal";
+          let buttonVariant = "solid";
+          let buttonAction = () => {
+            const itemsList = [{ priceId: currentPlan.id, quantity: 1 }];
+            openCheckout(itemsList, { current: checkoutButtonRef.current });
+          };
+          
+          if (isSubscribedPlan(currentPlan.id)) {
+            buttonText = 'Cancel';
+            buttonColor = "red";
+            buttonVariant = "outline";
+            buttonAction = () => handlePlanAction(currentPlan, 'cancel');
+          } else if (isDifferentPlan(currentPlan.id)) {
+            buttonText = 'Upgrade';
+            buttonAction = () => handlePlanAction(currentPlan, 'upgrade');
+          } else if (isSubscriptionCanceled()) {
+            buttonText = 'Resubscribe';
+            buttonAction = () => {
+              const itemsList = [{ priceId: currentPlan.id, quantity: 1 }];
+              openCheckout(itemsList, { current: checkoutButtonRef.current });
+            };
+          }
           
           return (
             <PriceWrapper key={currentPlan.id}>
@@ -364,25 +424,13 @@ const ThreeTierPricing = () => {
                       // This approach avoids using useRef inside a loop
                       if (el) checkoutButtonRef.current = el;
                     }}
-                    colorScheme={isSubscribedPlan(currentPlan.id) ? "red" : "teal"} 
-                    variant={isSubscribedPlan(currentPlan.id) ? "outline" : "solid"}
+                    colorScheme={buttonColor}
+                    variant={buttonVariant}
                     mt={3} 
-                    onClick={() => {
-                      if (isSubscribedPlan(currentPlan.id)) {
-                        // Open cancellation modal
-                        handlePlanAction(currentPlan, 'cancel');
-                      } else if (isDifferentPlan(currentPlan.id)) {
-                        // Open upgrade modal
-                        handlePlanAction(currentPlan, 'upgrade');
-                      } else {
-                        const itemsList = [
-                          { priceId: currentPlan.id, quantity: 1 }, // Add Subscription Plan
-                        ];
-                        openCheckout(itemsList, { current: checkoutButtonRef.current });
-                      }
-                    }}
+                    onClick={buttonAction}
+                    isLoading={updateLoading || cancelLoading}
                   >
-                    {isSubscribedPlan(currentPlan.id) ? 'Cancel' : isDifferentPlan(currentPlan.id) ? 'Upgrade' : 'Start trial'}
+                    {buttonText}
                   </Button>
                 </Box>
               </VStack>

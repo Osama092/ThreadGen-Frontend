@@ -847,25 +847,23 @@ export default function FlowManagement() {
               align={{ base: "start", md: "center" }}
             >
               <Text color={textColor} fontSize='2xl' ms='24px' fontWeight='700'>
-                Current flows:
+                Current Threads:
               </Text>
             </Flex>
             <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap='20px'>
 
-            {/* Add New Flow Button */}
             <Box as='button' onClick={onOpen} borderRadius='md' color='blue' px={4} h={8} width='auto' height='auto' border='2px' borderColor='blue.600' maxW='sm'>
               <AddIcon boxSize={20} />
             </Box>
 
-            {/* New Flow Modal */}
             <Modal isOpen={isOpen} size={'xl'} onClose={handleClose}>
               <ModalOverlay />
               <ModalContent>
                 <ModalHeader>
-                  {currentStep === 1 && "Add New Flow - Step 1: Basic Information"}
-                  {currentStep === 2 && "Add New Flow - Step 2: Transcription"}
-                  {currentStep === 3 && "Add New Flow - Step 3: Player Settings"}
-                  {currentStep === 4 && "Add New Flow - Step 4: Thumbnails"}
+                  {currentStep === 1 && "Add New Thread - Step 1: Basic Information"}
+                  {currentStep === 2 && "Add New Thread - Step 2: Transcription"}
+                  {currentStep === 3 && "Add New Thread - Step 3: Player Settings"}
+                  {currentStep === 4 && "Add New Thread - Step 4: Thumbnails"}
                 </ModalHeader>
                 <ModalCloseButton />
                 
@@ -935,10 +933,10 @@ export default function FlowManagement() {
                     >
                       <AlertIcon boxSize='40px' mr={0} />
                       <AlertTitle mt={4} mb={1} fontSize='lg'>
-                        Flow created successfully!
+                        Thread created successfully!
                       </AlertTitle>
                       <AlertDescription maxWidth='sm'>
-                        Your new flow has been created and saved. You can now manage it from the dashboard.
+                        Your new Thread has been created and saved. You can now manage it from the dashboard.
                       </AlertDescription>
                       <CloseButton
                         alignSelf='flex-start'
@@ -953,8 +951,6 @@ export default function FlowManagement() {
               </Modal>
             )}
               
-            {/* Flow List */}
-
             {userThreadsLoading && <Text>Loading...</Text>}
         
             {userThreadsError && <Text>Error: {userThreadsError.message}</Text>}
@@ -1024,7 +1020,7 @@ export default function FlowManagement() {
                 </Box>
               ))
             ) : (
-              !userThreadsLoading && <Text>No flows found</Text>
+              !userThreadsLoading && <Text>No Threads found</Text>
             )}
             </SimpleGrid>
           </Flex>

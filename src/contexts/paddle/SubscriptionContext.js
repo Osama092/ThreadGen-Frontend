@@ -40,7 +40,7 @@ export const SubscriptionProvider = ({ children }) => {
       const email = user.primaryEmailAddress.emailAddress;
       checkSubscription(email);
     } else {
-      navigate('/sign-in'); // Redirect to sign-in page
+      navigate('/sign-in'); 
     }
   }, [user, navigate]);
 
