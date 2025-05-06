@@ -9,11 +9,16 @@ import {
   SimpleGrid, 
   Card, 
   CardBody,
-  Flex
+  Flex,
+  Spinner
 } from "@chakra-ui/react";
 import ComplexTable from "views/admin/singleFlow/components/ComplexTable";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
+import IconBox from "components/icons/IconBox";
+import { MdAccessTime, MdPlayCircleFilled, MdCheckCircle, MdRepeat } from "react-icons/md";
+import { Icon } from "@chakra-ui/react";
+import { useKPIs } from "hooks/users/useKPI";
 
 export default function SingleFlow() {
   const [threadData, setThreadData] = useState(null);
@@ -22,6 +27,8 @@ export default function SingleFlow() {
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const bgCard = useColorModeValue("white", "navy.700");
   const borderColor = useColorModeValue("secondaryGray.100", "whiteAlpha.100");
+  const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
+  const brandColor = useColorModeValue("brand.500", "white");
 
   const location = useLocation();
   const { thread } = location.state || {};
@@ -36,6 +43,12 @@ export default function SingleFlow() {
     
     setThreadData(thread);
   }, [thread, navigate]);
+
+  // Fetch KPI data using our custom hook
+  const { kpiData, isLoading, formattedWatchTime } = useKPIs(
+    threadData?.user_id,
+    threadData?.thread_name
+  );
 
   // If thread data isn't available yet, show loading
   if (!threadData) {
@@ -83,11 +96,74 @@ export default function SingleFlow() {
               gap={6}
             >
               <GridItem colSpan={2}>
-                <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
+                <MiniStatistics 
+                  name='Avg Watch Time' 
+                  value={isLoading ? <Spinner size="sm" /> : formattedWatchTime}
+                  width={{ base: "100%", md: "auto" }}
+                  startContent={
+                    <IconBox
+                      w='56px'
+                      h='56px'
+                      bg={boxBg}
+                      icon={
+                        <Icon w='32px' h='32px' as={MdAccessTime} color={brandColor} />
+                      }
+                    />
+                  }
+                />
               </GridItem>
               <GridItem colSpan={2}>
-                <MiniStatistics growth='+23%' name='Sales' value='$574.34' width={{ base: "100%", md: "auto" }} />
+                <MiniStatistics 
+                  name='Play Rate' 
+                  value={isLoading ? <Spinner size="sm" /> : `${kpiData?.play_rate_percent || '0'}%`}
+                  width={{ base: "100%", md: "auto" }}
+                  startContent={
+                    <IconBox
+                      w='56px'
+                      h='56px'
+                      bg={boxBg}
+                      icon={
+                        <Icon w='32px' h='32px' as={MdPlayCircleFilled} color={brandColor} />
+                      }
+                    />
+                  }
+                />
               </GridItem>
+              <GridItem colSpan={2}>
+                <MiniStatistics 
+                  name='Completion Rate' 
+                  value={isLoading ? <Spinner size="sm" /> : `${kpiData?.completion_rate_percent || '0'}%`}
+                  width={{ base: "100%", md: "auto" }}
+                  startContent={
+                    <IconBox
+                      w='56px'
+                      h='56px'
+                      bg={boxBg}
+                      icon={
+                        <Icon w='32px' h='32px' as={MdCheckCircle} color={brandColor} />
+                      }
+                    />
+                  }
+                />
+              </GridItem>
+              <GridItem colSpan={2}>
+                <MiniStatistics 
+                  name='Replay Rate' 
+                  value={isLoading ? <Spinner size="sm" /> : `${kpiData?.replay_rate_percent || '0'}%`}
+                  width={{ base: "100%", md: "auto" }}
+                  startContent={
+                    <IconBox
+                      w='56px'
+                      h='56px'
+                      bg={boxBg}
+                      icon={
+                        <Icon w='32px' h='32px' as={MdRepeat} color={brandColor} />
+                      }
+                    />
+                  }
+                />
+              </GridItem>
+
                   
               <GridItem colSpan={4}>
                 <Text color={textColor} fontSize="2xl" fontWeight="700" mb={3}>

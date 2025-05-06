@@ -32,8 +32,6 @@ const routes = [
   },
 
 
-  
-
   {
     name: 'Threads',
     layout: '/admin',

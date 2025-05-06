@@ -7,15 +7,42 @@ import React, { useState, useEffect } from "react";
 import { MdAttachMoney, MdBarChart } from "react-icons/md";
 import ComplexTable from "views/admin/mainDashboard/components/ComplexTable";
 import TotalSpent from "views/admin/mainDashboard/components/TotalSpent";
+import useSSE from 'hooks/useSSE'; // Import our custom hook
 
 
 
 export default function Dashboard() {
+  const { user } = useUser();
+  const user_id = user?.id;
+  
+  // Use our custom SSE hook
+  const { messages, connectionStatus, isLoading } = useSSE(user_id);
+  
+  // Calculate statistics from messages
+  const totalRequests = messages.length;
+  
+  // Calculate average daily requests
+  const calculateAvgDailyRequests = () => {
+    if (messages.length === 0) return 0;
+    
+    // Get dates of all messages
+    const dates = messages.map(msg => {
+      const date = new Date(msg.created_at);
+      return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    });
+    
+    // Count unique dates
+    const uniqueDates = [...new Set(dates)];
+    const uniqueDaysCount = uniqueDates.length;
+    
+    // Calculate average
+    return uniqueDaysCount > 0 ? Math.round(messages.length / uniqueDaysCount) : 0;
+  };
+  
+  const avgDailyRequests = calculateAvgDailyRequests();
 
   const brandColor = useColorModeValue("brand.500", "white");
   const boxBg = useColorModeValue("secondaryGray.300", "whiteAlpha.100");
-
-
 
   return (
     <Box pt={{ base: "130px", md: "80px", xl: "80px" }}>
@@ -46,8 +73,8 @@ export default function Dashboard() {
                 }
               />
             }
-            name='Earnings'
-            value='$350.4'
+            name='Total Requests'
+            value={isLoading ? 'Loading...' : totalRequests.toString()}
           />
           <MiniStatistics
             startContent={
@@ -60,8 +87,8 @@ export default function Dashboard() {
                 }
               />
             }
-            name='Usage'
-            value='100/50'
+            name='Avg Daily Requests'
+            value={isLoading ? 'Loading...' : avgDailyRequests.toString()}
           />
           <MiniStatistics
             startContent={
