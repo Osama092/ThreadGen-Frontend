@@ -1,3 +1,5 @@
+
+// Third ComplexTable.js with updated pagination
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Flex, Icon, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
 import { MdCancel, MdCheckCircle, MdOutlineError } from 'react-icons/md';
@@ -257,24 +259,28 @@ export default function ComplexTable(props) {
             })}
           </Tbody>
         </Table>
+        
+        {/* Standardized Pagination Controls */}
         {tableData.length > 0 ? (
-          <Flex justifyContent="space-between" alignItems="center" mt="4" px="4">
+          <Flex justifyContent="space-between" alignItems="center" px="25px" pb="25px">
             <Button
               onClick={() => table.previousPage()}
               isDisabled={!hasPrevPage}
-              colorScheme="blue"
+              colorScheme="teal"
               size="sm"
+              variant="outline"
             >
               Previous
             </Button>
-            <Text>
+            <Text fontSize="sm" fontWeight="500">
               Page {currentPage} of {totalPages || 1}
             </Text>
             <Button
               onClick={() => table.nextPage()}
               isDisabled={!hasNextPage}
-              colorScheme="blue"
+              colorScheme="teal"
               size="sm"
+              variant="outline"
             >
               Next
             </Button>

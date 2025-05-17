@@ -15,7 +15,7 @@ export function SidebarBrand() {
     <Flex align='center' direction='column'>
       <Text fontSize="35px" my="32px">
         
-        <Text as="span" fontWeight="extrabold">FLOW</Text> <Text as="span">GEN</Text>
+        <Text as="span" fontWeight="extrabold">THREAD</Text> <Text as="span">GEN</Text>
       </Text>
     <HSeparator mb='20px' />
     </Flex>

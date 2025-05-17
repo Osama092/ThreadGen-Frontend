@@ -9,14 +9,17 @@ import {
   Thead, 
   Tr, 
   useColorModeValue, 
-  Tag 
+  Tag,
+  Button,
+  HStack
 } from '@chakra-ui/react';
 
 import { 
   createColumnHelper, 
   flexRender, 
   getCoreRowModel, 
-  getSortedRowModel, 
+  getSortedRowModel,
+  getPaginationRowModel,
   useReactTable 
 } from '@tanstack/react-table';
 import Card from 'components/card/Card';
@@ -25,12 +28,15 @@ import Menu from 'components/menu/MainMenu';
 import { useUser } from '@clerk/clerk-react';
 import useSSE from 'hooks/useSSE'; // Import our custom hook
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const columnHelper = createColumnHelper();
 
 export default function ComplexTable() {
-  const [sorting, setSorting] = useState([]);
+  // Set default sorting to created_at in descending order (newest first)
+  const [sorting, setSorting] = useState([
+    { id: 'created_at', desc: true }
+  ]);
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
   const { user } = useUser();
@@ -141,8 +147,20 @@ export default function ComplexTable() {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 5, // Show 5 rows per page by default
+      },
+    },
     debugTable: true,
   });
+
+  // Calculate pagination state
+  const totalPages = table.getPageCount();
+  const currentPage = table.getState().pagination.pageIndex + 1;
+  const hasNextPage = currentPage < totalPages;
+  const hasPrevPage = currentPage > 1;
 
   return (
     <Card
@@ -167,73 +185,95 @@ export default function ComplexTable() {
         ) : messages.length === 0 ? (
           <Text p="25px">No requests yet. Waiting for updates...</Text>
         ) : (
-          <Table variant="simple" color="gray.500" mb="24px" mt="12px">
-            <Thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <Tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <Th
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        pe="10px"
-                        borderColor={borderColor}
-                        cursor="pointer"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        <Flex
-                          justifyContent="space-between"
-                          align="center"
-                          fontSize={{ sm: '10px', lg: '12px' }}
-                          color="gray.400"
+          <>
+            <Table variant="simple" color="gray.500" mb="24px" mt="12px">
+              <Thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <Tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <Th
+                          key={header.id}
+                          colSpan={header.colSpan}
+                          pe="10px"
+                          borderColor={borderColor}
+                          cursor="pointer"
+                          onClick={header.column.getToggleSortingHandler()}
                         >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          {{
-                            asc: '',
-                            desc: '',
-                          }[header.column.getIsSorted()] ?? null}
-                        </Flex>
-                      </Th>
-                    );
-                  })}
-                </Tr>
-              ))}
-            </Thead>
-            <Tbody>
-              {table
-                .getRowModel()
-                .rows
-                .map((row) => {
-                  return (
-                    <Tr key={row.id}>
-                      {row.getVisibleCells().map((cell) => {
-                        return (
-                          <Td
-                            key={cell.id}
-                            fontSize={{ sm: '14px' }}
-                            minW={{ sm: '150px', md: '200px' }}
-                            borderColor="transparent"
+                          <Flex
+                            justifyContent="space-between"
+                            align="center"
+                            fontSize={{ sm: '10px', lg: '12px' }}
+                            color="gray.400"
                           >
                             {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
+                              header.column.columnDef.header,
+                              header.getContext(),
                             )}
-                          </Td>
-                        );
-                      })}
-                    </Tr>
-                  );
-                })}
-            </Tbody>
-          </Table>
+                          </Flex>
+                        </Th>
+                      );
+                    })}
+                  </Tr>
+                ))}
+              </Thead>
+              <Tbody>
+                {table
+                  .getRowModel()
+                  .rows
+                  .map((row) => {
+                    return (
+                      <Tr key={row.id}>
+                        {row.getVisibleCells().map((cell) => {
+                          return (
+                            <Td
+                              key={cell.id}
+                              fontSize={{ sm: '14px' }}
+                              minW={{ sm: '150px', md: '200px' }}
+                              borderColor="transparent"
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </Td>
+                          );
+                        })}
+                      </Tr>
+                    );
+                  })}
+              </Tbody>
+            </Table>
+            
+            {/* Standardized Pagination Controls */}
+            {messages.length > 0 && (
+              <Flex justifyContent="space-between" alignItems="center" px="25px" pb="25px">
+                <Button
+                  onClick={() => table.previousPage()}
+                  isDisabled={!hasPrevPage}
+                  colorScheme="teal"
+                  size="sm"
+                  variant="outline"
+                >
+                  Previous
+                </Button>
+                <Text fontSize="sm" fontWeight="500">
+                  Page {currentPage} of {totalPages || 1}
+                </Text>
+                <Button
+                  onClick={() => table.nextPage()}
+                  isDisabled={!hasNextPage}
+                  colorScheme="teal"
+                  size="sm"
+                  variant="outline"
+                >
+                  Next
+                </Button>
+              </Flex>
+            )}
+          </>
         )}
       </Box>
-      <Text px="25px" fontSize="sm" color="gray.500">
-        Connection Status: {connectionStatus}
-      </Text>
     </Card>
   );
 }

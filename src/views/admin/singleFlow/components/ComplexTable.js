@@ -1,16 +1,20 @@
-import { Box, Flex, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag } from '@chakra-ui/react';
+import { Box, Flex, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, Tag, Button } from '@chakra-ui/react';
 
-import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
+import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable, getPaginationRowModel } from '@tanstack/react-table';
 import Card from 'components/card/Card';
-import Menu from 'components/menu/MainMenu';
 import { useUser } from '@clerk/clerk-react';
 import useSSE from 'hooks/useSSE'; // Import the external SSE hook
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 const columnHelper = createColumnHelper();
 
 const ComplexTable = React.memo(( {thread_name}) => {
   const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 5, // Show 5 items per page
+  });
+  
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
   const { user } = useUser();
@@ -19,11 +23,13 @@ const ComplexTable = React.memo(( {thread_name}) => {
   // Use the external SSE hook with the current user's ID
   const { messages, connectionStatus, isLoading } = useSSE(userId);
 
-  // Filter data based on user ID
-  const filteredData = Array.isArray(messages) ? 
-    messages.filter(row => row.thread_name === thread_name) : [];
+  // Filter data based on user ID - use useMemo to prevent unnecessary re-filtering
+  const filteredData = useMemo(() => {
+    return Array.isArray(messages) ? 
+      messages.filter(row => row.thread_name === thread_name) : [];
+  }, [messages, thread_name]);
 
-  const columns = [
+  const columns = useMemo(() => [
     columnHelper.accessor('_id', {
       id: 'id',
       header: () => (
@@ -113,19 +119,30 @@ const ComplexTable = React.memo(( {thread_name}) => {
         </Flex>
       ),
     }),
-  ];
+  ],
+  [textColor]);
 
   const table = useReactTable({
     columns,
     data: filteredData,
     state: {
       sorting,
+      pagination,
     },
     onSortingChange: setSorting,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    debugTable: true,
+    getPaginationRowModel: getPaginationRowModel(),
+    debugTable: false, // Set debug to false to reduce console logs
   });
+  
+  // Calculate total pages - use useMemo to prevent recalculation on every render
+  const { totalPages, currentPage } = useMemo(() => {
+    const total = Math.max(1, Math.ceil(filteredData.length / pagination.pageSize));
+    const current = pagination.pageIndex + 1; // Adding 1 for human-readable page numbers
+    return { totalPages: total, currentPage: current };
+  }, [filteredData.length, pagination.pageSize, pagination.pageIndex]);
 
   return (
     <Card
@@ -143,7 +160,6 @@ const ComplexTable = React.memo(( {thread_name}) => {
         >
           Requests
         </Text>
-        <Menu />
       </Flex>
       <Box>
         {isLoading ? (
@@ -215,9 +231,35 @@ const ComplexTable = React.memo(( {thread_name}) => {
           </Table>
         )}
       </Box>
-      <Text px="25px" fontSize="sm" color="gray.500">
-        Connection Status: {connectionStatus}
-      </Text>
+      
+      {/* Pagination Controls */}
+      {filteredData.length > 0 && (
+        <Flex px="25px" pb="25px" justifyContent="space-between" align="center">
+          <Button
+            colorScheme="teal"
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            isDisabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          
+          <Text fontSize="sm" fontWeight="500">
+            Page {currentPage} of {totalPages}
+          </Text>
+          
+          <Button
+            colorScheme="teal"
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            isDisabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </Flex>
+      )}
     </Card>
   );
 });

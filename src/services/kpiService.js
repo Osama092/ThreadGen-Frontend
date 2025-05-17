@@ -10,28 +10,23 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
  */
 export const fetchUserKPIs = async (userId, threadName) => {
   try {
-    const response = await axios.post(`${API_URL}/player-kpi/get-user-kpis`, {
-      user_id: userId,
-      thread_name: threadName
-    });
-    
+    const payload = { user_id: userId };
+    if (threadName) payload.thread_name = threadName;
+
+    const response = await axios.post(`${API_URL}/player-kpi/get-user-kpis`, payload);
     return response.data;
   } catch (error) {
     console.error('Error fetching user KPIs:', error);
-    
-    // Handle different error cases
-    if (error.response) {
-      // Server responded with error status
-      if (error.response.status === 404) {
-        return {
-          average_watch_time_seconds: "0.00",
-          play_rate_percent: "0.00",
-          completion_rate_percent: "0.00",
-          replay_rate_percent: "0.00"
-        };
-      }
+
+    if (error.response && error.response.status === 404) {
+      return {
+        average_watch_time_seconds: "0.00",
+        play_rate_percent: "0.00",
+        completion_rate_percent: "0.00",
+        replay_rate_percent: "0.00"
+      };
     }
-    
+
     throw error;
   }
 };

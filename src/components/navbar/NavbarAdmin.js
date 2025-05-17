@@ -16,8 +16,6 @@ export default function AdminNavbar(props) {
 		const currentRoute = routes.find(route => route.layout + route.path === location.pathname);
 		if (currentRoute) {
 		  setBrandText(currentRoute.name);
-		} else {
-		  setBrandText('Default Brand Text');
 		}
 	}, [location.pathname]);
 	

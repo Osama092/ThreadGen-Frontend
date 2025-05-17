@@ -8,8 +8,8 @@ import {
   MdLock,
   MdOutlineShoppingCart,
 } from 'react-icons/md';
-import { MdSettings, MdCampaign } from 'react-icons/md';
-import { LockIcon } from '@chakra-ui/icons';
+import { MdSettings, MdCampaign, MdCreditCard, MdVideoLibrary } from 'react-icons/md';
+import { LockIcon,  } from '@chakra-ui/icons';
 import ProtectedRoute from 'protection';
 
 // Admin Imports
@@ -38,7 +38,7 @@ const routes = [
     path: '/threads-management',
     icon: (
       <Icon
-        as={MdSettings}
+        as={MdVideoLibrary}
         width="20px"
         height="20px"
         color="inherit"
@@ -66,9 +66,9 @@ const routes = [
     component: <ApiKeys />,
   },
   {
-    name: 'Bills',
+    name: 'Subscriptions',
     layout: '/admin',
-    icon: <Icon as={MdBarChart} width="20px" height="20px" color="inherit" />,
+    icon: <Icon as={MdCreditCard} width="20px" height="20px" color="inherit" />,
     path: '/bills-management',
     component: <DataTables />,
   },

@@ -4,23 +4,36 @@ import { useUser } from '@clerk/clerk-react';
 import MiniStatistics from "components/card/MiniStatistics";
 import IconBox from "components/icons/IconBox";
 import React, { useState, useEffect } from "react";
-import { MdAttachMoney, MdBarChart } from "react-icons/md";
+import { MdAttachMoney, MdBarChart, MdCalendarToday, MdMarkEmailUnread } from "react-icons/md";
 import ComplexTable from "views/admin/mainDashboard/components/ComplexTable";
 import TotalSpent from "views/admin/mainDashboard/components/TotalSpent";
 import useSSE from 'hooks/useSSE'; // Import our custom hook
+import { useKPIs } from "hooks/users/useKPI";
 
 
 
 export default function Dashboard() {
   const { user } = useUser();
   const user_id = user?.id;
-  
+
   // Use our custom SSE hook
   const { messages, connectionStatus, isLoading } = useSSE(user_id);
   
   // Calculate statistics from messages
   const totalRequests = messages.length;
+  console.log("Total Requests:", totalRequests);
   
+  const { kpiData, isLoading: kpiLoading, formattedWatchTime } = useKPIs(user_id);
+
+  useEffect(() => {
+    if (kpiData) {
+      console.log('KPI Data:', kpiData);
+      // If you expect kpiData to be an array (for multiple KPIs)
+      console.log("number of KPIs:", kpiData.count);
+    }
+  }, [kpiData]);
+
+  const unopenedRequests = kpiLoading || !kpiData ? 0 : totalRequests - kpiData.count;
   // Calculate average daily requests
   const calculateAvgDailyRequests = () => {
     if (messages.length === 0) return 0;
@@ -97,12 +110,12 @@ export default function Dashboard() {
                 h='56px'
                 bg={boxBg}
                 icon={
-                  <Icon w='32px' h='32px' as={MdAttachMoney} color={brandColor} />
+                  <Icon w='32px' h='32px' as={MdMarkEmailUnread} color={brandColor} />
                 }
               />
             }
-            name='Ovreage fee'
-            value='$642.39'
+            name='Unopened Requests'
+            value={isLoading ? 'Loading...': unopenedRequests.toString()}
           />
 
         </SimpleGrid>
@@ -137,3 +150,4 @@ export default function Dashboard() {
     
   );
 }
+

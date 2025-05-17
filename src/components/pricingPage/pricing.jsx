@@ -86,7 +86,7 @@ const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price })
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
+    <Modal isOpen={isOpen} onClose={onClose} isCentered size="lg">
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(5px)" />
       <ModalContent borderRadius="xl" shadow="xl">
         <ModalHeader borderBottomWidth="1px" pb={3}>
@@ -393,10 +393,13 @@ const ThreeTierPricing = () => {
                     $
                   </Text>
                   <Text fontSize="xl" fontWeight="900">
-                    {(currentPlan.unit_price.amount / 100).toFixed(2)} {currentPlan.unit_price.currency_code}
+                    {(currentPlan.unit_price.amount / 100).toFixed(2)}
+                  </Text>
+                  <Text fontSize="sm" fontWeight="500" alignSelf="flex-start" mt={1}>
+                    {currentPlan.unit_price.currency_code}
                   </Text>
                   <Text fontSize="xl" color="gray.500">
-                    /{isAnnual ? 'Annually' : 'Monthly'} ({currentPlan.billing_cycle.frequency})
+                    /{isAnnual ? 'Annually' : 'Monthly'}
                   </Text>
                 </HStack>
               </Box>

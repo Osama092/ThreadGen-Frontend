@@ -27,7 +27,7 @@ import {
   AlertIcon,
   useToast,
 } from "@chakra-ui/react";
-import { EditIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
+import { EditIcon, CheckIcon, CloseIcon, DownloadIcon } from "@chakra-ui/icons";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { useEditCampaign } from "hooks/useCampaign";
@@ -52,9 +52,8 @@ export default function SingleCampaign() {
   const [campaign, setCampaign] = useState(location.state?.campaignData || null);
   const [loading, setLoading] = useState(!location.state?.campaignData);
   const [error, setError] = useState(null);
-  
-  // State for currently playing video
-  const [currentVideoUrl, setCurrentVideoUrl] = useState("");
+  const [isDuplicateError, setIsDuplicateError] = useState(false);
+
 
   // Get edit campaign hook
   const { 
@@ -100,37 +99,6 @@ export default function SingleCampaign() {
     fetchCampaign();
   }, [isUserLoaded, user, campaignName, location.state]);
 
-  // Set default video URL if campaign has ready items
-  useEffect(() => {
-    if (campaign?.tts_text_list && campaign.tts_text_list.length > 0) {
-      const readyItems = campaign.tts_text_list.filter(item => item.status === "ready" && item.video_url);
-      if (readyItems.length > 0) {
-        setCurrentVideoUrl(readyItems[0].video_url);
-      } else {
-        // Fallback to a default placeholder if no ready videos exist
-        setCurrentVideoUrl("https://www.w3schools.com/html/mov_bbb.mp4");
-      }
-    }
-  }, [campaign]);
-
-  // Handle row click - change video URL
-  const handleRowClick = (item, index) => {
-    // Only allow clicking on items with "ready" status
-    if (item.status !== "ready" || !item.video_url) {
-      return;
-    }
-    
-    setCurrentVideoUrl(item.video_url);
-    
-    toast({
-      title: "Video changed",
-      description: `Now playing item: "${item.text.substring(0, 30)}${item.text.length > 30 ? '...' : ''}"`,
-      status: "info",
-      duration: 2000,
-      isClosable: true,
-    });
-  };
-
   // Update campaign data in the API using the hook
   const handleUpdateCampaign = async () => {
     if (!isUserLoaded || !user?.id || !campaign?._id) {
@@ -175,6 +143,37 @@ export default function SingleCampaign() {
       });
       return false;
     }
+  };
+
+  // Handle download click for an individual item
+  const handleDownload = (item) => {
+    // Only allow downloading items with "ready" status
+    if (item.status !== "ready" || !item.video_url) {
+      toast({
+        title: "Download unavailable",
+        description: "This item is not ready for download yet.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
+    // Create an anchor element and click it programmatically
+    const link = document.createElement('a');
+    link.href = item.video_url;
+    link.download = `${campaign.campaign_name}_item_${item.text.substring(0, 10)}.mp4`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download started",
+      description: "Your video is downloading.",
+      status: "success",
+      duration: 2000,
+      isClosable: true,
+    });
   };
 
   // Update form state when campaign data loads
@@ -237,7 +236,6 @@ export default function SingleCampaign() {
     }
   };
 
-
   // Loading state
   if (loading || !isUserLoaded || editLoading) {
     return (
@@ -248,7 +246,11 @@ export default function SingleCampaign() {
     );
   }
 
-
+  // Construct consolidated video URL
+  const consolidatedVideoUrl = isUserLoaded && user && campaign?.used_thread 
+    ? `http://localhost:5000/userData/temp/${user.fullName}_${user.id}/${campaign.used_thread}/${campaign.used_thread}.mp4`
+    : "";
+  console.log("video url", consolidatedVideoUrl)
 
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
@@ -420,19 +422,16 @@ export default function SingleCampaign() {
               <Table variant="simple" size="sm">
                 <Thead bg="gray.50" position="sticky" top="0" zIndex="1">
                   <Tr>
-                    <Th width="70%">Text</Th>
-                    <Th width="30%">Status</Th>
+                    <Th width="65%">Text</Th>
+                    <Th width="20%">Status</Th>
+                    <Th width="15%">Action</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
                   {campaign.tts_text_list?.map((item, index) => (
                     <Tr 
                       key={index}
-                      onClick={() => handleRowClick(item, index)}
-                      cursor={item.status === "ready" ? "pointer" : "not-allowed"}
-                      _hover={{ bg: item.status === "ready" ? "gray.50" : "inherit" }}
                       opacity={item.status === "ready" ? 1 : 0.6}
-                      transition="background-color 0.2s, opacity 0.2s"
                     >
                       <Td
                         height="40px"
@@ -453,6 +452,18 @@ export default function SingleCampaign() {
                         >
                           {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                         </Badge>
+                      </Td>
+                      <Td textAlign="center">
+                        {item.status === "ready" && (
+                          <IconButton
+                            aria-label="Download video"
+                            icon={<DownloadIcon />}
+                            size="sm"
+                            colorScheme="blue"
+                            variant="ghost"
+                            onClick={() => handleDownload(item)}
+                          />
+                        )}
                       </Td>
                     </Tr>
                   ))}
@@ -476,11 +487,11 @@ export default function SingleCampaign() {
                 Preview
               </Text>
               <AspectRatio ratio={16 / 9}>
-                {currentVideoUrl ? (
+                {consolidatedVideoUrl ? (
                   <video 
                     controls
-                    key={currentVideoUrl} // Force re-render when URL changes
-                    src={currentVideoUrl}
+                    key={consolidatedVideoUrl}
+                    src={consolidatedVideoUrl}
                   >
                     Your browser does not support the video tag.
                   </video>

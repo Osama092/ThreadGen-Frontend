@@ -1,5 +1,27 @@
-import React, { useEffect } from 'react';
-import { Box, Flex, IconButton, Table, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue, useToast, Button } from '@chakra-ui/react';
+import React, { useEffect, useState } from 'react';
+import { 
+  Box, 
+  Flex, 
+  IconButton, 
+  Table, 
+  Tbody, 
+  Td, 
+  Text, 
+  Th, 
+  Thead, 
+  Tr, 
+  useColorModeValue, 
+  useToast, 
+  Button,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure
+} from '@chakra-ui/react';
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
@@ -24,6 +46,10 @@ const ComplexTable = React.memo(() => {
   const toast = useToast();
   const textColor = useColorModeValue('secondaryGray.900', 'white');
   const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  
+  // State for delete confirmation modal
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [keyToDelete, setKeyToDelete] = useState(null);
 
   const handleButtonClick = async () => {
     if (!user?.id) return;  
@@ -129,21 +155,29 @@ const ComplexTable = React.memo(() => {
     debugTable: true,
   });
 
-  const handleDelete = async (api_key) => {
+  // Open confirmation modal and set the key to delete
+  const openDeleteConfirmation = (api_key) => {
+    setKeyToDelete(api_key);
+    onOpen();
+  };
+
+  // Handle confirmed deletion
+  const confirmDelete = async () => {
     try {
-      await handleDeleteApiKey(api_key);
+      await handleDeleteApiKey(keyToDelete);
       await fetchKeys();
       toast({
         position: 'top-center',
-        title: 'Entry deleted successfully',
+        title: 'API key deleted successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
+      onClose();
     } catch (err) {
       toast({
         position: 'top-center',
-        title: 'Error deleting entry',
+        title: 'Error deleting API key',
         description: err.message,
         status: 'error',
         duration: 3000,
@@ -225,7 +259,7 @@ const ComplexTable = React.memo(() => {
                   ))}
                   <Td borderColor="transparent">
                     <Flex justify="flex-end">
-                      <Button colorScheme="teal" size="sm" onClick={() => handleDelete(row.original.api_key)}>
+                      <Button colorScheme="teal" size="sm" onClick={() => openDeleteConfirmation(row.original.api_key)}>
                         Delete
                       </Button>
                     </Flex>
@@ -236,6 +270,42 @@ const ComplexTable = React.memo(() => {
           </Tbody>
         </Table>
       </Box>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader pb={3}>
+            Confirm Deletion
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pt={0}>
+            <Text>
+              Are you sure you want to delete this API key?
+            </Text>
+            <Text fontSize="sm" color="gray.500" mt={2}>
+              This action cannot be undone.
+            </Text>
+          </ModalBody>
+
+          <ModalFooter pt={4}>
+            <Button 
+              variant="outline" 
+              mr={3} 
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button 
+              colorScheme="red" 
+              onClick={confirmDelete} 
+              isLoading={deleteLoading}
+            >
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Card>
   );
 });

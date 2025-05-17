@@ -53,6 +53,8 @@ export default function FlowManagement() {
   const [bufferProgress, setBufferProgress] = useState(0);
   const [showPersonalizations, setShowPersonalizations] = useState(false);
   const [selectedPersonalization, setSelectedPersonalization] = useState(null);
+  const [isDuplicateError, setIsDuplicateError] = useState(false);
+
 
   // Form data states
   const [error, setError] = useState(null);
@@ -90,6 +92,10 @@ export default function FlowManagement() {
   //------------------------------------------------
 
   const submitThread = async () => {
+    setIsLoading(true); // Set loading for the final submission
+    setError(null); // Clear any previous general errors
+    // addThreadError state is handled by the hook itself
+
     try {
       const completeUserData = {
         session_id: ThreadData.user_id || user.id,
@@ -97,14 +103,14 @@ export default function FlowManagement() {
         user_name: ThreadData.user_name || user.fullName,
         thread_name: ThreadData.title,
         description: ThreadData.description,
-        ttsText: ThreadData.ttsText || "", 
+        ttsText: ThreadData.ttsText || "",
         color: ThreadData.color || "#3182CE",
         smart_pause: ThreadData.smart_pause,
         subtitle: ThreadData.subtitle ,
         fast_progress: ThreadData.fast_progress
       };
 
-  
+
       if (startThumbnail?.file && pauseThumbnail?.file && exitThumbnail?.file) {
         const result = await addThread(
           startThumbnail.file,
@@ -112,15 +118,45 @@ export default function FlowManagement() {
           exitThumbnail.file,
           completeUserData
         );
-        
-        return true;
+
+        if (result && !result.error) {
+          // Handle success
+          handleClose();
+          setShowAlert(true);
+          return true; // Indicate success
+        } else {
+          // Handle addThread errors with toast
+          toast({
+            title: "Error",
+            description:  "Failed to add thread. Please try again.",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+          });
+          return false; // Indicate failure
+        }
+
       } else {
-        return false;
+        // This case should ideally be caught by isStepValid, but adding a safeguard
+        setError("Thumbnail files are missing.");
+        return false; // Indicate failure
       }
     } catch (error) {
-      return false;
+      console.error("Error submitting thread:", error);
+      // Handle unexpected errors during submission with toast
+      toast({
+        title: "Error",
+        description: error?.message || "An unexpected error occurred while adding the thread.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      return false; // Indicate failure
+    } finally {
+      setIsLoading(false); // Ensure loading is false after submission attempt
     }
   };
+
   
 
   //------------------------------------------------
@@ -188,24 +224,42 @@ export default function FlowManagement() {
 
   const nextStep = async () => {
     let canProceed = true; // Flag to determine if we can proceed to next step
-  
+
     if (currentStep === 1) {
       if (videoFile) {
         setIsLoading(true);
-        
+        setIsDuplicateError(false); // Reset duplicate error flag
+        setError(null); // Clear any previous general errors
+
         try {
           const userData = {
             user_id: user.id,
             user_name: user.fullName,
             flow_name: title
           };
-  
+
           const result = await uploadThread(videoFile, userData);
-          
+
           if (!result || result.error) {
-            // Handle API error response
-            setError(result?.error?.message || "Failed to upload video. Please try again.");
-            canProceed = false;
+            // Check if this is a duplicate thread error
+            if (result?.error?.message?.includes('Thread name already exists') ||
+                result?.error?.includes('Thread name already exists')) {
+              // Use toast for duplicate name error
+              toast({
+                title: "Error",
+                description: "Thread name already exists. Please choose a different name.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+              });
+              setIsDuplicateError(true); // Keep state if needed elsewhere, but won't trigger the removed Alert
+              canProceed = false; // Prevent proceeding on duplicate error
+            } else {
+              // Handle other API error responses using the general error state and Alert
+              setError(result?.error?.message || "Failed to upload video. Please try again.");
+              setIsDuplicateError(false); // Ensure duplicate error flag is false for other errors
+              canProceed = false; // Prevent proceeding on other errors
+            }
           } else {
             // Success case
             setSttNames(result.stt_names || []);
@@ -216,15 +270,31 @@ export default function FlowManagement() {
               description: description
             });
             setError(null); // Clear any previous errors
+            setIsDuplicateError(false); // Clear duplicate error flag
           }
         } catch (error) {
-          console.error("Error uploading video:", error);
-          setError(error?.message || "An unexpected error occurred while uploading the video.");
-          canProceed = false;
-        } finally {
-          setIsLoading(false);
-        }
-        
+            console.error("Error uploading video:", error);
+            // Check if this is a duplicate thread error
+            if (error?.message?.includes('Thread name already exists')) {
+              // Use toast for duplicate name error caught in catch
+              toast({
+                title: "Error",
+                description: "Thread name already exists. Please choose a different name.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+              });
+              setIsDuplicateError(true); // Keep state if needed elsewhere
+            } else {
+              // Handle other errors caught in catch using the general error state and Alert
+              setError(error?.message || "An unexpected error occurred while uploading the video.");
+              setIsDuplicateError(false); // Ensure duplicate error flag is false for other errors
+            }
+            canProceed = false; // Prevent proceeding on any error
+          } finally {
+            setIsLoading(false);
+          }
+
         // If there was an error, don't proceed
         if (!canProceed) return;
       }
@@ -474,22 +544,39 @@ export default function FlowManagement() {
   const renderBasicInfoStep = () => {
     return (
       <VStack spacing={4} align="stretch">
+        {/* Keep this Alert for other errors in Step 1 */}
+        {error && !isDuplicateError && ( // Only show general error if not a duplicate error
+          <Alert status="error" borderRadius="md">
+            <AlertIcon />
+            <Box flex="1">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Box>
+          </Alert>
+        )}
+
         <FormControl>
           <Grid templateColumns="repeat(2, 1fr)" gap={8}>
             <FormControl>
               <FormLabel htmlFor='title'>Title</FormLabel>
-              <Input 
-                id='title' 
-                type='text' 
+              <Input
+                id='title'
+                type='text'
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  // Clear duplicate error and general error when user changes the title
+                  if (isDuplicateError) setIsDuplicateError(false);
+                  if (error) setError(null);
+                }}
+                isInvalid={isDuplicateError} // Keep isInvalid for visual feedback on the input
               />
             </FormControl>
 
             <FormControl>
               <FormLabel htmlFor='description'>Description</FormLabel>
-              <Input 
-                id='description' 
+              <Input
+                id='description'
                 type='text'
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -509,6 +596,7 @@ export default function FlowManagement() {
       </VStack>
     );
   };
+
 
   // Step 2: Transcription Settings
   const renderTranscriptionStep = () => {
@@ -679,112 +767,106 @@ export default function FlowManagement() {
   // Step 4: Thumbnails
   // Step 4: Thumbnails
   const renderThumbnailsStep = () => {
-    return (
-      <VStack spacing={6} align="stretch">
-        <Heading size="md">Thumbnail Images</Heading>
-        
-        {addThreadError && (
-          <Alert status="error">
-            <AlertIcon />
-            <AlertTitle>Error creating thread</AlertTitle>
-            <AlertDescription>{addThreadError}</AlertDescription>
-          </Alert>
-        )}
-        
-        <FormControl>
-          <FormLabel>Start Thumbnail</FormLabel>
-          <Box 
-            {...getStartRootProps()} 
-            p={4} 
-            border="2px dashed" 
-            borderColor="gray.300" 
-            borderRadius="md"
-            height="150px"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            cursor={addThreadLoading ? "not-allowed" : "pointer"}
-            bg={startThumbnail ? "transparent" : "gray.50"}
-            opacity={addThreadLoading ? 0.6 : 1}
-          >
-            <input {...getStartInputProps()} disabled={addThreadLoading} />
-            {startThumbnail ? (
-              <Image 
-                src={startThumbnail.preview} 
-                alt="Start thumbnail" 
-                maxHeight="140px"
-                objectFit="contain"
-              />
-            ) : (
-              <Text>Drag and drop or click to upload start thumbnail</Text>
-            )}
-          </Box>
-        </FormControl>
-        
-        <FormControl>
-          <FormLabel>Pause Thumbnail</FormLabel>
-          <Box 
-            {...getPauseRootProps()} 
-            p={4} 
-            border="2px dashed" 
-            borderColor="gray.300" 
-            borderRadius="md"
-            height="150px"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            cursor={addThreadLoading ? "not-allowed" : "pointer"}
-            bg={pauseThumbnail ? "transparent" : "gray.50"}
-            opacity={addThreadLoading ? 0.6 : 1}
-          >
-            <input {...getPauseInputProps()} disabled={addThreadLoading} />
-            {pauseThumbnail ? (
-              <Image 
-                src={pauseThumbnail.preview} 
-                alt="Pause thumbnail" 
-                maxHeight="140px"
-                objectFit="contain"
-              />
-            ) : (
-              <Text>Drag and drop or click to upload pause thumbnail</Text>
-            )}
-          </Box>
-        </FormControl>
-        
-        <FormControl>
-          <FormLabel>Exit Thumbnail</FormLabel>
-          <Box 
-            {...getExitRootProps()} 
-            p={4} 
-            border="2px dashed" 
-            borderColor="gray.300" 
-            borderRadius="md"
-            height="150px"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            cursor={addThreadLoading ? "not-allowed" : "pointer"}
-            bg={exitThumbnail ? "transparent" : "gray.50"}
-            opacity={addThreadLoading ? 0.6 : 1}
-          >
-            <input {...getExitInputProps()} disabled={addThreadLoading} />
-            {exitThumbnail ? (
-              <Image 
-                src={exitThumbnail.preview} 
-                alt="Exit thumbnail" 
-                maxHeight="140px"
-                objectFit="contain"
-              />
-            ) : (
-              <Text>Drag and drop or click to upload exit thumbnail</Text>
-            )}
-          </Box>
-        </FormControl>
-        
-        {/* You might also want to modify your navigation buttons to show loading state */}
-      </VStack>
-    );
-  };
+  return (
+    <VStack spacing={6} align="stretch">
+      <Heading size="md">Thumbnail Images</Heading>
+
+      {/* Remove the Alert for addThreadError here */}
+      {/* addThreadError is now handled by a toast in submitThread */}
+
+      <FormControl>
+        <FormLabel>Start Thumbnail</FormLabel>
+        <Box
+          {...getStartRootProps()}
+          p={4}
+          border="2px dashed"
+          borderColor="gray.300"
+          borderRadius="md"
+          height="150px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          cursor={isLoading ? "not-allowed" : "pointer"} // Use isLoading here as submitThread sets it
+          bg={startThumbnail ? "transparent" : "gray.50"}
+          opacity={isLoading ? 0.6 : 1}
+        >
+          <input {...getStartInputProps()} disabled={isLoading} />
+          {startThumbnail ? (
+            <Image
+              src={startThumbnail.preview}
+              alt="Start thumbnail"
+              maxHeight="140px"
+              objectFit="contain"
+            />
+          ) : (
+            <Text>Drag and drop or click to upload start thumbnail</Text>
+          )}
+        </Box>
+      </FormControl>
+
+      <FormControl>
+        <FormLabel>Pause Thumbnail</FormLabel>
+        <Box
+          {...getPauseRootProps()}
+          p={4}
+          border="2px dashed"
+          borderColor="gray.300"
+          borderRadius="md"
+          height="150px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          cursor={isLoading ? "not-allowed" : "pointer"} // Use isLoading
+          bg={pauseThumbnail ? "transparent" : "gray.50"}
+          opacity={isLoading ? 0.6 : 1}
+        >
+          <input {...getPauseInputProps()} disabled={isLoading} />
+          {pauseThumbnail ? (
+            <Image
+              src={pauseThumbnail.preview}
+              alt="Pause thumbnail"
+              maxHeight="140px"
+              objectFit="contain"
+            />
+          ) : (
+            <Text>Drag and drop or click to upload pause thumbnail</Text>
+          )}
+        </Box>
+      </FormControl>
+
+      <FormControl>
+        <FormLabel>Exit Thumbnail</FormLabel>
+        <Box
+          {...getExitRootProps()}
+          p={4}
+          border="2px dashed"
+          borderColor="gray.300"
+          borderRadius="md"
+          height="150px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          cursor={isLoading ? "not-allowed" : "pointer"} // Use isLoading
+          bg={exitThumbnail ? "transparent" : "gray.50"}
+          opacity={isLoading ? 0.6 : 1}
+        >
+          <input {...getExitInputProps()} disabled={isLoading} />
+          {exitThumbnail ? (
+            <Image
+              src={exitThumbnail.preview}
+              alt="Exit thumbnail"
+              maxHeight="140px"
+              objectFit="contain"
+            />
+          ) : (
+            <Text>Drag and drop or click to upload exit thumbnail</Text>
+          )}
+        </Box>
+      </FormControl>
+
+    </VStack>
+  );
+};
 
   //------------------------------------------------
   // STEP INDICATOR RENDERING

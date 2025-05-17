@@ -3,7 +3,11 @@ import {
   useColorModeValue, 
   Box, 
   Text, 
-  VStack 
+  VStack,
+  FormControl,
+  FormLabel,
+  Select,
+  HStack
 } from '@chakra-ui/react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
@@ -14,9 +18,11 @@ import * as XLSX from 'xlsx';
  * @param {Object} props Component properties
  * @param {Function} props.onFileUpload Callback function when file is uploaded
  * @param {Function} props.onDataProcessed Callback function when file data is processed
+ * @param {String} props.selectedColumn Selected column name
+ * @param {Function} props.onColumnsFound Callback to parent when columns are discovered
  * @returns {JSX.Element} FileUpload component
  */
-const FileUpload = ({ onFileUpload, onDataProcessed }) => {
+const FileUpload = ({ onFileUpload, onDataProcessed, selectedColumn, onColumnsFound }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const inputRef = useRef(null);
@@ -67,18 +73,32 @@ const FileUpload = ({ onFileUpload, onDataProcessed }) => {
   const processCsvFile = (file) => {
     Papa.parse(file, {
       complete: (results) => {
-        // Check if "names" column exists
-        const hasNamesColumn = results.meta.fields && results.meta.fields.includes('names');
-        const namesData = hasNamesColumn 
-          ? results.data.map(row => row.names).filter(Boolean)
-          : [];
+        // Get all column names
+        const columns = results.meta.fields || [];
+        
+        // Notify parent about available columns
+        if (onColumnsFound) {
+          onColumnsFound(columns);
+        }
+        
+        // Check if target column exists (use selected column or default to "names")
+        const targetColumn = selectedColumn || 'names';
+        const hasTargetColumn = columns.includes(targetColumn);
+        
+        // Extract data from the selected column or first column if target doesn't exist
+        const columnToUse = hasTargetColumn ? targetColumn : (columns[0] || '');
+        const columnData = columnToUse ? 
+          results.data.map(row => row[columnToUse]).filter(Boolean) : [];
           
         const fileData = {
           type: 'csv',
           records: results.data.length,
           preview: results.data.slice(0, 3),
-          namesColumn: hasNamesColumn,
-          names: namesData
+          columns: columns,
+          selectedColumn: columnToUse,
+          hasTargetColumn: hasTargetColumn,
+          columnData: columnData,
+          allData: results.data
         };
         
         // Call the onDataProcessed callback with the processed data
@@ -99,40 +119,36 @@ const FileUpload = ({ onFileUpload, onDataProcessed }) => {
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(worksheet, { header: "A" });
       
-      // Find "names" column in the first row
-      const headerRow = json[0];
-      let namesColumnIndex = null;
-      
-      // Look for "names" column (case insensitive)
-      for (const key in headerRow) {
-        if (typeof headerRow[key] === 'string' && headerRow[key].toLowerCase() === 'names') {
-          namesColumnIndex = key;
-          break;
-        }
-      }
-      
-      // Extract names if the column exists
-      const namesData = [];
-      if (namesColumnIndex) {
-        for (let i = 1; i < json.length; i++) {
-          const row = json[i];
-          if (row[namesColumnIndex]) {
-            namesData.push(row[namesColumnIndex]);
-          }
-        }
-      }
-      
-      // Convert to standard format with headers for preview
+      // Convert to standard format with headers
       const jsonWithHeaders = XLSX.utils.sheet_to_json(worksheet);
+      
+      // Get all column names from the first row
+      const columns = jsonWithHeaders.length > 0 ? Object.keys(jsonWithHeaders[0]) : [];
+      
+      // Notify parent about available columns
+      if (onColumnsFound) {
+        onColumnsFound(columns);
+      }
+      
+      // Check if target column exists (use selected column or default to "names")
+      const targetColumn = selectedColumn || 'names';
+      const hasTargetColumn = columns.some(col => col === targetColumn);
+      
+      // Extract data from the selected column or first column if target doesn't exist
+      const columnToUse = hasTargetColumn ? targetColumn : (columns[0] || '');
+      const columnData = columnToUse ? 
+        jsonWithHeaders.map(row => row[columnToUse]).filter(Boolean) : [];
       
       const fileData = {
         type: 'excel',
         records: jsonWithHeaders.length,
         preview: jsonWithHeaders.slice(0, 3),
-        namesColumn: !!namesColumnIndex,
-        names: namesData
+        columns: columns,
+        selectedColumn: columnToUse,
+        hasTargetColumn: hasTargetColumn,
+        columnData: columnData,
+        allData: jsonWithHeaders
       };
       
       // Call the onDataProcessed callback with the processed data
@@ -190,14 +206,17 @@ const FileUpload = ({ onFileUpload, onDataProcessed }) => {
 };
 
 /**
- * FileUploadArea component with file data display
+ * FileUploadArea component with file data display and column selection
  * 
  * @param {Object} props Component properties
  * @param {Function} props.onFileUpload Callback function when file is uploaded
+ * @param {Function} props.onDataProcessed Callback function when file data is processed
  * @returns {JSX.Element} FileUploadArea component
  */
-const FileUploadArea = ({ onFileUpload, onDataProcessed  }) => {
+const FileUploadArea = ({ onFileUpload, onDataProcessed }) => {
   const [fileData, setFileData] = useState(null);
+  const [availableColumns, setAvailableColumns] = useState([]);
+  const [selectedColumn, setSelectedColumn] = useState('');
   
   const handleFileUpload = (file) => {
     if (onFileUpload) {
@@ -207,8 +226,57 @@ const FileUploadArea = ({ onFileUpload, onDataProcessed  }) => {
   
   const handleDataProcessed = (data) => {
     setFileData(data);
+    
+    // Prepare data to pass back to parent component
+    const processedData = {
+      ...data,
+      selectedColumnData: data.columnData,
+    };
+    
     if (onDataProcessed) {
-      onDataProcessed(data);
+      onDataProcessed(processedData);
+    }
+  };
+  
+  const handleColumnsFound = (columns) => {
+    setAvailableColumns(columns);
+    
+    // If "names" is available, select it by default
+    if (columns.includes('names')) {
+      setSelectedColumn('names');
+    } else if (columns.length > 0) {
+      // Otherwise select the first column
+      setSelectedColumn(columns[0]);
+    }
+  };
+  
+  const handleColumnChange = (e) => {
+    const newSelectedColumn = e.target.value;
+    setSelectedColumn(newSelectedColumn);
+    
+    // Only reprocess if we have file data
+    if (fileData && fileData.allData) {
+      // Extract data for the newly selected column
+      const newColumnData = fileData.allData
+        .map(row => row[newSelectedColumn])
+        .filter(Boolean);
+      
+      // Update file data with new column selection
+      const updatedFileData = {
+        ...fileData,
+        selectedColumn: newSelectedColumn,
+        columnData: newColumnData
+      };
+      
+      setFileData(updatedFileData);
+      
+      // Pass updated data to parent
+      if (onDataProcessed) {
+        onDataProcessed({
+          ...updatedFileData,
+          selectedColumnData: newColumnData
+        });
+      }
     }
   };
   
@@ -217,31 +285,52 @@ const FileUploadArea = ({ onFileUpload, onDataProcessed  }) => {
       <FileUpload 
         onFileUpload={handleFileUpload}
         onDataProcessed={handleDataProcessed}
+        selectedColumn={selectedColumn}
+        onColumnsFound={handleColumnsFound}
       />
       
       {fileData && (
-        <Box mt={2}>
-          <Text fontSize="sm" color="green.500">
-            {fileData.records} records found in the {fileData.type} file
-          </Text>
-          
-          {fileData.namesColumn ? (
-            <Box mt={3} maxH="200px" overflowY="auto" borderWidth="1px" borderRadius="md" p={3}>
-              <Text fontWeight="bold" mb={2}>Names Column Found ({fileData.names.length} entries):</Text>
-              {fileData.names.slice(0, 10).map((name, index) => (
-                <Text key={index} fontSize="sm">{name}</Text>
-              ))}
-              {fileData.names.length > 10 && (
-                <Text fontSize="sm" fontStyle="italic">
-                  ...and {fileData.names.length - 10} more
-                </Text>
+        <Box mt={4}>
+          <HStack spacing={4} align="flex-start">
+            <Box flex="1">
+              <Text fontSize="sm" color="green.500" mb={2}>
+                {fileData.records} records found in the {fileData.type} file
+              </Text>
+              
+              {availableColumns.length > 0 && (
+                <FormControl mt={2}>
+                  <FormLabel fontSize="sm">Select Column for Names:</FormLabel>
+                  <Select 
+                    value={selectedColumn} 
+                    onChange={handleColumnChange}
+                    size="sm"
+                  >
+                    {availableColumns.map((column) => (
+                      <option key={column} value={column}>
+                        {column}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
               )}
             </Box>
-          ) : (
-            <Text mt={2} fontSize="sm" color="orange.500">
-              No column named "names" found in the file.
-            </Text>
-          )}
+            
+            {fileData.columnData && fileData.columnData.length > 0 && (
+              <Box flex="1" maxH="200px" overflowY="auto" borderWidth="1px" borderRadius="md" p={3}>
+                <Text fontWeight="bold" mb={2}>
+                  Column "{selectedColumn}" ({fileData.columnData.length} entries):
+                </Text>
+                {fileData.columnData.slice(0, 10).map((value, index) => (
+                  <Text key={index} fontSize="sm">{value}</Text>
+                ))}
+                {fileData.columnData.length > 10 && (
+                  <Text fontSize="sm" fontStyle="italic">
+                    ...and {fileData.columnData.length - 10} more
+                  </Text>
+                )}
+              </Box>
+            )}
+          </HStack>
         </Box>
       )}
     </>

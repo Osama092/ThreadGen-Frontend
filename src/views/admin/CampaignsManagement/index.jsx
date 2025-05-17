@@ -278,22 +278,22 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
           <Button variant="ghost" mr={3} onClick={onClose}>
             Cancel
           </Button>
-          <Button 
-            colorScheme="blue" 
+          <Button
+            colorScheme="blue"
             onClick={handleSubmit}
             isDisabled={
-              !formData.name || 
-              !formData.threadName || 
-              !formData.apiKey || 
-              !formData.file || 
-              loading || 
-              threadsLoading || 
+              !formData.name ||
+              !formData.threadName ||
+              !formData.apiKey ||
+              !formData.file ||
+              loading ||
+              threadsLoading ||
               keysLoading
             }
             isLoading={loading}
             loadingText="Creating..."
           >
-            Create Campaign
+            {error ? "Retry" : "Create Campaign"} {/* Modified line */}
           </Button>
         </ModalFooter>
       </ModalContent>

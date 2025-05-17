@@ -14,16 +14,16 @@ export const useKPIs = (userId, threadName) => {
 
   useEffect(() => {
     const loadKPIs = async () => {
-      if (!userId || !threadName) {
+      if (!userId) {
         setIsLoading(false);
         return;
       }
-      
+
       try {
         setIsLoading(true);
         setError(null);
-        
-        const data = await fetchUserKPIs(userId, threadName);
+
+        const data = await fetchUserKPIs(userId, threadName); // threadName might be undefined
         setKpiData(data);
       } catch (err) {
         console.error('Error in useKPIs hook:', err);
@@ -35,6 +35,7 @@ export const useKPIs = (userId, threadName) => {
 
     loadKPIs();
   }, [userId, threadName]);
+
 
   /**
    * Format seconds to MM:SS format
