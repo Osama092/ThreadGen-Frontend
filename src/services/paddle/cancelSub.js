@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-const PADDLE_API_URL_SUBSCRIPTION = 'http://localhost:5000/subscriptions';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export const cancelSubscription = async (subscriptionId) => {
   try {
-    const response = await axios.post(`${PADDLE_API_URL_SUBSCRIPTION}/${subscriptionId}/cancel`);
+    const response = await axios.post(`${API_URL}/subscriptions/${subscriptionId}/cancel`);
     return response.data;
   } catch (error) {
     throw new Error('Failed to cancel subscription');

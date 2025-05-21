@@ -48,7 +48,7 @@ export default function Billing() {
 
 
   useEffect(() => {
-    initializePaddle({ environment: 'sandbox', token: 'test_77cffaba1e413299f5fec86bb21' })
+    initializePaddle({ environment: 'sandbox', token: process.env.REACT_APP_PADDLE_TOKEN })
       .then((paddleInstance) => {
         if (paddleInstance) {
           setPaddle(paddleInstance);

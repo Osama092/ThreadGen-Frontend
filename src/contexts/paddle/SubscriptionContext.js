@@ -20,7 +20,7 @@ export const SubscriptionProvider = ({ children }) => {
   useEffect(() => {
     const checkSubscription = async (email) => {
       try {
-        const response = await axios.post('http://localhost:5000/subscriptions', { email });
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/subscriptions`, { email });
         const subscriptionStatus = response.data.isSubbed;
         const subscriptionInfo = response.data.subscriptionData;
         const transactionInfo = response.data.transactionData;

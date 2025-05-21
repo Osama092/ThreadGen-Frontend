@@ -10,7 +10,6 @@ import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 const columnHelper = createColumnHelper();
 
 export default function ComplexTable(props) {
-  const user = "tempuser0999@gmail.com";
   const { transactionDataTable } = useSubscription();
   const [tableData, setTableData] = useState([]);
   

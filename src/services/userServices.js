@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/users';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export const addUser = async (userData) => {
   try {
@@ -10,7 +10,7 @@ export const addUser = async (userData) => {
       full_name: userData.full_name
     };
     
-    const response = await axios.post(API_URL, formattedUser);
+    const response = await axios.post(`${API_URL}/users`, formattedUser);
     console.log("User added successfully:", response);
     return response.data;
     

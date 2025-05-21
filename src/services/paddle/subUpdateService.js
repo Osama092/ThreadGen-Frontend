@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-const PADDLE_API_URL_SUBSCRIPTION = 'http://localhost:5000/subscriptions';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export const updateSubscription = async (subscriptionId, priceId) => {
   try {
-    const response = await axios.patch(`${PADDLE_API_URL_SUBSCRIPTION}/${subscriptionId}`, {
+    const response = await axios.patch(`${API_URL}/subscriptions/${subscriptionId}`, {
       price_id: priceId,
     });
     return response.data;

@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 /**
  * Custom hook to handle Server-Sent Events (SSE) connections
  * @param {string} userId - The user ID to subscribe with
- * @param {string} baseUrl - Base API URL (default: http://localhost:5000)
+ * @param {string} baseUrl - Base API URL
  * @returns {Object} - Connection state and message data
  */
-const useSSE = (userId, baseUrl = 'http://localhost:5000') => {
+const useSSE = (userId, baseUrl = process.env.REACT_APP_API_URL) => {
   const [messages, setMessages] = useState([]);
   const [connectionStatus, setConnectionStatus] = useState('Connecting...');
   const [isLoading, setIsLoading] = useState(true);
