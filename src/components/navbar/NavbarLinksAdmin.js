@@ -37,7 +37,7 @@ import { Modal, Container, Grid, ModalOverlay, ModalContent, ModalHeader, ModalB
 import { useModal } from 'contexts/ModalContext';
 import { motion } from 'framer-motion';
 import { css, keyframes } from '@emotion/react';
-import { CloseIcon } from '@chakra-ui/icons';
+import { CloseIcon, MicIcon } from '@chakra-ui/icons';
 import { redirect } from 'react-router-dom';
 import useAudioCloning from 'hooks/useClone';
 import { useUser } from '@clerk/clerk-react';
@@ -215,100 +215,131 @@ export default function HeaderLinks(props) {
         </SignedIn>
       </Box>
 
-      <Modal isOpen={isVoiceModalOpen} onClose={() => setIsVoiceModalOpen(false)}>
-        <ModalOverlay backdropFilter="blur(10px)" />
-        <ModalContent maxW="fit-content">
-          <ModalHeader textAlign="center" fontSize="xl" fontWeight="bold">
-            Record Your Voice
+      <Modal isOpen={isVoiceModalOpen} onClose={() => setIsVoiceModalOpen(false)} size="md">
+        <ModalOverlay backdropFilter="blur(10px)" bg="blackAlpha.300" />
+        <ModalContent maxW="450px" mx={4} borderRadius="2xl" shadow="2xl">
+          <ModalHeader 
+            textAlign="center" 
+            fontSize="lg" 
+            fontWeight="600" 
+            pb={2}
+            borderBottomWidth="1px"
+            borderColor="gray.100"
+          >
+            🎤 Clone Your Voice
           </ModalHeader>
-          <ModalBody>
-            <Box
-              borderRadius="md"
-              p={2}
-              display="flex"
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              height="auto"
-              cursor="pointer"
-              position="relative"
-            >
+          
+          <ModalBody px={6} py={4}>
+            {/* Audio Upload/Recording Section */}
+            <Box mb={4}>
               {audioUrl ? (
-                <>
-                  <Flex 
-                    width="100%" 
-                    height="100%" 
-                    justify="center" 
-                    align="center"
-                    bottom={-4}
-                    position="relative"
-                  >
-                    <IconButton
-                      icon={<CloseIcon />}
-                      size="sm"
-                      position="absolute"
-                      onClick={handleDiscardAudio}
-                    />
-                  </Flex>
-                  <Box border="1px dashed #ccc" p={5}>
-                    <Box mt={4} bg={bg} p={audioUrl ? 2 : 0}>
-                      <audio controls src={audioUrl} />
-                    </Box>
-                  </Box>
-                </>
-              ) : (
-                <>
-                  <Upload
-                    minH={{ base: "auto", lg: "420px", "2xl": "365px" }}
-                    pe='20px'
-                    pb={{ base: "100px", lg: "20px" }}
-                    onFileChange={handelFileChange}
+                <Box 
+                  bg="gray.50" 
+                  borderRadius="lg" 
+                  p={4} 
+                  border="2px dashed" 
+                  borderColor="green.200"
+                  position="relative"
+                >
+                  <IconButton
+                    icon={<CloseIcon />}
+                    size="xs"
+                    position="absolute"
+                    top={2}
+                    right={2}
+                    onClick={handleDiscardAudio}
+                    bg="white"
+                    shadow="sm"
                   />
-                </>
+                  <VStack spacing={2}>
+                    <Text fontSize="sm" color="green.600" fontWeight="500">
+                      ✅ Audio Ready
+                    </Text>
+                    <audio 
+                      controls 
+                      src={audioUrl} 
+                      style={{ width: '100%', height: '35px' }}
+                    />
+                  </VStack>
+                </Box>
+              ) : (
+                <Box>
+                  <Upload
+                    minH="120px"
+                    onFileChange={handelFileChange}
+                    borderRadius="lg"
+                  />
+                </Box>
               )}
             </Box>
 
-            <Box display='flex' justifyContent='center' mb={7} size="xs"> 
-              <Button onClick={handleRecordClick} size="xs">
-                <Box
-                  as="div"
-                  width="12px"
-                  height="12px"
-                  borderRadius="50%"
-                  backgroundColor="red"
-                  marginRight="8px"
-                  animation={isRecording ? `${pulse} 1.5s infinite` : 'none'}
-                />
-                {audioUrl ? 'Save' : (isRecording ? 'Recording' : 'Record')}
+            {/* Record Button */}
+            <Box display="flex" justifyContent="center" mb={4}>
+              <Button
+                onClick={handleRecordClick}
+                size="sm"
+                variant="outline"
+                leftIcon={
+                  <Box
+                    w="8px"
+                    h="8px"
+                    borderRadius="50%"
+                    bg="red.500"
+                    animation={isRecording ? `${pulse} 1.5s infinite` : 'none'}
+                  />
+                }
+                colorScheme={isRecording ? "red" : "gray"}
+                borderColor={isRecording ? "red.300" : "gray.300"}
+              >
+                {isRecording ? 'Stop Recording' : 'Record Audio'}
               </Button>
             </Box>
 
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '10px', width: 'fit-content', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#f9f9f9' }}>
-                <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
-                  <Text width="auto">✅ Recommended</Text>
-                  <Text>• Talking without pauses</Text>
-                  <Text>• Changing positions while</Text>
-                  <Text>• Talking without pauses</Text>
-                </div>
-                <div style={{ padding: '10px', whiteSpace: 'normal', maxWidth: '200px' }}>
-                  <Text width="auto">❌ Things to avoid</Text>
-                  <Text>• Talking without pauses</Text>
-                  <Text>• Changing positions</Text>
-                  <Text>• Changing positions</Text>
-                </div>
-              </div>
-            </div>
+            {/* Tips Section */}
+            <Box 
+              bg="blue.50" 
+              borderRadius="lg" 
+              p={3} 
+              border="1px solid" 
+              borderColor="blue.100"
+              mb={4}
+            >
+              <HStack spacing={6} align="start">
+                <VStack align="start" spacing={1} flex={1}>
+                  <Text fontSize="xs" fontWeight="600" color="green.700">
+                    ✅ Best Practices
+                  </Text>
+                  <Text fontSize="xs" color="gray.600">• Clear, steady voice</Text>
+                  <Text fontSize="xs" color="gray.600">• 30-60 seconds long</Text>
+                  <Text fontSize="xs" color="gray.600">• Quiet environment</Text>
+                </VStack>
+                
+                <VStack align="start" spacing={1} flex={1}>
+                  <Text fontSize="xs" fontWeight="600" color="red.600">
+                    ❌ Avoid
+                  </Text>
+                  <Text fontSize="xs" color="gray.600">• Background noise</Text>
+                  <Text fontSize="xs" color="gray.600">• Long pauses</Text>
+                  <Text fontSize="xs" color="gray.600">• Multiple speakers</Text>
+                </VStack>
+              </HStack>
+            </Box>
+
+            {/* Save Button */}
             <Button
               onClick={async () => {
-                handleClick();      // Run the cloning logic
-                setShowAlert(true); // Trigger the alert
+                handleClick();
+                setShowAlert(true);
               }}
               isLoading={isLoading}
-              loadingText="Saving..."
-              mt={4}
+              loadingText="Processing..."
+              width="100%"
+              colorScheme="blue"
+              size="md"
+              borderRadius="lg"
+              isDisabled={!audioFile}
             >
-              Save
+              Clone My Voice
             </Button>
           </ModalBody>
         </ModalContent>

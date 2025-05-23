@@ -174,7 +174,11 @@ export default function Billing() {
           <Box height='auto'>
             <Text>
             Need unlimited api usage on a bigger scale?  {" "}
-              <Link color="brand.500" href="#">
+              <Link 
+                color="brand.500" 
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=derouichoussama099@gmail.com"
+                target="_blank"
+              >
                 Contact Sales
               </Link>
             </Text>

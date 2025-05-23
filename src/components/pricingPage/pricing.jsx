@@ -29,7 +29,8 @@ import {
   Stack,
   Alert,
   AlertIcon,
-  Divider
+  Divider,
+  Badge
 } from '@chakra-ui/react'
 import { FaCheckCircle } from 'react-icons/fa'
 import usePrices from 'hooks/paddle/usePrices'; // Import the custom hook
@@ -40,18 +41,38 @@ import { useUpdateSubscription } from 'hooks/paddle/useSubUpdate';
 import { useSubscriptionCancel } from 'hooks/paddle/useCancelSub';
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';
 
-const PriceWrapper = ({ children }) => {
+const PriceWrapper = ({ children, isPopular = false }) => {
   return (
     <Box
       mb={4}
-      shadow="base"
-      borderWidth="1px"
+      shadow={isPopular ? "xl" : "base"}
+      borderWidth={isPopular ? "2px" : "1px"}
       alignSelf={{ base: 'center', lg: 'flex-start' }}
-      borderColor='gray.200'
+      borderColor={isPopular ? 'teal.500' : 'gray.200'}
       borderRadius={'xl'}
-      width={{ base: '100%', md: '25%' }} // Adjust width here
-      mx={2} // Add horizontal margin for spacing
+      width={{ base: '100%', md: '25%' }}
+      mx={2}
+      position="relative"
+      transform={isPopular ? "scale(1.05)" : "scale(1)"}
+      zIndex={isPopular ? 10 : 1}
     >
+      {isPopular && (
+        <Badge
+          position="absolute"
+          top="-10px"
+          left="50%"
+          transform="translateX(-50%)"
+          bg="teal.500"
+          color="white"
+          px={3}
+          py={1}
+          borderRadius="full"
+          fontSize="sm"
+          fontWeight="bold"
+        >
+          Most Popular
+        </Badge>
+      )}
       {children}
     </Box>
   )
@@ -179,24 +200,64 @@ const ThreeTierPricing = () => {
   const [modalType, setModalType] = useState('cancel');
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  console.log("the product are", prices)
+  // Define your plan perks here, keyed by Paddle Price ID.
+  const planPerks = {
+    // Monthly Plans
+    "pri_01j82nx8bqpf679svazwrgja50": [ 
+      "100 Requests Limit",
+      "Standard Email Support",
+      "Low Video Generating Priority",
+    ],
+    "pri_01j82nzvsg4st6xjs8px3khsgg": [
+      "500 Requests Limit",
+      "Basic video Generating Priority",
+      "24/7 Priority Support",
+    ],
+    "pri_01j83g0qprpe2xdwpjgebqhef3": [
+      "Unlimited Requests",
+      "High Video Generating Priority",
+      "24/7 Priority Support",
+    ],
+
+    // Annual Plans
+    "pri_01j82nyetjez36tratkwysaaj4": [ 
+      "100 Requests Limit",
+      "Standard Email Support",
+      "Low Video Generating Priority",
+      "Save 17% annually"
+    ],
+    "pri_01j82p126fykccmf7gtf1k0vwj": [
+      "500 Requests Limit",
+      "Basic video Generating Priority",
+      "24/7 Priority Support",
+      "Save 17% annually"
+    ],
+    "pri_01j83g1rs5ynrh6tnq2zeq5y9t": [
+      "Unlimited Requests",
+      "High Video Generating Priority",
+      "24/7 Priority Support",
+      "Save 23% annually"
+    ],
+  };
+
+  console.log("All prices from Paddle:", prices);
 
   useEffect(() => {
-    if (isSubbed !== null) { // Check if it's not null (i.e., data has been fetched)
-      console.log('subscription data', subscriptionData)
+    if (isSubbed !== null) {
+      console.log('Current subscription data:', subscriptionData);
     }
-  });
+  }, [isSubbed, subscriptionData]);
 
   useEffect(() => {
     if (user) {
-      console.log("User Email:", user.primaryEmailAddress.emailAddress);
+      console.log("User Email:", user.primaryEmailAddress?.emailAddress);
     } else {
       console.log("User is not logged in");
     }
   }, [user]);
 
-  const email = user.primaryEmailAddress.emailAddress;
-  console.log("should workd", email)
+  const email = user?.primaryEmailAddress?.emailAddress;
+  console.log("User email for Paddle checkout:", email);
 
   useEffect(() => {
     initializePaddle({ environment: 'sandbox', token: process.env.REACT_APP_PADDLE_TOKEN })
@@ -204,14 +265,12 @@ const ThreeTierPricing = () => {
         if (paddleInstance) {
           setPaddle(paddleInstance);
           
-          // Add event listeners for Paddle checkout events
           paddleInstance.Checkout.on('open', () => {
             console.log('Paddle checkout opened');
           });
           
           paddleInstance.Checkout.on('close', () => {
             console.log('Paddle checkout closed');
-            // Return focus to the button that opened the checkout
             if (checkoutButtonRef.current) {
               setTimeout(() => {
                 checkoutButtonRef.current.focus();
@@ -228,44 +287,40 @@ const ThreeTierPricing = () => {
   }, []);
 
   const updateSub = (priceId) => {
-    const subscriptionId = subscriptionData.data.id; // Use subscriptionData.data.id as the subscriptionId
+    const subscriptionId = subscriptionData?.data?.id;
   
     if (subscriptionId && priceId) {
       return handleUpdateSubscription(subscriptionId, priceId);
     } else {
-      console.error('Subscription ID or Price ID is missing.');
+      console.error('Subscription ID or Price ID is missing for update.');
       return Promise.reject('Subscription ID or Price ID is missing');
     }
   };
   
   const cancelSub = () => {
-    const subscriptionId = subscriptionData.data.id;
+    const subscriptionId = subscriptionData?.data?.id;
     
     if (subscriptionId) {
       return handleCancelSubscription(subscriptionId);
     } else {
-      console.error('Subscription ID is missing.');
+      console.error('Subscription ID is missing for cancellation.');
       return Promise.reject('Subscription ID is missing');
     }
   };
 
   const openCheckout = (items, buttonRef) => {
     if (paddle) {
-      // The button reference is already saved via the ref callback
-      // so we don't need to set it again
       
-      // Close any existing modal or focus traps before opening Paddle checkout
-      document.activeElement.blur();
+      document.activeElement?.blur();
       
-      // Small delay to ensure any existing focus traps are released
       setTimeout(() => {
         paddle.Checkout.open({
           items: items,
-          customData: {
-            "customer_email": email,
+          customer: {
+            email: email,
           },
           settings: {
-            displayMode: 'overlay', // Use overlay mode to prevent focus issues
+            displayMode: 'overlay',
             theme: 'light',
             locale: 'en'
           }
@@ -325,7 +380,6 @@ const ThreeTierPricing = () => {
     if (modalType === 'upgrade' && selectedPlan) {
       return updateSub(selectedPlan.id);
     } else if (modalType === 'cancel') {
-      // Call the actual cancelSub function
       return cancelSub();
     }
     return Promise.resolve();
@@ -350,14 +404,16 @@ const ThreeTierPricing = () => {
         
       </VStack>
       <Flex direction={{ base: 'column', md: 'row' }} justify="center" wrap="wrap" spacing={4} py={5}>
-        {Object.keys(groupedPlans).reverse().map((planName) => { // Reverse the order here
+        {Object.keys(groupedPlans).reverse().map((planName, index) => { 
           const currentPlan = isAnnual ? groupedPlans[planName].year : groupedPlans[planName].month;
+          const isMiddlePlan = index === 1; // Middle plan (Pro Plan)
 
-          if (!currentPlan) return null;
+          if (!currentPlan) return null; 
+
+          console.log(`Rendering: ${planName} (${isAnnual ? 'Annual' : 'Monthly'}) - Price ID: ${currentPlan.id}`);
           
           const priceDisplay = `$${(currentPlan.unit_price.amount / 100).toFixed(2)} ${currentPlan.unit_price.currency_code}/${isAnnual ? 'year' : 'month'}`;
           
-          // Determine button state and text
           let buttonText = 'Start trial';
           let buttonColor = "teal";
           let buttonVariant = "solid";
@@ -383,8 +439,8 @@ const ThreeTierPricing = () => {
           }
           
           return (
-            <PriceWrapper key={currentPlan.id}>
-              <Box py={4} px={12}>
+            <PriceWrapper key={currentPlan.id} isPopular={isMiddlePlan}> 
+              <Box py={4} px={8}>
                 <Text fontWeight="500" fontSize="2xl">
                   {planName}
                 </Text>
@@ -407,31 +463,32 @@ const ThreeTierPricing = () => {
                 bg='gray.50'
                 py={4}
                 borderBottomRadius={'xl'}>
-                <List spacing={3} textAlign="start" px={12}>
-                  <ListItem>
-                    <ListIcon as={FaCheckCircle} color="green.500" />
-                    unlimited build minutes
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaCheckCircle} color="green.500" />
-                    Lorem, ipsum dolor.
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaCheckCircle} color="green.500" />
-                    5TB Lorem, ipsum dolor.
-                  </ListItem>
+                <List spacing={2} textAlign="start" px={6} width="100%">
+                  {planPerks[currentPlan.id] && planPerks[currentPlan.id].map((perk, index) => (
+                    <ListItem key={index} fontSize="sm">
+                      <ListIcon as={FaCheckCircle} color="green.500" />
+                      {perk}
+                    </ListItem>
+                  ))}
+                  {!planPerks[currentPlan.id] && (
+                      <ListItem>
+                          <Text color="gray.500" fontSize="sm">
+                            (Perks not defined for ID: {currentPlan.id})
+                          </Text>
+                      </ListItem>
+                  )}
                 </List>
-                <Box w="80%" pt={7}>
+                <Box w="80%" pt={4}>
                   <Button 
                     ref={(el) => {
-                      // This approach avoids using useRef inside a loop
-                      if (el) checkoutButtonRef.current = el;
+                      if (el) checkoutButtonRef.current = el; 
                     }}
                     colorScheme={buttonColor}
                     variant={buttonVariant}
                     mt={3} 
                     onClick={buttonAction}
                     isLoading={updateLoading || cancelLoading}
+                    width="100%"
                   >
                     {buttonText}
                   </Button>
@@ -442,7 +499,6 @@ const ThreeTierPricing = () => {
         })}
       </Flex>
       
-      {/* Feedback Modal */}
       <FeedbackModal 
         isOpen={isOpen} 
         onClose={onClose} 
