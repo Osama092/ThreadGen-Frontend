@@ -128,8 +128,8 @@ const ComplexTable = React.memo(() => {
         </Text>
       ),
     }),
-    columnHelper.accessor('nUses', {
-      id: 'nUses',
+    columnHelper.accessor('n_uses', {
+      id: 'n_uses',
       header: () => (
         <Text justifyContent="space-between" align="center" fontSize={{ sm: '10px', lg: '12px' }} color="gray.400">
           N° USES

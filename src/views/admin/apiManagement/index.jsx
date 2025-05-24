@@ -1,17 +1,18 @@
-import { Box, Button, Spinner, Grid, Flex, SimpleGrid, useColorModeValue, Card, CardBody, VStack, Input, FormLabel, FormControl, CardHeader, Text, Icon, Select } from "@chakra-ui/react";
+import { Box, Button, Spinner, Grid, Flex, SimpleGrid, useColorModeValue, Card, CardBody, VStack, Input, FormLabel, FormControl, CardHeader, Text, Icon, Select, Badge } from "@chakra-ui/react";
 import { MdVideoLibrary } from "react-icons/md";
 import React, { useState } from "react";
 import ComplexTable from "views/admin/apiManagement/components/ComplexTable";
 import useGenerateVideo from "hooks/apiKeys/useGenVid";
 import useGetUserThreads from 'hooks/flows/useGetUserThreads';
 import { useUser } from "@clerk/clerk-react"
+
 export default function ApiManagement() {
   const [apiKey, setApiKey] = useState('');
   const [threadName, setThreadName] = useState('');
   const [ttsText, setTtsText] = useState('');
   const [iframeUrl, setIframeUrl] = useState('');
   const [showIframe, setShowIframe] = useState(false);
-  const { generate, loading, error, videoUrl } = useGenerateVideo();
+  const { generate, loading, error, videoUrl, remainingTries } = useGenerateVideo();
   const { user } = useUser();
   
   const { threads, loading: threadsLoading, error: threadsError } = useGetUserThreads(user.id);
@@ -82,7 +83,17 @@ export default function ApiManagement() {
           
           <Card>
             <CardHeader>
-              SANDBOX
+              <Flex justify="space-between" align="center">
+                <Text>SANDBOX</Text>
+                {remainingTries !== null && (
+                  <Badge 
+                    colorScheme={remainingTries === 'unlimited' ? 'green' : remainingTries > 10 ? 'blue' : 'orange'}
+                    variant="solid"
+                  >
+                    {remainingTries === 'unlimited' ? 'Unlimited' : `${remainingTries} tries left`}
+                  </Badge>
+                )}
+              </Flex>
             </CardHeader>
             <CardBody>
               <Box>
@@ -123,13 +134,19 @@ export default function ApiManagement() {
                     <Input id='apiKey' type='text' value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
                   </FormControl>
                   <FormControl>
-
                     <FormLabel htmlFor='ttsText'>TTS Text</FormLabel>
                     <Input id='ttsText' type='text' value={ttsText} onChange={(e) => setTtsText(e.target.value)} />
                   </FormControl>
-                  <Button mt={4} type="submit" isLoading={loading}>Submit</Button>
+                  <Button 
+                    mt={4} 
+                    type="submit" 
+                    isLoading={loading}
+                    loadingText="Generating..."
+                  >
+                    Submit
+                  </Button>
                 </VStack>
-                {error && <p>Error: {error.message}</p>}
+                {/* Removed the error display since we're now using toasts */}
               </Box>
             </CardBody>
           </Card>
