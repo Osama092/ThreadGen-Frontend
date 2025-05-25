@@ -26,11 +26,11 @@ import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import Card from 'components/card/Card';
 import useVisibility from 'hooks/useVisibility';
-import useGetUserApiKeys from 'hooks/apiKeys/useGetUserApiKeys'; // Adjust the path as necessary
+import useGetUserApiKeys from 'hooks/apiKeys/useGetUserApiKeys';
 import { useUser } from '@clerk/clerk-react';
 
 import useAddApiKey from 'hooks/apiKeys/useAddKey';
-import useDeleteApiKey from 'hooks/apiKeys/useDeleteKey';
+import usePatchApiKey from 'hooks/apiKeys/usePatchKey'; // Import the new patch hook
 
 const columnHelper = createColumnHelper();
 
@@ -39,7 +39,7 @@ const ComplexTable = React.memo(() => {
   const { keys, loading, error, fetchKeys } = useGetUserApiKeys(user?.id);
 
   const { createApiKey, loading: createLoading, error: createError, apiKey } = useAddApiKey();
-  const { removeApiKey, loading: deleteLoading, error: deleteError, successMessage } = useDeleteApiKey();
+  const { softDeleteApiKey, loading: patchLoading, error: patchError, successMessage } = usePatchApiKey(); // Use patch hook
 
   const [sorting, setSorting] = React.useState([]);
   const { visibility, toggleVisibility } = useVisibility();
@@ -56,8 +56,8 @@ const ComplexTable = React.memo(() => {
     await createApiKey(user.id); 
   };
 
-  const handleDeleteApiKey = async (api_key) => {
-    await removeApiKey(api_key);
+  const handleSoftDeleteApiKey = async (api_key) => {
+    await softDeleteApiKey(api_key);
   };
 
   const columns = [
@@ -161,14 +161,14 @@ const ComplexTable = React.memo(() => {
     onOpen();
   };
 
-  // Handle confirmed deletion
+  // Handle confirmed soft deletion
   const confirmDelete = async () => {
     try {
-      await handleDeleteApiKey(keyToDelete);
+      await handleSoftDeleteApiKey(keyToDelete);
       await fetchKeys();
       toast({
         position: 'top-center',
-        title: 'API key deleted successfully',
+        title: 'API key marked as deleted successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -177,7 +177,7 @@ const ComplexTable = React.memo(() => {
     } catch (err) {
       toast({
         position: 'top-center',
-        title: 'Error deleting API key',
+        title: 'Error marking API key as deleted',
         description: err.message,
         status: 'error',
         duration: 3000,
@@ -284,7 +284,7 @@ const ComplexTable = React.memo(() => {
               Are you sure you want to delete this API key?
             </Text>
             <Text fontSize="sm" color="gray.500" mt={2}>
-              This action cannot be undone.
+              The key will be marked as deleted and disabled.
             </Text>
           </ModalBody>
 
@@ -299,7 +299,7 @@ const ComplexTable = React.memo(() => {
             <Button 
               colorScheme="red" 
               onClick={confirmDelete} 
-              isLoading={deleteLoading}
+              isLoading={patchLoading}
             >
               Delete
             </Button>

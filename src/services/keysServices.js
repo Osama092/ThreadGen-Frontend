@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL;
 
-// Function to get all API keys for a specific user
 export const getKeysService = async (userId) => {
   try {
     const response = await fetch(`/api-keys/get-user-api-keys?user_id=${userId}`);
@@ -27,6 +26,16 @@ export const addApiKey = async (user_id) => {
     return response.data; 
   } catch (error) {
     throw new Error(error.response?.data || 'Error adding API key'); 
+  }
+};
+
+
+export const patchApiKey = async (key) => {
+  try {
+    const response = await axios.patch(`${API_BASE_URL}/api/keys/${key}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data || 'Error marking API key as deleted');
   }
 };
 
