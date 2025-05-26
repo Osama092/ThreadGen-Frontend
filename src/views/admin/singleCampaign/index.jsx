@@ -27,7 +27,7 @@ import {
   AlertIcon,
   useToast,
 } from "@chakra-ui/react";
-import { EditIcon, CheckIcon, CloseIcon, DownloadIcon } from "@chakra-ui/icons";
+import { EditIcon, CheckIcon, CloseIcon } from "@chakra-ui/icons";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { useEditCampaign } from "hooks/useCampaign";
@@ -53,7 +53,10 @@ export default function SingleCampaign() {
   const [loading, setLoading] = useState(!location.state?.campaignData);
   const [error, setError] = useState(null);
   const [isDuplicateError, setIsDuplicateError] = useState(false);
-
+  
+  // State for currently playing video
+  const [currentVideoUrl, setCurrentVideoUrl] = useState("");
+  const [selectedItemIndex, setSelectedItemIndex] = useState(null);
 
   // Get edit campaign hook
   const { 
@@ -145,13 +148,13 @@ export default function SingleCampaign() {
     }
   };
 
-  // Handle download click for an individual item
-  const handleDownload = (item) => {
-    // Only allow downloading items with "ready" status
+  // Handle item click to play video
+  const handleItemClick = (item, index) => {
+    // Only allow playing items with "ready" status and valid video_url
     if (item.status !== "ready" || !item.video_url) {
       toast({
-        title: "Download unavailable",
-        description: "This item is not ready for download yet.",
+        title: "Video unavailable",
+        description: "This item is not ready for playback yet.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -159,17 +162,12 @@ export default function SingleCampaign() {
       return;
     }
     
-    // Create an anchor element and click it programmatically
-    const link = document.createElement('a');
-    link.href = item.video_url;
-    link.download = `${campaign.campaign_name}_item_${item.text.substring(0, 10)}.mp4`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setCurrentVideoUrl(item.video_url);
+    setSelectedItemIndex(index);
     
     toast({
-      title: "Download started",
-      description: "Your video is downloading.",
+      title: "Video loaded",
+      description: `Now playing: ${item.text.substring(0, 30)}...`,
       status: "success",
       duration: 2000,
       isClosable: true,
@@ -181,8 +179,23 @@ export default function SingleCampaign() {
     if (campaign) {
       setEditedName(campaign.campaign_name);
       setEditedDescription(campaign.campaign_description);
+      
+      // Set initial video URL to consolidated video or first ready item
+      const consolidatedVideoUrl = isUserLoaded && user && campaign?.used_thread 
+        ? `http://localhost:5000/userData/temp/${user.fullName}_${user.id}/${campaign.used_thread}/${campaign.used_thread}.mp4`
+        : "";
+      
+      if (consolidatedVideoUrl) {
+        setCurrentVideoUrl(consolidatedVideoUrl);
+      } else {
+        // Find first ready item with video_url
+        const firstReadyItem = campaign.tts_text_list?.find(item => item.status === "ready" && item.video_url);
+        if (firstReadyItem) {
+          setCurrentVideoUrl(firstReadyItem.video_url);
+        }
+      }
     }
-  }, [campaign]);
+  }, [campaign, isUserLoaded, user]);
 
   // Get status color
   const getStatusColor = (status) => {
@@ -246,12 +259,9 @@ export default function SingleCampaign() {
     );
   }
 
-  // Construct consolidated video URL
-  const consolidatedVideoUrl = isUserLoaded && user && campaign?.used_thread 
-    ? `http://localhost:5000/userData/temp/${user.fullName}_${user.id}/${campaign.used_thread}/${campaign.used_thread}.mp4`
-    : "";
-  console.log("video url", consolidatedVideoUrl)
-
+  console.log("campaign", campaign);
+  console.log("current video url", currentVideoUrl);
+  
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
       {/* Back button and Campaign Title */}
@@ -422,9 +432,8 @@ export default function SingleCampaign() {
               <Table variant="simple" size="sm">
                 <Thead bg="gray.50" position="sticky" top="0" zIndex="1">
                   <Tr>
-                    <Th width="65%">Text</Th>
-                    <Th width="20%">Status</Th>
-                    <Th width="15%">Action</Th>
+                    <Th width="85%">Text</Th>
+                    <Th width="15%">Status</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -432,6 +441,10 @@ export default function SingleCampaign() {
                     <Tr 
                       key={index}
                       opacity={item.status === "ready" ? 1 : 0.6}
+                      cursor={item.status === "ready" && item.video_url ? "pointer" : "default"}
+                      _hover={item.status === "ready" && item.video_url ? { bg: "gray.50" } : {}}
+                      bg={selectedItemIndex === index ? "blue.50" : "transparent"}
+                      onClick={() => handleItemClick(item, index)}
                     >
                       <Td
                         height="40px"
@@ -439,6 +452,7 @@ export default function SingleCampaign() {
                         textOverflow="ellipsis"
                         whiteSpace="nowrap"
                         maxW="200px"
+                        title={item.text} // Tooltip for full text
                       >
                         {item.text}
                       </Td>
@@ -453,23 +467,16 @@ export default function SingleCampaign() {
                           {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                         </Badge>
                       </Td>
-                      <Td textAlign="center">
-                        {item.status === "ready" && (
-                          <IconButton
-                            aria-label="Download video"
-                            icon={<DownloadIcon />}
-                            size="sm"
-                            colorScheme="blue"
-                            variant="ghost"
-                            onClick={() => handleDownload(item)}
-                          />
-                        )}
-                      </Td>
                     </Tr>
                   ))}
                 </Tbody>
               </Table>
             </TableContainer>
+            
+            {/* Instructions text */}
+            <Text color="gray.500" fontSize="xs" mt="2" textAlign="center">
+              Click on ready items to play their videos
+            </Text>
           </CardBody>
         </Card>
         
@@ -485,13 +492,18 @@ export default function SingleCampaign() {
             <Flex direction="column" h="100%">
               <Text color={textColor} fontSize="lg" fontWeight="700" mb="15px">
                 Preview
+                {selectedItemIndex !== null && (
+                  <Text as="span" color="gray.500" fontSize="sm" fontWeight="400" ml="2">
+                    - Item {selectedItemIndex + 1}
+                  </Text>
+                )}
               </Text>
               <AspectRatio ratio={16 / 9}>
-                {consolidatedVideoUrl ? (
+                {currentVideoUrl ? (
                   <video 
                     controls
-                    key={consolidatedVideoUrl}
-                    src={consolidatedVideoUrl}
+                    key={currentVideoUrl}
+                    src={currentVideoUrl}
                   >
                     Your browser does not support the video tag.
                   </video>
@@ -501,8 +513,12 @@ export default function SingleCampaign() {
                     alignItems="center" 
                     justifyContent="center" 
                     bg="gray.100"
+                    flexDirection="column"
                   >
-                    <Text color="gray.500">No video available</Text>
+                    <Text color="gray.500" mb="2">No video available</Text>
+                    <Text color="gray.400" fontSize="sm" textAlign="center">
+                      Click on a ready item to load its video
+                    </Text>
                   </Box>
                 )}
               </AspectRatio>
