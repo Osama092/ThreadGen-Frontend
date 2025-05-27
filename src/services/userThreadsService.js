@@ -1,6 +1,8 @@
 const getUserThreads = async (user_id) => {
+  const API_URL = process.env.REACT_APP_API_URL;
+
   try {
-    const response = await fetch(`/threads/get-user-threads?user_id=${user_id}`); 
+    const response = await fetch(`${API_URL}/threads/get-user-threads?user_id=${user_id}`); 
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);
     }
