@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 export const getKeysService = async (userId) => {
   try {
-    const response = await fetch(`/api-keys/get-user-api-keys?user_id=${userId}`);
+    const response = await fetch(`${API_BASE_URL}/api-keys/get-user-api-keys?user_id=${userId}`);
     
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);
