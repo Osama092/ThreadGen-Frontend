@@ -4,11 +4,16 @@ const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 export const uploadThread = async (formData) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/threads/upload-thread`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await axios.post(
+      `${API_BASE_URL}/threads/upload-thread`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'ngrok-skip-browser-warning': 'true', // 👈 Add this line
+        },
+      }
+    );
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.error || 'Error uploading thread');
