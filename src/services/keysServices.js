@@ -32,7 +32,7 @@ export const addApiKey = async (user_id) => {
 
 export const patchApiKey = async (key) => {
   try {
-    const response = await axios.patch(`${API_BASE_URL}/api/keys/${key}`);
+    const response = await axios.patch(`${API_BASE_URL}/api-keys/patch-key/${key}`);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data || 'Error marking API key as deleted');

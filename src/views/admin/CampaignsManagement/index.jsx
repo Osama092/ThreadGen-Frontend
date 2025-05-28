@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { 
-  useColorModeValue, 
-  Box, 
-  Flex, 
-  Grid, 
-  Text, 
+import {
+  useColorModeValue,
+  Box,
+  Flex,
+  Grid,
+  Text,
   Button,
   Modal,
   ModalOverlay,
@@ -36,7 +36,7 @@ function CampaignRow(props) {
   const bgColor = useColorModeValue("#F8F9FA", "gray.800");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
   const hoverBgColor = useColorModeValue("gray.100", "gray.700");
-  
+
   return (
     <Flex
       my="1rem"
@@ -81,7 +81,7 @@ function CampaignRow(props) {
 // Add Campaign Modal Component
 function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
   const { user } = useUser();
-  
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -94,7 +94,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
   const [fileData, setFileData] = useState(null);
   const toast = useToast();
   const { createCampaign, loading, error, success } = useAddCampaign();
-  
+
   // Use hooks to fetch threads and API keys
   const { threads, loading: threadsLoading, error: threadsError } = useGetUserThreads(user_id);
   const { keys, loading: keysLoading, error: keysError } = useGetUserApiKeys(user_id);
@@ -110,7 +110,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
         isClosable: true,
       });
     }
-    
+
     if (threadsError) {
       toast({
         title: "Error loading threads",
@@ -120,7 +120,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
         isClosable: true,
       });
     }
-    
+
     if (keysError) {
       toast({
         title: "Error loading API keys",
@@ -131,7 +131,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
       });
     }
   }, [error, threadsError, keysError, toast]);
-  
+
   // Handle API success notifications
   useEffect(() => {
     if (success) {
@@ -144,38 +144,38 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
       });
     }
   }, [success, toast]);
-  
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  
+
   const handleFileUpload = (file) => {
     setFormData(prev => ({ ...prev, file }));
   };
-  
+
   const handleDataProcessed = (data) => {
     setFileData(data);
     setFormData(prev => ({ ...prev, fileData: data }));
   };
-  
+
   const handleSubmit = async () => {
     try {
       // Calculate total requests based on file data
       const totalRequests = fileData ? fileData.records : 0;
-      
+
       const campaignData = {
         ...formData,
         totalRequests
       };
-      
+
       await createCampaign(campaignData, (newCampaign) => {
         // Pass new campaign to parent component
         onAddCampaign({
           name: newCampaign.campaign_name,
           description: newCampaign.campaign_description,
           threadName: newCampaign.used_thread,
-          totalRequests: newCampaign.tts_text_list.length || 0,
+          totalRequests: newCampaign.tts_text_list?.length || 0,
           status: newCampaign.status || "pending",
           tts_text_list: newCampaign.tts_text_list || []
         });
@@ -185,7 +185,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
       console.error("Error creating campaign:", err);
     }
   };
-  
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xl">
       <ModalOverlay />
@@ -196,33 +196,33 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
           <VStack spacing={4}>
             <FormControl isRequired>
               <FormLabel>Campaign Name</FormLabel>
-              <Input 
-                name="name" 
-                value={formData.name} 
-                onChange={handleInputChange} 
-                placeholder="Enter campaign name" 
+              <Input
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter campaign name"
               />
             </FormControl>
-            
+
             <FormControl>
               <FormLabel>Description</FormLabel>
-              <Input 
-                name="description" 
-                value={formData.description} 
-                onChange={handleInputChange} 
-                placeholder="Enter campaign description" 
+              <Input
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Enter campaign description"
               />
             </FormControl>
-            
+
             <FormControl isRequired>
               <FormLabel>Thread Name</FormLabel>
               {threadsLoading ? (
                 <Spinner size="sm" />
               ) : (
-                <Select 
-                  name="threadName" 
-                  value={formData.threadName} 
-                  onChange={handleInputChange} 
+                <Select
+                  name="threadName"
+                  value={formData.threadName}
+                  onChange={handleInputChange}
                   placeholder="Select thread"
                   isDisabled={threadsLoading || threads.length === 0}
                 >
@@ -239,16 +239,16 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
                 </Text>
               )}
             </FormControl>
-            
+
             <FormControl isRequired>
               <FormLabel>API Key</FormLabel>
               {keysLoading ? (
                 <Spinner size="sm" />
               ) : (
-                <Select 
-                  name="apiKey" 
-                  value={formData.apiKey} 
-                  onChange={handleInputChange} 
+                <Select
+                  name="apiKey"
+                  value={formData.apiKey}
+                  onChange={handleInputChange}
                   placeholder="Select API key"
                   isDisabled={keysLoading || keys.length === 0}
                 >
@@ -263,17 +263,17 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
                 </Text>
               )}
             </FormControl>
-            
+
             <FormControl isRequired>
               <FormLabel>Upload File</FormLabel>
-              <FileUploadArea 
+              <FileUploadArea
                 onFileUpload={handleFileUpload}
                 onDataProcessed={handleDataProcessed}
               />
             </FormControl>
           </VStack>
         </ModalBody>
-        
+
         <ModalFooter>
           <Button variant="ghost" mr={3} onClick={onClose}>
             Cancel
@@ -293,7 +293,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
             isLoading={loading}
             loadingText="Creating..."
           >
-            {error ? "Retry" : "Create Campaign"} {/* Modified line */}
+            {error ? "Retry" : "Create Campaign"}
           </Button>
         </ModalFooter>
       </ModalContent>
@@ -302,7 +302,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
 }
 
 // Main CampaignsManagement Component
-export default function CampaignsManagement() {  
+export default function CampaignsManagement() {
   const textColor = useColorModeValue("secondaryGray.900", "white");
   const bgColor = useColorModeValue("#F8F9FA", "gray.800");
   const tableTextColor = useColorModeValue("gray.700", "white");
@@ -313,11 +313,11 @@ export default function CampaignsManagement() {
 
   // Local state for campaigns (combine backend data with any local additions)
   const [campaigns, setCampaigns] = useState([]);
-  
+
   // Use the custom hook to fetch campaigns, but only if user is loaded
-  const { campaigns: fetchedCampaigns, loading, error, refetch } = 
+  const { campaigns: fetchedCampaigns, loading, error, refetch } =
     useUserCampaigns(isUserLoaded && user ? user.id : null);
-  
+
   // Update local campaigns state when fetched data changes
   useEffect(() => {
     if (fetchedCampaigns && fetchedCampaigns.length > 0) {
@@ -332,11 +332,11 @@ export default function CampaignsManagement() {
         // Store the complete original data for passing to single campaign view
         raw: campaign
       }));
-      
+
       setCampaigns(formattedCampaigns);
     }
   }, [fetchedCampaigns]);
-  
+
   // Show error toast if API fetch fails
   useEffect(() => {
     if (error) {
@@ -354,18 +354,18 @@ export default function CampaignsManagement() {
   const handleCampaignClick = (campaignName) => {
     // Find the clicked campaign in our local state
     const campaign = campaigns.find(c => c.name === campaignName);
-    
+
     if (campaign) {
       // URL-encode the campaign name to handle special characters in the URL
       const encodedName = encodeURIComponent(campaignName);
-      
+
       // Navigate with state containing the full campaign data
-      navigate(`/admin/single-campaign/${encodedName}`, { 
+      navigate(`/admin/single-campaign/${encodedName}`, {
         state: { campaignData: campaign.raw }
       });
     }
   };
-  
+
   const handleAddCampaign = (newCampaign) => {
     setCampaigns([...campaigns, newCampaign]);
     // Refetch from backend to ensure we have the latest data
@@ -424,7 +424,7 @@ export default function CampaignsManagement() {
                 </Box>
               </Flex>
             </Flex>
-            
+
             {/* Campaign Table Header */}
             <Flex
               px="24px"
@@ -479,12 +479,12 @@ export default function CampaignsManagement() {
                   );
                 })
               ) : (
-                <Flex 
-                  justify="center" 
-                  align="center" 
-                  p={8} 
-                  borderRadius="md" 
-                  bg={bgColor} 
+                <Flex
+                  justify="center"
+                  align="center"
+                  p={8}
+                  borderRadius="md"
+                  bg={bgColor}
                   color={textColor}
                 >
                   <Text fontSize="lg">No campaigns found. Create your first campaign using the "Add Campaign" button.</Text>
@@ -494,12 +494,12 @@ export default function CampaignsManagement() {
           </Flex>
         </Flex>
       </Grid>
-      
+
       {/* Add Campaign Modal - Only pass user_id if user is loaded */}
       {user && (
-        <AddCampaignModal 
-          isOpen={isOpen} 
-          onClose={onClose} 
+        <AddCampaignModal
+          isOpen={isOpen}
+          onClose={onClose}
           onAddCampaign={handleAddCampaign}
           user_id={user.id}
         />

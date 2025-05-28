@@ -72,14 +72,15 @@ export default function SingleFlow() {
           borderColor={borderColor}
           borderRadius="20px"
         >
-          <CardBody>
-            <video controls borderRadius='xl' width='100%'>
-              <source 
-                src={`http://localhost:5000/userData/temp/${user.fullName}_${threadData.user_id}/${threadData.thread_name}/${threadData.thread_name}.mp4`} 
-                type="video/mp4" 
-              />
-            </video>        
-          </CardBody>
+        <CardBody>
+          <video controls borderRadius='xl' width='100%'>
+            <source 
+              src={`${process.env.REACT_APP_API_URL}/UserData/temp/${user.fullName}_${threadData.user_id}/${threadData.thread_name}/${threadData.thread_name}.mp4`} 
+              type="video/mp4" 
+            />
+          </video>        
+        </CardBody>
+
         </Card>
 
         <Card

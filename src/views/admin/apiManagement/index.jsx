@@ -21,6 +21,8 @@ export default function ApiManagement() {
     setThreadName(e.target.value); // Update threadName directly
   };
 
+  const baseUrl = process.env.REACT_APP_API_URL;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -32,7 +34,7 @@ export default function ApiManagement() {
     if (result && result.video) {
       // Create and set the iframe URL with the form parameters and the video URL from the result
       const timestamp = new Date().getTime();
-      const url = `http://localhost:5000/player/index.html?apiKey=${encodeURIComponent(apiKey)}&threadName=${encodeURIComponent(threadName)}&ttsText=${encodeURIComponent(ttsText)}&video=${encodeURIComponent(result.video)}&_t=${timestamp}`;
+      const url = `${baseUrl}/player/index.html?apiKey=${encodeURIComponent(apiKey)}&threadName=${encodeURIComponent(threadName)}&ttsText=${encodeURIComponent(ttsText)}&video=${encodeURIComponent(result.video)}&_t=${timestamp}`;
       
       // Force iframe refresh by temporarily hiding it
       setShowIframe(false);

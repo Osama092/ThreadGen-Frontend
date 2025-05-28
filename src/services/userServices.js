@@ -19,3 +19,9 @@ export const addUser = async (userData) => {
     throw error;
   }
 };
+
+
+export const getUserById = async (user_id) => {
+  const response = await axios.get(`${API_URL}/users/${user_id}`);
+  return response.data;
+};

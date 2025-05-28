@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   Box, 
   Flex, 
@@ -51,8 +51,12 @@ const ComplexTable = React.memo(() => {
   // State for delete confirmation modal
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [keyToDelete, setKeyToDelete] = useState(null);
-  
 
+  // Filter out deleted keys - don't show them at all
+  const filteredKeys = useMemo(() => {
+    if (!keys) return [];
+    return keys.filter(key => !key.deleted);
+  }, [keys]);
 
   const handleButtonClick = async () => {
     if (!user?.id) return;  
@@ -148,7 +152,7 @@ const ComplexTable = React.memo(() => {
 
   const table = useReactTable({
     columns,
-    data: keys,
+    data: filteredKeys, // Use filtered data instead of raw keys
     state: {
       sorting,
     },
@@ -266,7 +270,7 @@ const ComplexTable = React.memo(() => {
                   ))}
                   <Td borderColor="transparent">
                     <Flex justify="flex-end">
-                      <Button colorScheme="teal" size="sm" onClick={() => openDeleteConfirmation(row.original.api_key)}>
+                      <Button colorScheme="red" size="sm" onClick={() => openDeleteConfirmation(row.original.api_key)}>
                         Delete
                       </Button>
                     </Flex>

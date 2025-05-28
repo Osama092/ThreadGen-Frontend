@@ -1099,7 +1099,8 @@ export default function FlowManagement() {
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         >
                           {(() => {
-                            const videoUrl = `http://localhost:5000/userData/temp/${user.fullName}_${user.id}/${thread.thread_name}/${thread.thread_name}.mp4`;
+                            const baseUrl = process.env.REACT_APP_API_URL;
+                            const videoUrl = `${baseUrl}/UserData/temp/${user.fullName}_${user.id}/${thread.thread_name}/${thread.thread_name}.mp4`;
                             return (
                               <source 
                                 src={videoUrl}
@@ -1108,6 +1109,7 @@ export default function FlowManagement() {
                             );
                           })()}
                         </video>
+
                       </div>
                     </CardBody>
                   </Card>

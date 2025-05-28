@@ -167,13 +167,16 @@ export default function SingleCampaign() {
     
     toast({
       title: "Video loaded",
-      description: `Now playing: ${item.text.substring(0, 30)}...`,
+      description: `Now playing: ${item.text.substring(0, 30)}`,
       status: "success",
       duration: 2000,
       isClosable: true,
     });
   };
 
+  const baseUrl = process.env.REACT_APP_API_URL;
+
+  
   // Update form state when campaign data loads
   useEffect(() => {
     if (campaign) {
@@ -181,9 +184,9 @@ export default function SingleCampaign() {
       setEditedDescription(campaign.campaign_description);
       
       // Set initial video URL to consolidated video or first ready item
-      const consolidatedVideoUrl = isUserLoaded && user && campaign?.used_thread 
-        ? `http://localhost:5000/userData/temp/${user.fullName}_${user.id}/${campaign.used_thread}/${campaign.used_thread}.mp4`
-        : "";
+      const consolidatedVideoUrl = isUserLoaded && user && campaign?.used_thread
+          ? `${baseUrl}/UserData/temp/${user.fullName}_${user.id}/${campaign.used_thread}/${campaign.used_thread}.mp4`
+          : "";
       
       if (consolidatedVideoUrl) {
         setCurrentVideoUrl(consolidatedVideoUrl);
@@ -490,14 +493,6 @@ export default function SingleCampaign() {
         >
           <CardBody p="4">
             <Flex direction="column" h="100%">
-              <Text color={textColor} fontSize="lg" fontWeight="700" mb="15px">
-                Preview
-                {selectedItemIndex !== null && (
-                  <Text as="span" color="gray.500" fontSize="sm" fontWeight="400" ml="2">
-                    - Item {selectedItemIndex + 1}
-                  </Text>
-                )}
-              </Text>
               <AspectRatio ratio={16 / 9}>
                 {currentVideoUrl ? (
                   <video 
