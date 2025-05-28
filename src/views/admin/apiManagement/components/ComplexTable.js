@@ -20,7 +20,8 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-  useDisclosure
+  useDisclosure,
+  Spinner
 } from '@chakra-ui/react';
 import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
@@ -50,6 +51,8 @@ const ComplexTable = React.memo(() => {
   // State for delete confirmation modal
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [keyToDelete, setKeyToDelete] = useState(null);
+  
+
 
   const handleButtonClick = async () => {
     if (!user?.id) return;  
@@ -238,15 +241,19 @@ const ComplexTable = React.memo(() => {
             {loading ? (
               <Tr>
                 <Td colSpan={columns.length}>
-                  <Text textAlign="center">Loading...</Text>
+                  <Flex justify="center" align="center" py={4}>
+                    <Spinner size="xl" color="brand.500" thickness="4px" />
+                  </Flex>
                 </Td>
               </Tr>
             ) : error ? (
               <Tr>
                 <Td colSpan={columns.length}>
-                  <Text textAlign="center" color="red.500">
-                    {error.message || 'Failed to load API keys.'}
-                  </Text>
+                  <Flex justify="center" align="center" direction="column" py={4} gap={4}>
+                    <Text color={textColor} fontSize="md" textAlign="center">
+                      No API keys found
+                    </Text>
+                  </Flex>
                 </Td>
               </Tr>
             ) : (

@@ -32,7 +32,7 @@ export default function FlowManagement() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user } = useUser();
 
-  const { threads, userThreadsLoading, userThreadsError } = useGetUserThreads(user.id);
+  const { threads, userThreadsLoading, userThreadsError, Spinner } = useGetUserThreads(user.id);
 
   const totalSteps = 4;
 
@@ -934,8 +934,28 @@ export default function FlowManagement() {
             </Flex>
             <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap='20px'>
 
-            <Box as='button' onClick={onOpen} borderRadius='md' color='blue' px={4} h={8} width='auto' height='auto' border='2px' borderColor='blue.600' maxW='sm'>
-              <AddIcon boxSize={20} />
+            <Box
+              as='button'
+              onClick={onOpen}
+              borderRadius='xl'
+              border='2px dashed'
+              borderColor='gray.300'
+              p={6}
+              minH='300px'
+              display='flex'
+              flexDirection='column'
+              alignItems='center'
+              justifyContent='center'
+              cursor='pointer'
+              _hover={{
+                borderColor: 'blue.500',
+                bg: 'blue.50'
+              }}
+            >
+              <AddIcon boxSize={8} color='blue.500' mb={3} />
+              <Text fontSize='md' color='blue.500'>
+                Add New Thread
+              </Text>
             </Box>
 
             <Modal isOpen={isOpen} size={'xl'} onClose={handleClose}>
@@ -1033,8 +1053,18 @@ export default function FlowManagement() {
               </Modal>
             )}
               
-            {userThreadsLoading && <Text>Loading...</Text>}
-        
+            {userThreadsLoading && (
+              <Box 
+                display="flex" 
+                justifyContent="center" 
+                alignItems="center" 
+                minHeight="400px"
+                width="100%"
+                gridColumn={{ base: "1", md: "1 / -1", xl: "2" }}
+              >
+                <Spinner size="xl" color="blue.500" thickness="4px" />
+              </Box>
+            )}        
             {userThreadsError && <Text>Error: {userThreadsError.message}</Text>}
             {threads && threads.length > 0 ? (
                 threads.map((thread) => (
@@ -1101,9 +1131,58 @@ export default function FlowManagement() {
                   </Card>
                 </Box>
               ))
-            ) : (
-              !userThreadsLoading && <Text>No Threads found</Text>
-            )}
+) : (
+  !userThreadsLoading && (
+    <Box
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      p={12}
+      textAlign="center"
+      gridColumn={{ base: "1", md: "2", xl: "2" }}
+    >
+      <Circle size="80px" bg="gray.100" mb={4}>
+        <Box
+          w="40px"
+          h="40px"
+          bg="gray.300"
+          borderRadius="md"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Box
+            w="20px"
+            h="15px"
+            border="2px solid"
+            borderColor="gray.500"
+            borderRadius="2px"
+            position="relative"
+          >
+            <Box
+              position="absolute"
+              top="50%"
+              left="50%"
+              transform="translate(-50%, -50%)"
+              w="0"
+              h="0"
+              borderLeft="6px solid gray.500"
+              borderTop="4px solid transparent"
+              borderBottom="4px solid transparent"
+            />
+          </Box>
+        </Box>
+      </Circle>
+      <Text fontSize="xl" fontWeight="semibold" color="gray.600" mb={2}>
+        No threads yet
+      </Text>
+      <Text fontSize="md" color="gray.500" maxW="300px">
+        Get started by creating your first video thread using the add button above
+      </Text>
+    </Box>
+  )
+)}
             </SimpleGrid>
           </Flex>
         </Flex>

@@ -11,7 +11,8 @@ import {
   useColorModeValue, 
   Tag,
   Button,
-  HStack
+  HStack,
+  Spinner
 } from '@chakra-ui/react';
 
 import { 
@@ -181,7 +182,9 @@ export default function ComplexTable() {
       </Flex>
       <Box>
         {isLoading ? (
-          <Text p="25px">Loading Requests...</Text>
+          <Flex justifyContent="center" alignItems="center" p="25px">
+            <Spinner size="xl" color="blue.500" thickness="4px" />
+          </Flex>
         ) : messages.length === 0 ? (
           <Text p="25px">No requests yet. Waiting for updates...</Text>
         ) : (

@@ -1,5 +1,5 @@
 // Chakra imports
-import { Box, Button, Flex, Icon, Text, useColorModeValue } from "@chakra-ui/react";
+import { Box, Button, Flex, Icon, Text, useColorModeValue, Spinner } from "@chakra-ui/react";
 // Custom components
 import Card from "components/card/Card.js";
 import LineChart from "components/charts/LineChart";
@@ -294,7 +294,15 @@ export default function TotalSpent(props) {
       {...rest}>
       
       <Box minH='300px' w='100%'>
-        {xAxisLabels.length > 0 ? (
+        {isLoading ? (
+          <Flex 
+            justifyContent="center" 
+            alignItems="center" 
+            height="300px"
+          >
+            <Spinner size="xl" color="blue.500" thickness="4px" />
+          </Flex>
+        ) : xAxisLabels.length > 0 ? (
           <LineChart
             chartData={lineChartData}
             chartOptions={lineChartOptions}

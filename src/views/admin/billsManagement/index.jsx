@@ -8,7 +8,7 @@ import ComplexTable from "views/admin/billsManagement/components/ComplexTable";
 
 import React ,{ useState, useEffect } from "react";
 
-import { Card, CardBody, Button, Heading, Text, Badge, } from '@chakra-ui/react'
+import { Card, CardBody, Button, Heading, Text, Badge, Spinner } from '@chakra-ui/react'
 import { initializePaddle } from '@paddle/paddle-js';
 import axios from 'axios';
 import { useSubscription } from 'contexts/paddle/SubscriptionContext';
@@ -77,7 +77,15 @@ export default function Billing() {
         
     <Box pt={{ base: "130px", md: "80px", xl: "80px" }}>
     {isSubbed === null ? (
-      <p>Loading subscription data...</p>
+        <Box 
+          display="flex" 
+          justifyContent="center" 
+          alignItems="center" 
+          minHeight="400px"
+          width="100%"
+        >
+          <Spinner size="xl" color="brand.500" thickness="4px" />
+        </Box>
     ) : isSubbed ? (
       <Grid
         mb='20px'
