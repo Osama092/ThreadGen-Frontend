@@ -24,6 +24,26 @@ export default function SidebarDocs() {
   const { isSubbed, subscriptionData, transactionData } = useSubscription();
   const upgradeButtonRef = useRef(null);
 
+  // Function to get upgrade text based on product ID
+  const getUpgradeText = () => {
+    if (!subscriptionData?.data?.items?.[0]?.product?.id) {
+      return "Upgrade to PRO"; // Default fallback
+    }
+
+    const productId = subscriptionData.data.items[0].product.id;
+    console.log('Product ID:', productId); // Debugging log
+    switch (productId) {
+      case 'pro_01j82nweft36pcrgwt9zcek5g2':
+        return "Upgrade to PRO";
+      case 'pro_01j82nzbtjmtzpyv2yp5b36stz':
+        return "Upgrade to Ultimate";
+      case 'pro_01j83fwqv84197bhntf28ts527':
+        return "All Set";
+      default:
+        return "Upgrade to PRO";
+    }
+  };
+
   useEffect(() => {
     if (isSubbed !== null) { // Check if it's not null (i.e., data has been fetched)
       if (!isSubbed) {
@@ -33,6 +53,8 @@ export default function SidebarDocs() {
     }
   }, [isSubbed, onOpen]);
 
+  console.log('SidebarDocs rendered with isSubbed:', isSubbed, 'subscriptionData:', subscriptionData, 'transactionData:', transactionData);
+  
   // Handle modal closure properly
   const handleModalClose = () => {
     onClose();
@@ -46,6 +68,7 @@ export default function SidebarDocs() {
 
   const bgColor = "linear-gradient(135deg, #868CFF 0%, #4318FF 100%)";
   const borderColor = useColorModeValue("white", "navy.800");
+  const upgradeText = getUpgradeText();
 
   return (
     <Flex
@@ -87,7 +110,7 @@ export default function SidebarDocs() {
           px='10px'
           mt="10px"
           mb='6px'>
-          Upgrade to PRO
+          {upgradeText}
         </Text>
         <Text
           fontSize='14px'
@@ -96,7 +119,10 @@ export default function SidebarDocs() {
           px='10px'
           mb='6px'
           textAlign='center'>
-          Improve your work process and start doing more with PRO!
+          {upgradeText === "All Set" 
+            ? "You're enjoying all premium features!" 
+            : "Improve your work process and start doing more with PRO!"
+          }
         </Text>
       </Flex>
       <Button
@@ -110,8 +136,9 @@ export default function SidebarDocs() {
         fontSize='sm'
         minW='185px'
         mx='auto'
-        onClick={onOpen}>
-        Upgrade to PRO
+        onClick={onOpen}
+        isDisabled={upgradeText === "All Set"}>
+        {upgradeText}
       </Button>
 
       <Modal 
