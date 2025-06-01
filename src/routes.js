@@ -89,14 +89,6 @@ const routes = [
     icon: <Icon as={MdPerson} width="20px" height="20px" color="inherit" />,
     component: <SingleFlow />,
     hideInNav: true,
-  },
-  
-  {
-    name: 'Landing',
-    layout: '/admin',
-    path: '/home',
-    icon: <Icon as={MdPerson} width="20px" height="20px" color="inherit" />,
-    component: <LandingPage />,
   }
 
 
