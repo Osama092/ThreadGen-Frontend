@@ -31,7 +31,6 @@ import {
   Avatar,
   AvatarGroup,
   Tooltip,
-  keyframes,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -41,6 +40,8 @@ import {
   useDisclosure,
   AspectRatio
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
+
 import { 
   MdVideoLibrary, 
   MdPeople, 
