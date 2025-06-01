@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { ModalProvider } from 'contexts/ModalContext'
 // Chakra imports
 import SignInPage from 'views/auth/index';
+import LandingPage from 'views/admin/landingPage'; // Assuming you save the landing page here
 
 export default function Main() {
   // eslint-disable-next-line
@@ -20,7 +21,7 @@ export default function Main() {
     <ModalProvider>
       <ChakraProvider theme={currentTheme}>
         <Routes>
-          <Route path="/sign-in" element={<SignInPage />} />
+          <Route path="/sign-in" element={<LandingPage />} />
 
           <Route
             path="admin/*"

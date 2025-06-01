@@ -102,7 +102,7 @@ export default function ApiManagement() {
                 <VStack spacing={4} as="form" onSubmit={handleSubmit}>
                   
                   <FormControl isRequired>
-                    <FormLabel htmlFor='threadName'>Thread Name</FormLabel>
+                    <FormLabel htmlFor='threadName'>Flow Name</FormLabel>
 
                     {
                       threadsLoading ? (
@@ -126,7 +126,7 @@ export default function ApiManagement() {
                     }
                     {threads.length === 0 && !threadsLoading && (
                       <Text fontSize="sm" color="red.500" mt={1}>
-                        No Threads available
+                        No Flows available
                       </Text>
                     )}
                      

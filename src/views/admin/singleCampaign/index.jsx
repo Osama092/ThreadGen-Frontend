@@ -363,7 +363,7 @@ export default function SingleCampaign() {
             )}
             
             <Text color="gray.600" fontSize="sm" mb="2">
-              <Text as="span" fontWeight="600">Thread: </Text>
+              <Text as="span" fontWeight="600">Flow: </Text>
               {campaign.used_thread}
             </Text>
             

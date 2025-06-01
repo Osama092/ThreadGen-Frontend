@@ -128,7 +128,7 @@ export default function FlowManagement() {
           // Handle addThread errors with toast
           toast({
             title: "Error",
-            description:  "Failed to add thread. Please try again.",
+            description:  "Failed to add flow. Please try again.",
             status: "error",
             duration: 5000,
             isClosable: true,
@@ -142,11 +142,11 @@ export default function FlowManagement() {
         return false; // Indicate failure
       }
     } catch (error) {
-      console.error("Error submitting thread:", error);
+      console.error("Error submitting flow:", error);
       // Handle unexpected errors during submission with toast
       toast({
         title: "Error",
-        description: error?.message || "An unexpected error occurred while adding the thread.",
+        description: error?.message || "An unexpected error occurred while adding the flow.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -242,12 +242,12 @@ export default function FlowManagement() {
 
           if (!result || result.error) {
             // Check if this is a duplicate thread error
-            if (result?.error?.message?.includes('Thread name already exists') ||
-                result?.error?.includes('Thread name already exists')) {
+            if (result?.error?.message?.includes('Flow name already exists') ||
+                result?.error?.includes('Flow name already exists')) {
               // Use toast for duplicate name error
               toast({
                 title: "Error",
-                description: "Thread name already exists. Please choose a different name.",
+                description: "Flow name already exists. Please choose a different name.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -275,11 +275,11 @@ export default function FlowManagement() {
         } catch (error) {
             console.error("Error uploading video:", error);
             // Check if this is a duplicate thread error
-            if (error?.message?.includes('Thread name already exists')) {
+            if (error?.message?.includes('Flow name already exists')) {
               // Use toast for duplicate name error caught in catch
               toast({
                 title: "Error",
-                description: "Thread name already exists. Please choose a different name.",
+                description: "Flow name already exists. Please choose a different name.",
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -375,8 +375,8 @@ export default function FlowManagement() {
         setError(null); // Clear any previous errors
   
       } catch (error) {
-        console.error("Error creating thread:", error);
-        setError(error?.message || "An error occurred while creating the thread.");
+        console.error("Error creating flow:", error);
+        setError(error?.message || "An error occurred while creating the flow.");
         canProceed = false;
       } finally {
         setIsLoading(false);
@@ -929,7 +929,7 @@ export default function FlowManagement() {
               align={{ base: "start", md: "center" }}
             >
               <Text color={textColor} fontSize='2xl' ms='24px' fontWeight='700'>
-                Current Threads:
+                Current Flows:
               </Text>
             </Flex>
             <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap='20px'>
@@ -954,7 +954,7 @@ export default function FlowManagement() {
             >
               <AddIcon boxSize={8} color='blue.500' mb={3} />
               <Text fontSize='md' color='blue.500'>
-                Add New Thread
+                Add New Flow
               </Text>
             </Box>
 
@@ -962,10 +962,10 @@ export default function FlowManagement() {
               <ModalOverlay />
               <ModalContent>
                 <ModalHeader>
-                  {currentStep === 1 && "Add New Thread - Step 1: Basic Information"}
-                  {currentStep === 2 && "Add New Thread - Step 2: Transcription"}
-                  {currentStep === 3 && "Add New Thread - Step 3: Player Settings"}
-                  {currentStep === 4 && "Add New Thread - Step 4: Thumbnails"}
+                  {currentStep === 1 && "Add New Flow - Step 1: Basic Information"}
+                  {currentStep === 2 && "Add New Flow - Step 2: Transcription"}
+                  {currentStep === 3 && "Add New Flow - Step 3: Player Settings"}
+                  {currentStep === 4 && "Add New Flow - Step 4: Thumbnails"}
                 </ModalHeader>
                 <ModalCloseButton />
                 
@@ -995,7 +995,7 @@ export default function FlowManagement() {
                     <Button 
                       colorScheme="teal" 
                       isLoading={addThreadLoading}
-                      loadingText="Creating thread..."
+                      loadingText="Creating Flow..."
                       isDisabled={!isStepValid || addThreadLoading}
                       onClick={async () => {
                         if (currentStep === 4) {
@@ -1035,10 +1035,10 @@ export default function FlowManagement() {
                     >
                       <AlertIcon boxSize='40px' mr={0} />
                       <AlertTitle mt={4} mb={1} fontSize='lg'>
-                        Thread created successfully!
+                        Flow created successfully!
                       </AlertTitle>
                       <AlertDescription maxWidth='sm'>
-                        Your new Thread has been created and saved. You can now manage it from the dashboard.
+                        Your new Flow has been created successfully and is being processed.
                       </AlertDescription>
                       <CloseButton
                         alignSelf='flex-start'
@@ -1177,10 +1177,10 @@ export default function FlowManagement() {
         </Box>
       </Circle>
       <Text fontSize="xl" fontWeight="semibold" color="gray.600" mb={2}>
-        No threads yet
+        No Flows yet
       </Text>
       <Text fontSize="md" color="gray.500" maxW="300px">
-        Get started by creating your first video thread using the add button above
+        Get started by creating your first Flow
       </Text>
     </Box>
   )

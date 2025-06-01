@@ -54,7 +54,7 @@ export default function SingleFlow() {
   if (!threadData) {
     return (
       <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
-        <Text>Loading thread data...</Text>
+        <Text>Loading flow data...</Text>
       </Box>
     );
   }
@@ -62,7 +62,7 @@ export default function SingleFlow() {
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>
       <Text color={textColor} fontSize='2xl' ms='24px' fontWeight='700' mb="20px">
-        Thread Details
+        Flow Details
       </Text>
 
       <SimpleGrid columns={{ base: 1, md: 2 }} gap='20px' mb="20px">

@@ -113,8 +113,8 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
 
     if (threadsError) {
       toast({
-        title: "Error loading threads",
-        description: "Could not load available threads",
+        title: "Error loading flows",
+        description: "Could not load available flows",
         status: "error",
         duration: 3000,
         isClosable: true,
@@ -215,7 +215,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel>Thread Name</FormLabel>
+              <FormLabel>Flow Name</FormLabel>
               {threadsLoading ? (
                 <Spinner size="sm" />
               ) : (
@@ -223,7 +223,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
                   name="threadName"
                   value={formData.threadName}
                   onChange={handleInputChange}
-                  placeholder="Select thread"
+                  placeholder="Select flow"
                   isDisabled={threadsLoading || threads.length === 0}
                 >
                   {threads.filter((thread) => thread.status === "ready").map((thread) => (
@@ -235,7 +235,7 @@ function AddCampaignModal({ isOpen, onClose, onAddCampaign, user_id }) {
               )}
               {threads.length === 0 && !threadsLoading && (
                 <Text fontSize="sm" color="red.500" mt={1}>
-                  No threads available
+                  No flows available
                 </Text>
               )}
             </FormControl>
@@ -446,7 +446,7 @@ export default function CampaignsManagement() {
                 fontWeight="700"
                 width="25%"
               >
-                Used Thread
+                Used Flow
               </Text>
               <Text
                 color={tableTextColor}

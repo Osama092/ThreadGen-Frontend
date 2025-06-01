@@ -59,7 +59,7 @@ const ComplexTable = React.memo(( {thread_name}) => {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Thread
+          Flow
         </Text>
       ),
       cell: (info) => (

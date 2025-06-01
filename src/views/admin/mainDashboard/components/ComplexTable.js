@@ -77,7 +77,7 @@ export default function ComplexTable() {
           fontSize={{ sm: '10px', lg: '12px' }}
           color="gray.400"
         >
-          Thread Name
+          Flow Name
         </Text>
       ),
       cell: (info) => (

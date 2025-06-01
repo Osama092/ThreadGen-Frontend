@@ -11,6 +11,7 @@ import {
 import { MdSettings, MdCampaign, MdCreditCard, MdVideoLibrary } from 'react-icons/md';
 import { LockIcon,  } from '@chakra-ui/icons';
 import ProtectedRoute from 'protection';
+import LandingPage from 'views/admin/landingPage';
 
 // Admin Imports
 import MainDashboard from 'views/admin/mainDashboard';
@@ -33,9 +34,9 @@ const routes = [
 
 
   {
-    name: 'Threads',
+    name: 'Flows',
     layout: '/admin',
-    path: '/threads-management',
+    path: '/flows-management',
     icon: (
       <Icon
         as={MdVideoLibrary}
@@ -89,6 +90,14 @@ const routes = [
     component: <SingleFlow />,
     hideInNav: true,
   },
+  
+  {
+    name: 'Landing',
+    layout: '/admin',
+    path: '/home',
+    icon: <Icon as={MdPerson} width="20px" height="20px" color="inherit" />,
+    component: <LandingPage />,
+  }
 
 
 
