@@ -106,10 +106,9 @@ export default function FlowManagement() {
         ttsText: ThreadData.ttsText || "",
         color: ThreadData.color || "#3182CE",
         smart_pause: ThreadData.smart_pause,
-        subtitle: ThreadData.subtitle ,
+        subtitle: ThreadData.subtitle,
         fast_progress: ThreadData.fast_progress
       };
-
 
       if (startThumbnail?.file && pauseThumbnail?.file && exitThumbnail?.file) {
         const result = await addThread(
@@ -123,19 +122,24 @@ export default function FlowManagement() {
           // Handle success
           handleClose();
           setShowAlert(true);
+          
+          // Reload the page after a short delay to allow the success alert to show
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000); // 3 second delay to match the alert duration
+          
           return true; // Indicate success
         } else {
           // Handle addThread errors with toast
           toast({
             title: "Error",
-            description:  "Failed to add flow. Please try again.",
+            description: "Failed to add flow. Please try again.",
             status: "error",
             duration: 5000,
             isClosable: true,
           });
           return false; // Indicate failure
         }
-
       } else {
         // This case should ideally be caught by isStepValid, but adding a safeguard
         setError("Thumbnail files are missing.");
@@ -1184,7 +1188,7 @@ export default function FlowManagement() {
       </Text>
     </Box>
   )
-)}
+  )}
             </SimpleGrid>
           </Flex>
         </Flex>

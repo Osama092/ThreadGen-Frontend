@@ -307,29 +307,30 @@ const ThreeTierPricing = () => {
       return Promise.reject('Subscription ID is missing');
     }
   };
-
-  const openCheckout = (items, buttonRef) => {
-    if (paddle) {
-      
-      document.activeElement?.blur();
-      
-      setTimeout(() => {
-        paddle.Checkout.open({
-          items: items,
-          customer: {
-            email: email,
-          },
-          settings: {
-            displayMode: 'overlay',
-            theme: 'light',
-            locale: 'en'
-          }
-        });
-      }, 100);
-    } else {
-      console.error('Paddle instance is not available');
-    }
-  };
+const openCheckout = (items, buttonRef) => {
+  if (paddle) {
+    document.activeElement?.blur();
+    setTimeout(() => {
+      paddle.Checkout.open({
+        items: items,
+        customer: {
+          email: email,
+        },
+        customData: {
+          helloworld: 'Hello from Paddle Checkout',
+          customer_email: email 
+        },
+        settings: {
+          displayMode: 'overlay',
+          theme: 'light',
+          locale: 'en'
+        }
+      });
+    }, 100);
+  } else {
+    console.error('Paddle instance is not available');
+  }
+};
 
   const groupedPlans = prices.reduce((acc, price) => {
     const planName = price.name;
@@ -346,19 +347,23 @@ const ThreeTierPricing = () => {
     return acc;
   }, {});
 
+  // Fixed subscription status checks
   const isSubscribedPlan = (planId) => {
     return subscriptionData && 
            subscriptionData.data && 
            subscriptionData.data.items && 
            subscriptionData.data.items[0] && 
            subscriptionData.data.items[0].price.id === planId &&
-           subscriptionData.data.status !== 'canceled';
+           subscriptionData.data.status === 'active'; // Changed to explicitly check for 'active'
   };
 
   const isSubscriptionCanceled = () => {
     return subscriptionData && 
            subscriptionData.data && 
-           subscriptionData.data.status === 'canceled';
+           (subscriptionData.data.status === 'canceled' || 
+            subscriptionData.data.status === 'cancelled' || // Handle both spellings
+            subscriptionData.data.status === 'paused' ||
+            subscriptionData.data.status === 'past_due'); // Include other non-active states
   };
 
   const isDifferentPlan = (planId) => {
@@ -367,7 +372,12 @@ const ThreeTierPricing = () => {
            subscriptionData.data.items && 
            subscriptionData.data.items[0] && 
            subscriptionData.data.items[0].price.id !== planId &&
-           subscriptionData.data.status !== 'canceled';
+           subscriptionData.data.status === 'active'; // Only show upgrade for active subscriptions
+  };
+
+  // New helper function to check if user has any subscription history
+  const hasSubscriptionHistory = () => {
+    return subscriptionData && subscriptionData.data && subscriptionData.data.id;
   };
 
   const handlePlanAction = (plan, actionType) => {
@@ -411,6 +421,10 @@ const ThreeTierPricing = () => {
           if (!currentPlan) return null; 
 
           console.log(`Rendering: ${planName} (${isAnnual ? 'Annual' : 'Monthly'}) - Price ID: ${currentPlan.id}`);
+          console.log('Subscription status:', subscriptionData?.data?.status);
+          console.log('Is subscribed to this plan:', isSubscribedPlan(currentPlan.id));
+          console.log('Is subscription canceled:', isSubscriptionCanceled());
+          console.log('Has subscription history:', hasSubscriptionHistory());
           
           const priceDisplay = `$${(currentPlan.unit_price.amount / 100).toFixed(2)} ${currentPlan.unit_price.currency_code}/${isAnnual ? 'year' : 'month'}`;
           
@@ -422,16 +436,27 @@ const ThreeTierPricing = () => {
             openCheckout(itemsList, { current: checkoutButtonRef.current });
           };
           
+          // Fixed button logic
           if (isSubscribedPlan(currentPlan.id)) {
+            // User is currently subscribed to this plan
             buttonText = 'Cancel';
             buttonColor = "red";
             buttonVariant = "outline";
             buttonAction = () => handlePlanAction(currentPlan, 'cancel');
           } else if (isDifferentPlan(currentPlan.id)) {
+            // User has active subscription to different plan
             buttonText = 'Upgrade';
             buttonAction = () => handlePlanAction(currentPlan, 'upgrade');
-          } else if (isSubscriptionCanceled()) {
+          } else if (isSubscriptionCanceled() && hasSubscriptionHistory()) {
+            // User had subscription but it's now canceled/inactive
             buttonText = 'Resubscribe';
+            buttonAction = () => {
+              const itemsList = [{ priceId: currentPlan.id, quantity: 1 }];
+              openCheckout(itemsList, { current: checkoutButtonRef.current });
+            };
+          } else {
+            // New user or no subscription history
+            buttonText = 'Get Started';
             buttonAction = () => {
               const itemsList = [{ priceId: currentPlan.id, quantity: 1 }];
               openCheckout(itemsList, { current: checkoutButtonRef.current });
