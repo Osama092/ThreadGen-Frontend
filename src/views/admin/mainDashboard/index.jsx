@@ -21,14 +21,11 @@ export default function Dashboard() {
   
   // Calculate statistics from messages
   const totalRequests = messages.length;
-  console.log("Total Requests:", totalRequests);
   
   const { kpiData, isLoading: kpiLoading, formattedWatchTime } = useKPIs(user_id);
 
   useEffect(() => {
     if (kpiData) {
-      console.log('KPI Data:', kpiData);
-      // If you expect kpiData to be an array (for multiple KPIs)
       console.log("number of KPIs:", kpiData.count);
     }
   }, [kpiData]);

@@ -262,8 +262,6 @@ export default function SingleCampaign() {
     );
   }
 
-  console.log("campaign", campaign);
-  console.log("current video url", currentVideoUrl);
   
   return (
     <Box pt={{ base: "180px", md: "80px", xl: "80px" }}>

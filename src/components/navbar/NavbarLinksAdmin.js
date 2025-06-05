@@ -74,9 +74,7 @@ export default function HeaderLinks(props) {
   // Set modal state based on voice_cloned status
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   
-  console.log("Voice cloned status:", voice_cloned);
-  console.log("Logged User:", logedUser);
-  console.log("cloned user status", logedUser?.voice_cloned);
+
 
   // Update modal state when user data loads or voice_cloned status changes
   useEffect(() => {
@@ -86,8 +84,6 @@ export default function HeaderLinks(props) {
   }, [voice_cloned, userLoading, logedUser]);
 
   const handleClick = async () => {
-    console.log(user.id)
-    console.log(user.fullName)
     if (audioFile && audioFile instanceof File) {
       setIsLoading(true);
       try {
@@ -95,13 +91,8 @@ export default function HeaderLinks(props) {
           user_id: user.id,
           user_name: user.fullName,
         }
-        console.log('Audio file details:', {
-          name: audioFile.name,
-          type: audioFile.type,
-          size: audioFile.size
-        });
+
         const result = await cloneAudio(audioFile, userData);
-        console.log(result);
         // Close the modal after successful cloning
         setIsVoiceModalOpen(false);
       } catch (error) {
@@ -111,7 +102,6 @@ export default function HeaderLinks(props) {
       }
     } else {
       console.log('No audio file selected');
-      console.log("audioFile", audioFile) 
     }
   };
 

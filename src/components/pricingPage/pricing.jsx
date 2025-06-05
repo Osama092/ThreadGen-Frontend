@@ -50,8 +50,8 @@ const PriceWrapper = ({ children, isPopular = false }) => {
       alignSelf={{ base: 'center', lg: 'flex-start' }}
       borderColor={isPopular ? 'teal.500' : 'gray.200'}
       borderRadius={'xl'}
-      width={{ base: '100%', md: '25%' }}
-      mx={2}
+      width={{ base: '280px', sm: '300px', md: '280px', lg: '280px' }}
+      mx={{ base: 'auto', lg: 2 }}
       position="relative"
       transform={isPopular ? "scale(1.05)" : "scale(1)"}
       zIndex={isPopular ? 10 : 1}
@@ -93,15 +93,15 @@ const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price, o
         setIsSubmitting(false);
         setIsSuccess(true);
         
-        // Close the modal after showing success message and call parent close
+        // Close the modal and trigger page refresh after showing success message
         setTimeout(() => {
           onClose();
           setIsSuccess(false);
-          // Close the parent pricing modal
+          // Trigger the callback to refresh the page
           if (onActionComplete) {
             onActionComplete();
           }
-        }, 2000);
+        }, 1500); // Reduced timeout for better UX
       })
       .catch((error) => {
         setIsSubmitting(false);
@@ -244,24 +244,7 @@ const ThreeTierPricing = ({ onActionComplete }) => {
     ],
   };
 
-  console.log("All prices from Paddle:", prices);
-
-  useEffect(() => {
-    if (isSubbed !== null) {
-      console.log('Current subscription data:', subscriptionData);
-    }
-  }, [isSubbed, subscriptionData]);
-
-  useEffect(() => {
-    if (user) {
-      console.log("User Email:", user.primaryEmailAddress?.emailAddress);
-    } else {
-      console.log("User is not logged in");
-    }
-  }, [user]);
-
   const email = user?.primaryEmailAddress?.emailAddress;
-  console.log("User email for Paddle checkout:", email);
 
   useEffect(() => {
     initializePaddle({ environment: 'sandbox', token: process.env.REACT_APP_PADDLE_TOKEN })
@@ -274,7 +257,6 @@ const ThreeTierPricing = ({ onActionComplete }) => {
           });
           
           paddleInstance.Checkout.on('close', () => {
-            console.log('Paddle checkout closed');
             if (checkoutButtonRef.current) {
               setTimeout(() => {
                 checkoutButtonRef.current.focus();
@@ -282,16 +264,17 @@ const ThreeTierPricing = ({ onActionComplete }) => {
             }
           });
 
-          // Handle successful checkout completion
+          // Listen for successful checkout completion
           paddleInstance.Checkout.on('checkout.completed', (data) => {
             console.log('Checkout completed:', data);
-            // Close the pricing modal when checkout is successful
-            if (onActionComplete) {
-              setTimeout(() => {
+            // Trigger page refresh after successful purchase
+            setTimeout(() => {
+              if (onActionComplete) {
                 onActionComplete();
-              }, 1000); // Small delay to allow for any processing
-            }
+              }
+            }, 2000); // Give some time for the transaction to process
           });
+
         } else {
           console.error('Paddle initialization failed');
         }
@@ -411,36 +394,60 @@ const ThreeTierPricing = ({ onActionComplete }) => {
     return Promise.resolve();
   };
 
+  // Handler for when any action completes (to refresh the page)
+  const handleActionComplete = () => {
+    // Close any open modals first
+    onClose();
+    
+    // Refresh the page after a short delay
+    setTimeout(() => {
+      if (onActionComplete) {
+        onActionComplete();
+      } else {
+        // Fallback to window.location.reload if no callback provided
+        window.location.reload();
+      }
+    }, 500);
+  };
+
   return (
-    <Box py={12}>
-      <VStack spacing={2} textAlign="center">
-        <Heading as="h1" fontSize="4xl">
+    <Box py={{ base: 6, md: 12 }} px={{ base: 4, md: 6, lg: 8 }}>
+      <VStack spacing={2} textAlign="center" mb={{ base: 6, md: 8 }}>
+        <Heading 
+          as="h1" 
+          fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
+          px={{ base: 4, md: 0 }}
+        >
           Plans that fit your need
         </Heading>
         
-        <HStack mb={4} align="center">
-          <Text>Monthly</Text>
+        <HStack mb={4} align="center" spacing={3}>
+          <Text fontSize={{ base: "sm", md: "md" }}>Monthly</Text>
           <Switch
             isChecked={isAnnual}
             onChange={() => setIsAnnual(!isAnnual)}
             colorScheme="teal"
           />
-          <Text>Annually</Text>
+          <Text fontSize={{ base: "sm", md: "md" }}>Annually</Text>
         </HStack>
-        
       </VStack>
-      <Flex direction={{ base: 'column', md: 'row' }} justify="center" wrap="wrap" spacing={4} py={5}>
+      
+      <Flex 
+        direction={{ base: 'column', lg: 'row' }} 
+        justify="center" 
+        align={{ base: 'center', lg: 'flex-start' }}
+        gap={{ base: 4, lg: 6 }}
+        py={5}
+        maxWidth="1200px"
+        mx="auto"
+      >
         {Object.keys(groupedPlans).reverse().map((planName, index) => { 
           const currentPlan = isAnnual ? groupedPlans[planName].year : groupedPlans[planName].month;
           const isMiddlePlan = index === 1; // Middle plan (Pro Plan)
 
           if (!currentPlan) return null; 
 
-          console.log(`Rendering: ${planName} (${isAnnual ? 'Annual' : 'Monthly'}) - Price ID: ${currentPlan.id}`);
-          console.log('Subscription status:', subscriptionData?.data?.status);
-          console.log('Is subscribed to this plan:', isSubscribedPlan(currentPlan.id));
-          console.log('Is subscription canceled:', isSubscriptionCanceled());
-          console.log('Has subscription history:', hasSubscriptionHistory());
+
           
           const priceDisplay = `$${(currentPlan.unit_price.amount / 100).toFixed(2)} ${currentPlan.unit_price.currency_code}/${isAnnual ? 'year' : 'month'}`;
           
@@ -481,55 +488,79 @@ const ThreeTierPricing = ({ onActionComplete }) => {
           
           return (
             <PriceWrapper key={currentPlan.id} isPopular={isMiddlePlan}> 
-              <Box py={4} px={8}>
-                <Text fontWeight="500" fontSize="2xl">
+              <Box py={{ base: 3, md: 4 }} px={{ base: 4, md: 6 }}>
+                <Text 
+                  fontWeight="500" 
+                  fontSize={{ base: "lg", md: "xl" }}
+                  mb={2}
+                  textAlign="center"
+                >
                   {planName}
                 </Text>
-                <HStack justifyContent="center">
-                  <Text fontSize="xl" fontWeight="600">
-                    $
+                
+                {/* Responsive Price Display */}
+                <VStack spacing={0} justify="center" align="center" mb={1}>
+                  <HStack 
+                    justify="center" 
+                    align="baseline" 
+                    spacing={1}
+                  >
+                    <Text fontSize={{ base: "md", md: "lg" }} fontWeight="600">
+                      $
+                    </Text>
+                    <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="900" lineHeight="1">
+                      {(currentPlan.unit_price.amount / 100).toFixed(0)}
+                    </Text>
+                    <Text fontSize={{ base: "xs", md: "sm" }} fontWeight="500" color="gray.600">
+                      {currentPlan.unit_price.currency_code}
+                    </Text>
+                  </HStack>
+                  
+                  <Text 
+                    fontSize={{ base: "xs", md: "sm" }} 
+                    color="gray.500" 
+                    textAlign="center"
+                  >
+                    per {isAnnual ? 'year' : 'month'}
                   </Text>
-                  <Text fontSize="xl" fontWeight="900">
-                    {(currentPlan.unit_price.amount / 100).toFixed(2)}
-                  </Text>
-                  <Text fontSize="sm" fontWeight="500" alignSelf="flex-start" mt={1}>
-                    {currentPlan.unit_price.currency_code}
-                  </Text>
-                  <Text fontSize="xl" color="gray.500">
-                    /{isAnnual ? 'Annually' : 'Monthly'}
-                  </Text>
-                </HStack>
+                </VStack>
               </Box>
+              
               <VStack
                 bg='gray.50'
-                py={4}
-                borderBottomRadius={'xl'}>
-                <List spacing={2} textAlign="start" px={6} width="100%">
+                py={{ base: 3, md: 4 }}
+                borderBottomRadius={'xl'}
+                minHeight={{ base: "auto", md: "240px" }}
+              >
+                <List spacing={1} textAlign="start" px={{ base: 3, md: 4 }} width="100%">
                   {planPerks[currentPlan.id] && planPerks[currentPlan.id].map((perk, index) => (
-                    <ListItem key={index} fontSize="sm">
+                    <ListItem key={index} fontSize={{ base: "xs", md: "sm" }}>
                       <ListIcon as={FaCheckCircle} color="green.500" />
                       {perk}
                     </ListItem>
                   ))}
                   {!planPerks[currentPlan.id] && (
                       <ListItem>
-                          <Text color="gray.500" fontSize="sm">
+                          <Text color="gray.500" fontSize={{ base: "xs", md: "sm" }}>
                             (Perks not defined for ID: {currentPlan.id})
                           </Text>
                       </ListItem>
                   )}
                 </List>
-                <Box w="80%" pt={4}>
+                
+                <Box w={{ base: "85%", md: "80%" }} pt={3}>
                   <Button 
                     ref={(el) => {
                       if (el) checkoutButtonRef.current = el; 
                     }}
                     colorScheme={buttonColor}
                     variant={buttonVariant}
-                    mt={3} 
+                    mt={2} 
                     onClick={buttonAction}
                     isLoading={updateLoading || cancelLoading}
                     width="100%"
+                    size={{ base: "sm", md: "md" }}
+                    fontSize={{ base: "sm", md: "md" }}
                   >
                     {buttonText}
                   </Button>
@@ -547,7 +578,7 @@ const ThreeTierPricing = ({ onActionComplete }) => {
         handleAction={executeAction}
         planName={selectedPlan?.name || ''}
         price={selectedPlan ? `$${(selectedPlan.unit_price.amount / 100).toFixed(2)} ${selectedPlan.unit_price.currency_code}/${selectedPlan.billing_cycle.interval}` : ''}
-        onActionComplete={onActionComplete}
+        onActionComplete={handleActionComplete}
       />
     </Box>
   )

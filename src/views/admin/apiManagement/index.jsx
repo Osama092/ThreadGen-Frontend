@@ -28,7 +28,6 @@ export default function ApiManagement() {
     
     // Generate the video and get the result directly
     const result = await generate(apiKey, threadName, ttsText);
-    console.log("Result from generate:", result);
     
     // Use the result from the generate function instead of relying on the state
     if (result && result.video) {

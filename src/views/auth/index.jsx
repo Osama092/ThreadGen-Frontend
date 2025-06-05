@@ -18,7 +18,6 @@ function SignUpPage() {
         const timeDifference = Math.abs(user.createdAt - user.lastSignInAt);
         const isNewUser = timeDifference < 5000; // 5 seconds
         
-        console.log("isNewUser", isNewUser);  
         if (isNewUser) {
           const newUserData = {
             user_id: user.id,

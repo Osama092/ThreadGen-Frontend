@@ -16,9 +16,9 @@ export default function ComplexTable(props) {
 
   useEffect(() => {
     if (transactionDataTable && transactionDataTable.length > 0) {
-      const transformedData = transactionDataTable.map((transaction) => {
-        const startDate = new Date(transaction.billing_period.starts_at);
-        const endDate = new Date(transaction.billing_period.ends_at);
+        const transformedData = transactionDataTable.map((transaction) => {
+        const startDate = new Date(transaction?.billing_period?.starts_at || Date.now());
+        const endDate = new Date(transaction?.billing_period?.ends_at || Date.now());
         const formattedStartDate = startDate.toLocaleDateString('en-CA').replace(/-/g, '/');
         const formattedEndDate = endDate.toLocaleDateString('en-CA').replace(/-/g, '/');
 

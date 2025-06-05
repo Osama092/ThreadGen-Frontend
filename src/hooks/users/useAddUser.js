@@ -12,7 +12,6 @@ export const useAddUser = () => {
     try {
       const response = await addUser(user);
       setData(response); 
-      console.log("User added successfully:", response);
       return response;
     } catch (err) {
       if (err.response) {
@@ -21,11 +20,8 @@ export const useAddUser = () => {
           message: err.response.data.message,
           voice_cloned: err.response.data.voice_cloned
         };
-        console.log("Error response from server:", errorData);
         setError(errorData);
       } else {
-        // Some other error (like network issue)
-        console.log("Other error:", err.message);
         setError({ message: err.message });
       }
     } finally {

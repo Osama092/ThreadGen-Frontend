@@ -31,7 +31,6 @@ export default function SidebarDocs() {
     }
 
     const productId = subscriptionData.data.items[0].product.id;
-    console.log('Product ID:', productId); // Debugging log
     switch (productId) {
       case 'pro_01j82nweft36pcrgwt9zcek5g2':
         return "Upgrade to PRO";
@@ -47,13 +46,11 @@ export default function SidebarDocs() {
   useEffect(() => {
     if (isSubbed !== null) { // Check if it's not null (i.e., data has been fetched)
       if (!isSubbed) {
-        console.log('User is not subscribed');
         onOpen(); // Open the modal if isSubbed is true
       }
     }
   }, [isSubbed, onOpen]);
 
-  console.log('SidebarDocs rendered with isSubbed:', isSubbed, 'subscriptionData:', subscriptionData, 'transactionData:', transactionData);
   
   // Handle modal closure properly
   const handleModalClose = () => {
@@ -64,6 +61,18 @@ export default function SidebarDocs() {
         upgradeButtonRef.current.focus();
       }
     }, 0);
+  };
+
+  // Handler for when any pricing action completes - this will refresh the page
+  const handlePricingActionComplete = () => {
+    console.log('Pricing action completed, refreshing page...');
+    // Close the modal first
+    onClose();
+    
+    // Add a small delay then refresh the page
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
   };
 
   const bgColor = "linear-gradient(135deg, #868CFF 0%, #4318FF 100%)";
@@ -153,7 +162,8 @@ export default function SidebarDocs() {
         <ModalContent maxW="100%" width="70%">
           {isSubbed && <ModalCloseButton />} {/* Only show close button if user is subscribed */}
           <ModalBody>
-            <PricingPage onActionComplete={handleModalClose} />
+            {/* Pass the callback to the PricingPage component */}
+            <PricingPage onActionComplete={handlePricingActionComplete} />
           </ModalBody>
         </ModalContent>
       </Modal>
