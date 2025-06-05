@@ -16,7 +16,7 @@ import { Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react
 import { CloseButton } from '@chakra-ui/react';
 import { Progress } from '@chakra-ui/react';
 
-import { Card, CardBody, Image, Stack as ChakraStack, Heading, Divider } from '@chakra-ui/react';
+import { Card, CardBody, Image, Stack as ChakraStack, Heading, Divider, Spinner } from '@chakra-ui/react';
 import { AddIcon, CheckIcon } from '@chakra-ui/icons';
 
 //------------------------------------------------
@@ -32,7 +32,7 @@ export default function FlowManagement() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { user } = useUser();
 
-  const { threads, userThreadsLoading, userThreadsError, Spinner } = useGetUserThreads(user.id);
+  const { threads, loading: userThreadsLoading, error: userThreadsError, refetchThreads } = useGetUserThreads(user.id);
 
   const totalSteps = 4;
 
@@ -123,10 +123,17 @@ export default function FlowManagement() {
           handleClose();
           setShowAlert(true);
           
-          // Reload the page after a short delay to allow the success alert to show
+          // Refetch threads instead of reloading the page
+          // Assuming your useGetUserThreads hook has a refetch function
+          // If not, you might need to modify the hook or add a refetch mechanism
+          if (typeof refetchThreads === 'function') {
+            await refetchThreads();
+          }
+          
+          // Hide alert after 3 seconds
           setTimeout(() => {
-            window.location.reload();
-          }, 3000); // 3 second delay to match the alert duration
+            setShowAlert(false);
+          }, 3000);
           
           return true; // Indicate success
         } else {
