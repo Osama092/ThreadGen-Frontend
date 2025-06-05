@@ -78,7 +78,7 @@ const PriceWrapper = ({ children, isPopular = false }) => {
   )
 }
 
-const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price }) => {
+const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price, onActionComplete }) => {
   const [reason, setReason] = useState('');
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,10 +93,14 @@ const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price })
         setIsSubmitting(false);
         setIsSuccess(true);
         
-        // Close the modal after showing success message
+        // Close the modal after showing success message and call parent close
         setTimeout(() => {
           onClose();
           setIsSuccess(false);
+          // Close the parent pricing modal
+          if (onActionComplete) {
+            onActionComplete();
+          }
         }, 2000);
       })
       .catch((error) => {
@@ -184,7 +188,7 @@ const FeedbackModal = ({ isOpen, onClose, type, handleAction, planName, price })
   );
 };
 
-const ThreeTierPricing = () => {
+const ThreeTierPricing = ({ onActionComplete }) => {
   const { loading: updateLoading, error: updateError, data: updateData, handleUpdateSubscription } = useUpdateSubscription();
   const { loading: cancelLoading, error: cancelError, data: cancelData, handleCancelSubscription } = useSubscriptionCancel();
   const { isSubbed, subscriptionData, transactionData } = useSubscription();
@@ -277,6 +281,17 @@ const ThreeTierPricing = () => {
               }, 0);
             }
           });
+
+          // Handle successful checkout completion
+          paddleInstance.Checkout.on('checkout.completed', (data) => {
+            console.log('Checkout completed:', data);
+            // Close the pricing modal when checkout is successful
+            if (onActionComplete) {
+              setTimeout(() => {
+                onActionComplete();
+              }, 1000); // Small delay to allow for any processing
+            }
+          });
         } else {
           console.error('Paddle initialization failed');
         }
@@ -284,7 +299,7 @@ const ThreeTierPricing = () => {
       .catch((error) => {
         console.error('Error initializing Paddle:', error);
       });
-  }, []);
+  }, [onActionComplete]);
 
   const updateSub = (priceId) => {
     const subscriptionId = subscriptionData?.data?.id;
@@ -307,30 +322,31 @@ const ThreeTierPricing = () => {
       return Promise.reject('Subscription ID is missing');
     }
   };
-const openCheckout = (items, buttonRef) => {
-  if (paddle) {
-    document.activeElement?.blur();
-    setTimeout(() => {
-      paddle.Checkout.open({
-        items: items,
-        customer: {
-          email: email,
-        },
-        customData: {
-          helloworld: 'Hello from Paddle Checkout',
-          customer_email: email 
-        },
-        settings: {
-          displayMode: 'overlay',
-          theme: 'light',
-          locale: 'en'
-        }
-      });
-    }, 100);
-  } else {
-    console.error('Paddle instance is not available');
-  }
-};
+
+  const openCheckout = (items, buttonRef) => {
+    if (paddle) {
+      document.activeElement?.blur();
+      setTimeout(() => {
+        paddle.Checkout.open({
+          items: items,
+          customer: {
+            email: email,
+          },
+          customData: {
+            helloworld: 'Hello from Paddle Checkout',
+            customer_email: email 
+          },
+          settings: {
+            displayMode: 'overlay',
+            theme: 'light',
+            locale: 'en'
+          }
+        });
+      }, 100);
+    } else {
+      console.error('Paddle instance is not available');
+    }
+  };
 
   const groupedPlans = prices.reduce((acc, price) => {
     const planName = price.name;
@@ -531,6 +547,7 @@ const openCheckout = (items, buttonRef) => {
         handleAction={executeAction}
         planName={selectedPlan?.name || ''}
         price={selectedPlan ? `$${(selectedPlan.unit_price.amount / 100).toFixed(2)} ${selectedPlan.unit_price.currency_code}/${selectedPlan.billing_cycle.interval}` : ''}
+        onActionComplete={onActionComplete}
       />
     </Box>
   )

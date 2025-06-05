@@ -153,7 +153,7 @@ export default function SidebarDocs() {
         <ModalContent maxW="100%" width="70%">
           {isSubbed && <ModalCloseButton />} {/* Only show close button if user is subscribed */}
           <ModalBody>
-            <PricingPage />
+            <PricingPage onActionComplete={handleModalClose} />
           </ModalBody>
         </ModalContent>
       </Modal>
